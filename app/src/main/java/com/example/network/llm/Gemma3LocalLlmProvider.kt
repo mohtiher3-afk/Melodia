@@ -2,6 +2,10 @@ package com.example.network.llm
 
 import android.content.Context
 import com.example.domain.LocalModelManager
+import com.google.ai.edge.litertlm.Backend
+import com.google.ai.edge.litertlm.Engine
+import com.google.ai.edge.litertlm.EngineConfig
+import com.google.ai.edge.litertlm.LogSeverity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -35,20 +39,59 @@ class Gemma3LocalLlmProvider(
         val modelPath = modelManager.getModelPath(modelInfo)
             ?: throw LlmException("Gemma 3 1B model not downloaded. Please download it from Settings.")
 
-        // TODO: Implement actual LiteRT-LM inference
-        // This requires:
-        // 1. Initialize LLM inference engine with modelPath
-        // 2. Tokenize input (prompt + systemPrompt)
-        // 3. Run generation with temperature and maxTokens
-        // 4. Decode tokens to text
-        //
-        // Example LiteRT-LM API (when stable):
-        // val llm = LlmInference(modelPath)
-        // val result = llm.generate(prompt, temperature, maxTokens)
+        // Build the full prompt with system instruction
+        val fullPrompt = if (systemPrompt != null) {
+            "$systemPrompt\n\n$prompt"
+        } else {
+            prompt
+        }
 
-        throw LlmException(
-            "Gemma 3 1B local inference not yet implemented. " +
-            "LiteRT-LM integration pending. Model file ready at: $modelPath"
+        // Initialize LiteRT-LM engine
+        Engine.setNativeMinLogSeverity(LogSeverity.ERROR)
+
+        val engineConfig = EngineConfig(
+            modelPath = modelPath,
+            backend = Backend.CPU(),
+            cacheDir = context.cacheDir.absolutePath
         )
+
+        Engine(engineConfig).use { engine ->
+            engine.initialize()
+
+            engine.createConversation().use { conversation ->
+                val responseBuilder = StringBuilder()
+                val tokenCount = intArrayOf(0)
+
+                try {
+                    conversation.sendMessageAsync(fullPrompt).collect { token ->
+                        responseBuilder.append(token)
+                        tokenCount[0]++
+                    }
+                } catch (e: Exception) {
+                    throw LlmException("LiteRT-LM inference failed: ${e.message}", e)
+                }
+
+                val responseText = responseBuilder.toString().trim()
+
+                if (responseText.isEmpty()) {
+                    throw LlmException("LiteRT-LM returned empty response")
+                }
+
+                LlmResponse(
+                    text = responseText,
+                    providerId = id,
+                    model = "gemma-3-1b-it-int4",
+                    finishReason = "stop"
+                )
+            }
+        }
+    }
+
+    /**
+     * Rough token count estimate (~4 chars per token for English text).
+     * LiteRT-LM does not expose token counts directly, so we estimate.
+     */
+    private fun estimateTokenCount(text: String): Int {
+        return (text.length / 4.0).toInt().coerceAtLeast(1)
     }
 }
