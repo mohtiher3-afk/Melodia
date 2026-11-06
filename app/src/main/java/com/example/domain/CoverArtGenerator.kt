@@ -8,15 +8,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
-import android.util.Base64
 import android.util.Log
-import com.example.BuildConfig
-import com.example.network.ApiClient
-import com.example.network.GeminiContent
-import com.example.network.GeminiGenerateRequest
-import com.example.network.GeminiGenerationConfig
-import com.example.network.GeminiImageConfig
-import com.example.network.GeminiPart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -32,8 +24,8 @@ object CoverArtGenerator {
     private const val TAG = "CoverArtGenerator"
 
     /**
-     * Generates a monochromatic, high-contrast cover art image using the Gemini text-to-image API,
-     * with an offline high-contrast Nothing OS graphic generator as a resilient fallback.
+     * Generates cover art locally. This deliberately avoids cloud image APIs and their possible
+     * charges; until an on-device diffusion model is installed, the procedural design is used.
      *
      * @return Absolute file path to the saved cover image.
      */
@@ -79,46 +71,6 @@ object CoverArtGenerator {
         genre: String,
         mood: String
     ): String = withContext(Dispatchers.IO) {
-        val apiKey = BuildConfig.GEMINI_API_KEY
-        if (apiKey.isNotBlank() && apiKey != "MY_GEMINI_API_KEY") {
-            try {
-                val imagePrompt = buildMonochromaticPrompt(title, genre, mood, lyrics)
-                val request = GeminiGenerateRequest(
-                    contents = listOf(
-                        GeminiContent(parts = listOf(GeminiPart(text = imagePrompt)))
-                    ),
-                    generationConfig = GeminiGenerationConfig(
-                        temperature = 0.3f,
-                        topP = 0.8f,
-                        responseModalities = listOf("TEXT", "IMAGE"),
-                        imageConfig = GeminiImageConfig(aspectRatio = "1:1", imageSize = "2K")
-                    )
-                )
-
-                val response = ApiClient.geminiService.generateImage(apiKey, request)
-                if (response.isSuccessful && response.body() != null) {
-                    val parts = response.body()?.candidates?.firstOrNull()?.content?.parts
-                    val imagePart = parts?.firstOrNull { it.inlineData?.data != null }
-                    val base64Data = imagePart?.inlineData?.data
-
-                    if (!base64Data.isNullOrBlank()) {
-                        val decodedBytes = Base64.decode(base64Data, Base64.DEFAULT)
-                        val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-                        if (bitmap != null) {
-                            return@withContext saveCoverBitmap(context, bitmap, title)
-                        }
-                    }
-                } else {
-                    Log.w(TAG, "Gemini image generation response: ${response.code()} ${response.message()}")
-                    // Fall through to procedural generator
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed calling text-to-image API, falling back to Nothing OS generator", e)
-                // Fall through to procedural generator
-            }
-        }
-
-        // High-contrast monochromatic Nothing OS offline generator (always runs as primary or fallback)
         generateProceduralNothingCover(context, title, genre, mood)
     }
 

@@ -1,12 +1,6 @@
 package com.example.domain
 
 import android.util.Log
-import com.example.BuildConfig
-import com.example.network.ApiClient
-import com.example.network.GeminiContent
-import com.example.network.GeminiGenerateRequest
-import com.example.network.GeminiGenerationConfig
-import com.example.network.GeminiPart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -24,8 +18,7 @@ object SentimentAnalyzer {
     private const val TAG = "SentimentAnalyzer"
 
     suspend fun analyzeLyrics(lyrics: String): SentimentResult = withContext(Dispatchers.IO) {
-        val apiKey = BuildConfig.GEMINI_API_KEY
-        if (apiKey.isNotBlank() && apiKey != "MY_GEMINI_API_KEY" && lyrics.isNotBlank()) {
+        if (lyrics.isNotBlank()) {
             try {
                 val prompt = """
                     Analyze the emotional tone and sentiment of these song lyrics. 
@@ -36,31 +29,21 @@ object SentimentAnalyzer {
                     $lyrics
                 """.trimIndent()
 
-                val request = GeminiGenerateRequest(
-                    contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = prompt)))),
-                    generationConfig = GeminiGenerationConfig(
-                        temperature = 0.3f,
-                        responseMimeType = "application/json"
-                    )
+                val provider = com.example.network.llm.LlmProviderFactory.create(
+                    com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO
                 )
-
-                val response = ApiClient.geminiService.generateContent(apiKey, request)
-                if (response.isSuccessful) {
-                    val candidate = response.body()?.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                    if (!candidate.isNullOrBlank()) {
-                        val json = JSONObject(candidate.trim().removeSurrounding("```json", "```").trim())
-                        return@withContext SentimentResult(
-                            dominantTone = json.optString("dominantTone", "Energetic"),
-                            joyScore = json.optInt("joyScore", 35),
-                            energyScore = json.optInt("energyScore", 40),
-                            melancholyScore = json.optInt("melancholyScore", 15),
-                            nostalgiaScore = json.optInt("nostalgiaScore", 10),
-                            summary = json.optString("summary", "High energy pulse with uplifting lyrical themes.")
-                        )
-                    }
-                }
+                val candidate = provider.generate(prompt, temperature = 0.3f, maxTokens = 400).text
+                val json = JSONObject(candidate.trim().removeSurrounding("```json", "```").trim())
+                return@withContext SentimentResult(
+                    dominantTone = json.optString("dominantTone", "Energetic"),
+                    joyScore = json.optInt("joyScore", 35),
+                    energyScore = json.optInt("energyScore", 40),
+                    melancholyScore = json.optInt("melancholyScore", 15),
+                    nostalgiaScore = json.optInt("nostalgiaScore", 10),
+                    summary = json.optString("summary", "High energy pulse with uplifting lyrical themes.")
+                )
             } catch (e: Exception) {
-                Log.e(TAG, "Gemini sentiment analysis failed, using heuristic analysis", e)
+                Log.e(TAG, "On-device sentiment analysis unavailable; using heuristic analysis", e)
             }
         }
 

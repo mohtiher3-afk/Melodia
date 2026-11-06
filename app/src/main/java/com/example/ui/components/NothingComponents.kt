@@ -35,10 +35,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -77,14 +79,21 @@ fun GlyphCard(
     testTag: String = "glyph_card",
     content: @Composable () -> Unit
 ) {
+    val shape = RoundedCornerShape(cornerRadius)
     Surface(
         modifier = modifier
             .testTag(testTag)
-            .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(cornerRadius))
-            .clip(RoundedCornerShape(cornerRadius)),
+            .shadow(8.dp, shape)
+            .border(width = 1.dp, color = borderColor, shape = shape)
+            .clip(shape),
+        shape = shape,
         color = backgroundColor
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .background(Brush.verticalGradient(listOf(NothingElevatedSurface.copy(alpha = 0.32f), backgroundColor)))
+                .padding(16.dp)
+        ) {
             if (headerTitle != null || hasRedDot) {
                 Row(
                     modifier = Modifier
@@ -94,14 +103,23 @@ fun GlyphCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     if (headerTitle != null) {
-                        Text(
-                            text = headerTitle.uppercase(),
-                            fontFamily = NothingDotMatrixFontFamily,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 13.sp,
-                            letterSpacing = 1.2.sp,
-                            color = NothingGrey
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(5.dp)
+                                    .clip(CircleShape)
+                                    .background(NothingRed)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = headerTitle.uppercase(),
+                                fontFamily = NothingDotMatrixFontFamily,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 13.sp,
+                                letterSpacing = 1.2.sp,
+                                color = NothingGrey
+                            )
+                        }
                     } else {
                         Spacer(modifier = Modifier.width(1.dp))
                     }

@@ -57,6 +57,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.components.FloatingPlayerBar
 import com.example.ui.components.NothingBottomBar
 import com.example.ui.components.MelodiaTab
+import com.example.ui.ambientGlow
 import com.example.ui.dotGrid
 import com.example.ui.screens.*
 import com.example.ui.theme.MelodiaTheme
@@ -92,13 +93,14 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
-                            .background(NothingBlack)
-                            .dotGrid()
-                    ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(innerPadding)
+                                            .background(NothingBlack)
+                                            .ambientGlow()
+                                            .dotGrid()
+                                    ) {
                         AnimatedContent(
                             targetState = currentTab,
                             modifier = Modifier.fillMaxSize(),

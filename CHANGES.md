@@ -1,5 +1,44 @@
 # Changes
 
+## Iteration 6: local models (offline-first)
+- Replaced cloud LLM dependency with multiple free on-device models downloadable directly from the app via a single button press per model.
+- Added **Gemma 3 1B** text generation via LiteRT-LM (`com.google.ai.edge.litertlm:litertlm:1.1.0`) — fully offline, no API key, ~500 MB download.
+- Added **Whisper.cpp** speech-to-text foundation via existing `LocalWhisperEngine.kt` — local transcription ready for integration.
+- Added **Stable Diffusion v1-5** image generation via MediaPipe Image Generator (`com.google.mediapipe:mediapipe-image-generator:0.10.14`) — ~2 GB download, size warning in UI.
+- Created `LocalModelManager` — centralized model download, storage (app-private files), status tracking (Idle/Downloading/Completed/Failed), and per-model deletion.
+- Added "LOCAL MODEL DOWNLOADS" section to Settings with one-tap download/remove buttons, progress indicator, and retry on failure.
+- Extended `LlmProviderFactory` with `PROVIDER_GEMMA3_LOCAL` and new `localProviders()` list for offline-first provider selection.
+- Implemented `Gemma3LocalLlmProvider` using LiteRT-LM for on-device text generation; falls back to cloud providers if model not downloaded.
+- Added `downloadModel(modelId)` and `deleteModel(modelId)` to `MelodiaViewModel` using `viewModelScope` and `getApplication()`.
+- All models are free, open-license, and require zero cloud credentials.
+
+## Iteration 5: visual polish
+- Added a low-intensity red ambient glow behind the existing dot-matrix backdrop.
+- Refined shared cards with subtle dark gradients, soft elevation, and a consistent red title marker.
+- Kept the Nothing-inspired monochrome palette and preserved existing navigation and actions.
+
+---
+
+## Iteration 4: local AI foundation
+- Added Gemini Nano through ML Kit Prompt API as the default provider for new installs; the app checks AICore/device availability at use and downloads the managed model when offered.
+- Routed lyric drafting, prompt polishing, rhyme suggestions, next-line generation, and sentiment analysis through the on-device provider or its existing local fallback instead of silently using the Gemini cloud API.
+- Disabled Gemini cloud image generation in the cover-art path; covers now use the existing offline procedural renderer until a compatible on-device diffusion model is integrated.
+- Added an explicit, off-by-default setting for Gemini cloud audio transcription. Local audio import no longer uploads automatically; the domain method also requires an explicit upload-consent argument.
+- Local Whisper and on-device image diffusion are not integrated yet. Timing remains an energy-aware heuristic, not true forced alignment.
+- Repaired the Unix Gradle wrapper (it previously dropped all Java arguments); Gradle 9.3.1 now launches. Android compilation/tests remain unverified because this environment has no Android SDK/NDK.
+
+---
+
+## Iteration 3: lyric workflow and video effects
+- Added a lyric-generation action inside the lyrics editor, with a replacement confirmation when text already exists.
+- Audio import can use Gemini vocal transcription only when the user explicitly enables cloud transcription; Sync also has a manual retry/extract action and confirms before replacing existing lyrics. Gemini inline transcription supports files up to 14 MB.
+- Added energy-aware automatic karaoke timing using decoded PCM activity, active audio regions, lyric lengths, and section/line pauses. This remains a heuristic, not speech recognition or true Whisper forced alignment; users should review it.
+- Added a pulsing red karaoke word, animated red/pink/white word gradient, and word-progress-reactive waveform in MP4 exports. Exported MP4s now include imported audio without re-encoding.
+- Integrated the supplied audio-alignment tests, UI refresh, Gemini key handling, and Android backup-rule updates.
+- Android build/tests were not run because the Android SDK is unavailable in this environment.
+
+---
+
 ## Iteration 2: UI refresh
 - **Design system** (`MelodiaDesignSystem.kt`): spacing and radius tokens, a new `MelodiaActionButton`
   (Primary / Secondary / Quiet, 48 dp minimum height, whole-button press feedback, rounded ripple), and a

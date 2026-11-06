@@ -2,13 +2,15 @@ package com.example.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,6 +32,7 @@ fun SyncScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.studioState.collectAsStateWithLifecycle()
+    val allowCloudTranscription by viewModel.allowCloudTranscription.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     val player = viewModel.audioPlayerManager
@@ -37,6 +40,7 @@ fun SyncScreen(
     val playbackPosition by player.currentPosition.collectAsStateWithLifecycle()
     val playbackDuration by player.duration.collectAsStateWithLifecycle()
     val playbackUrl by player.currentUrl.collectAsStateWithLifecycle()
+    var showTranscribeConfirmation by remember { mutableStateOf(false) }
 
     val audioPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -56,7 +60,7 @@ fun SyncScreen(
         val draft = state.currentDraft
         val karaoke = state.karaokeLyrics
 
-        GlyphCard(headerTitle = "LOCAL WHISPER AUDIO ALIGNMENT") {
+        GlyphCard(headerTitle = "AUTOMATIC LYRICS & SYNC") {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 // Header with StatusBadge
                 Row(
@@ -72,6 +76,7 @@ fun SyncScreen(
                     )
                     StatusBadge(
                         status = when {
+                            state.isTranscribingAudio -> "TRANSCRIBING"
                             state.isAligningAudio -> "PROCESSING"
                             state.karaokeLyrics != null -> "READY"
                             else -> "IDLE"
@@ -86,6 +91,29 @@ fun SyncScreen(
                         fontSize = 12.sp,
                         color = NothingWhite,
                         fontWeight = FontWeight.Bold
+                    )
+                    val withinCloudLimit = com.example.domain.LocalAudioImporter
+                        .isWithinTranscriptionLimit(state.localAudioMetadata!!.localFile)
+                    val canTranscribe = withinCloudLimit && allowCloudTranscription
+                    Text(
+                        text = when {
+                            !withinCloudLimit -> "Audio remains local; cloud transcription is limited to files up to 14 MB."
+                            !allowCloudTranscription -> "Cloud transcription is off. Enable it in Settings to upload this audio; local Whisper is not integrated yet."
+                            else -> "This audio may be sent to Gemini for transcription (up to 14 MB)."
+                        },
+                        fontFamily = SpaceMonoFontFamily,
+                        fontSize = 10.sp,
+                        color = NothingGrey
+                    )
+                    NothingPillButton(
+                        text = if (state.isTranscribingAudio) "TRANSCRIBING VOCALS..." else "EXTRACT LYRICS FROM AUDIO",
+                        onClick = {
+                            if (!draft?.lyrics.isNullOrBlank()) showTranscribeConfirmation = true
+                            else viewModel.transcribeImportedAudio(context)
+                        },
+                        enabled = canTranscribe && !state.isTranscribingAudio && !state.isImportingAudio,
+                        isPrimary = true,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 } else {
                     Text(
@@ -103,9 +131,17 @@ fun SyncScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 NothingPillButton(
-                    text = if (state.isAligningAudio) "ALIGNING WITH WHISPER..." else "RUN WHISPER ALIGNMENT",
+                    text = if (state.isAligningAudio) "CREATING WORD TIMINGS..." else "AUTO-CREATE WORD TIMINGS",
                     onClick = { viewModel.syncLyricsWithAudio(context) },
+                    enabled = !state.isAligningAudio && !draft?.lyrics.isNullOrBlank() && state.isLocalAudioActive,
                     isPrimary = true
+                )
+
+                Text(
+                    text = "Timing follows active audio regions and lyric sections. This is a heuristic, not speech recognition; review before export.",
+                    fontFamily = SpaceMonoFontFamily,
+                    fontSize = 10.sp,
+                    color = NothingGrey
                 )
 
                 if (karaoke != null) {
@@ -207,6 +243,25 @@ fun SyncScreen(
             }
         }
     }
+
+    if (showTranscribeConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showTranscribeConfirmation = false },
+            title = { Text("Replace current lyrics?") },
+            text = { Text("The imported audio will be sent to Gemini for transcription and will replace the lyrics in the current draft.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showTranscribeConfirmation = false
+                        viewModel.transcribeImportedAudio(context, replaceExistingLyrics = true)
+                    }
+                ) { Text("EXTRACT & REPLACE") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTranscribeConfirmation = false }) { Text("CANCEL") }
+            }
+        )
+    }
 }
 
 private fun formatClock(ms: Int): String {
@@ -215,4 +270,3 @@ private fun formatClock(ms: Int): String {
     val seconds = totalSeconds % 60
     return String.format(java.util.Locale.US, "%02d:%02d", minutes, seconds)
 }
-

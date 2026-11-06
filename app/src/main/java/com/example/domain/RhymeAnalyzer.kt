@@ -1,12 +1,6 @@
 package com.example.domain
 
 import android.util.Log
-import com.example.BuildConfig
-import com.example.network.ApiClient
-import com.example.network.GeminiContent
-import com.example.network.GeminiGenerateRequest
-import com.example.network.GeminiGenerationConfig
-import com.example.network.GeminiPart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -22,10 +16,9 @@ object RhymeAnalyzer {
     private const val TAG = "RhymeAnalyzer"
 
     suspend fun findRhymes(lineOrWord: String): RhymeResult = withContext(Dispatchers.IO) {
-        val apiKey = BuildConfig.GEMINI_API_KEY
         val cleanQuery = lineOrWord.trim().split("\\s+".toRegex()).lastOrNull() ?: lineOrWord
 
-        if (apiKey.isNotBlank() && apiKey != "MY_GEMINI_API_KEY" && cleanQuery.isNotBlank()) {
+        if (cleanQuery.isNotBlank()) {
             try {
                 val prompt = """
                     Provide rhyming words, slant rhymes, and poetic synonyms for the following word or line from song lyrics: "$lineOrWord" (focusing on the ending word "$cleanQuery").
@@ -35,39 +28,29 @@ object RhymeAnalyzer {
                     - synonyms (array of strings, e.g. 3-5 poetic synonyms)
                 """.trimIndent()
 
-                val request = GeminiGenerateRequest(
-                    contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = prompt)))),
-                    generationConfig = GeminiGenerationConfig(
-                        temperature = 0.5f,
-                        responseMimeType = "application/json"
-                    )
+                val provider = com.example.network.llm.LlmProviderFactory.create(
+                    com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO
                 )
+                val candidate = provider.generate(prompt, temperature = 0.5f, maxTokens = 400).text
+                val json = JSONObject(candidate.trim().removeSurrounding("```json", "```").trim())
 
-                val response = ApiClient.geminiService.generateContent(apiKey, request)
-                if (response.isSuccessful) {
-                    val candidate = response.body()?.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                    if (!candidate.isNullOrBlank()) {
-                        val json = JSONObject(candidate.trim().removeSurrounding("```json", "```").trim())
-                        
-                        fun parseArray(key: String): List<String> {
-                            val arr = json.optJSONArray(key) ?: JSONArray()
-                            val list = mutableListOf<String>()
-                            for (i in 0 until arr.length()) {
-                                val item = arr.optString(i)
-                                if (item.isNotBlank()) list.add(item)
-                            }
-                            return list
-                        }
-
-                        return@withContext RhymeResult(
-                            exactRhymes = parseArray("exactRhymes").ifEmpty { listOf("light", "night", "sight", "flight") },
-                            slantRhymes = parseArray("slantRhymes").ifEmpty { listOf("time", "line", "shine") },
-                            synonyms = parseArray("synonyms").ifEmpty { listOf("glow", "spark", "beam") }
-                        )
+                fun parseArray(key: String): List<String> {
+                    val arr = json.optJSONArray(key) ?: JSONArray()
+                    val list = mutableListOf<String>()
+                    for (i in 0 until arr.length()) {
+                        val item = arr.optString(i)
+                        if (item.isNotBlank()) list.add(item)
                     }
+                    return list
                 }
+
+                return@withContext RhymeResult(
+                    exactRhymes = parseArray("exactRhymes").ifEmpty { listOf("light", "night", "sight", "flight") },
+                    slantRhymes = parseArray("slantRhymes").ifEmpty { listOf("time", "line", "shine") },
+                    synonyms = parseArray("synonyms").ifEmpty { listOf("glow", "spark", "beam") }
+                )
             } catch (e: Exception) {
-                Log.e(TAG, "Gemini rhyme finder failed, using heuristic fallback", e)
+                Log.e(TAG, "On-device rhyme generation unavailable; using heuristic fallback", e)
             }
         }
 

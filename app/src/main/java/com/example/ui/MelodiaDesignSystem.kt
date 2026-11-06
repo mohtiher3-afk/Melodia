@@ -103,6 +103,16 @@ fun Modifier.dotGrid(
     }
 }
 
+/** A restrained red ambient bloom that adds depth without competing with content. */
+fun Modifier.ambientGlow(): Modifier = drawWithCache {
+    val glow = Brush.radialGradient(
+        colors = listOf(NothingRed.copy(alpha = 0.14f), Color.Transparent),
+        center = Offset(size.width * 0.88f, size.height * 0.03f),
+        radius = maxOf(size.width, size.height) * 0.78f
+    )
+    onDrawBehind { drawRect(glow) }
+}
+
 enum class MelodiaButtonStyle { Primary, Secondary, Quiet }
 
 /**

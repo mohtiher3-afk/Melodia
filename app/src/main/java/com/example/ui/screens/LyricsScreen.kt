@@ -1,6 +1,5 @@
 package com.example.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,7 +30,6 @@ import com.example.ui.components.GlyphCard
 import com.example.ui.components.NothingPillButton
 import com.example.ui.dialogs.RhymeDialog
 import com.example.ui.dialogs.VoiceDictationDialog
-import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingRed
@@ -89,6 +87,7 @@ fun LyricsScreen(
 
     var showDictationDialog by rememberSaveable { mutableStateOf(false) }
     var showRhymeDialog by rememberSaveable { mutableStateOf(false) }
+    var showGenerateConfirmation by rememberSaveable { mutableStateOf(false) }
 
     fun insertWord(word: String) {
         val trimmed = editorText.trimEnd()
@@ -157,6 +156,18 @@ fun LyricsScreen(
                             .weight(1f)
                             .testTag("lyrics_rhyme_button")
                     )
+                    NothingPillButton(
+                        text = if (state.isGenerating) "WRITING..." else "GENERATE",
+                        onClick = {
+                            if (editorText.isNotBlank()) showGenerateConfirmation = true
+                            else viewModel.generateLyricsOnly()
+                        },
+                        enabled = !state.isGenerating,
+                        isPrimary = true,
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("lyrics_generate_button")
+                    )
                 }
 
                 // Quick section-tag insertion
@@ -221,6 +232,27 @@ fun LyricsScreen(
             query = rhymeQuery,
             onInsert = { word -> insertWord(word) },
             onDismiss = { showRhymeDialog = false }
+        )
+    }
+
+    if (showGenerateConfirmation) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showGenerateConfirmation = false },
+            title = { Text("Generate new lyrics?") },
+            text = { Text("This will replace the lyrics currently in the editor. Cancel or save a copy first if you want to keep this text.") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        showGenerateConfirmation = false
+                        viewModel.generateLyricsOnly()
+                    }
+                ) { Text("GENERATE") }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { showGenerateConfirmation = false }) {
+                    Text("CANCEL")
+                }
+            }
         )
     }
 }

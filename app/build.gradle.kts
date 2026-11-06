@@ -125,6 +125,8 @@ dependencies {
   implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
   implementation(libs.firebase.ai)
+  // On-device Gemini Nano via Android AICore; requires a supported device at runtime.
+  implementation("com.google.mlkit:genai-prompt:1.0.0-beta4")
   // Uncomment to use Firestore:
   // implementation(libs.firebase.firestore)
   implementation(libs.androidx.security.crypto)
@@ -140,8 +142,9 @@ dependencies {
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
   implementation(libs.logging.interceptor)
-  implementation(libs.moshi.kotlin)
   implementation(libs.okhttp)
+  implementation(libs.litert-lm)
+  implementation(libs.mediapipe-image-generator)
   // implementation(libs.play.services.location)
   implementation(libs.retrofit)
   testImplementation(libs.androidx.compose.ui.test.junit4)

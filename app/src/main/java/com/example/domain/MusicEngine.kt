@@ -23,7 +23,7 @@ object MusicEngine {
         language: String,
         userTopic: String,
         moodKeywords: String = "",
-        providerId: String = com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI
+        providerId: String = com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO
     ): GeneratedSongDraft? = withContext(Dispatchers.IO) {
         val provider = com.example.network.llm.LlmProviderFactory.create(providerId)
         if (!provider.isAvailable()) {
@@ -42,6 +42,7 @@ object MusicEngine {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error invoking LLM provider '$providerId'", e)
+            throw e
         }
         null
     }
@@ -52,77 +53,42 @@ object MusicEngine {
         mood: String,
         vocalStyle: String,
         bpm: String,
-        lyricalTheme: String = ""
+        lyricalTheme: String = "",
+        providerId: String = com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO
     ): String = withContext(Dispatchers.IO) {
-        val apiKey = BuildConfig.GEMINI_API_KEY
-        if (apiKey.isNotBlank() && apiKey != "MY_GEMINI_API_KEY") {
-            try {
-                val systemPrompt = "You are a master audio engineer and music producer. " +
-                        "Your job is to take a short or raw user music prompt and expand it into a detailed, " +
-                        "vivid, high-fidelity production prompt with instrument details, acoustic space, mix balance, " +
-                        "and vocal nuances. Return ONLY the polished prompt string in plain text without markdown or quotes."
-                val userText = "Raw prompt: '$rawPrompt'\nGenre: $genre\nMood: $mood\nVocal Style: $vocalStyle\nTempo: $bpm\n\n" +
-                        (if (lyricalTheme.isNotBlank()) "Lyrical theme/key idea: '$lyricalTheme'" else "") +
-                        "\n\nPolish and enrich this into an optimized Melodia prompt."
-
-                val request = GeminiGenerateRequest(
-                    contents = listOf(
-                        GeminiContent(parts = listOf(GeminiPart(text = userText)))
-                    ),
-                    generationConfig = GeminiGenerationConfig(
-                        temperature = 0.7f,
-                        topP = 0.9f
-                    ),
-                    systemInstruction = GeminiContent(
-                        parts = listOf(GeminiPart(text = systemPrompt))
-                    )
-                )
-
-                val response = ApiClient.geminiService.generateContent(apiKey, request)
-                if (response.isSuccessful) {
-                    val candidateText = response.body()?.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                    if (!candidateText.isNullOrBlank()) {
-                        return@withContext candidateText.trim()
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error invoking Gemini autoPolishPrompt", e)
+        val systemPrompt = "You are a master audio engineer and music producer. " +
+                "Expand the raw music prompt into a vivid production prompt with instruments, acoustic space, mix balance, " +
+                "and vocal nuances. Return only the polished prompt, without markdown or quotes."
+        val userText = "Raw prompt: '$rawPrompt'\nGenre: $genre\nMood: $mood\nVocal Style: $vocalStyle\nTempo: $bpm\n\n" +
+                (if (lyricalTheme.isNotBlank()) "Lyrical theme/key idea: '$lyricalTheme'" else "") +
+                "\n\nPolish and enrich this into an optimized Melodia prompt."
+        try {
+            val provider = com.example.network.llm.LlmProviderFactory.create(providerId)
+            if (provider.isAvailable()) {
+                provider.generate(userText, systemPrompt, temperature = 0.7f, maxTokens = 800)
+                    .text.trim().takeIf { it.isNotBlank() }?.let { return@withContext it }
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error invoking LLM provider '$providerId' for prompt polishing", e)
         }
         "$genre, $mood, $bpm, $vocalStyle, ${rawPrompt.ifBlank { "high fidelity studio recording" }}, wide stereo soundstage, punchy bass, pristine mix balance"
     }
 
-    suspend fun suggestTagsFromPrompt(polishedPrompt: String): List<String> = withContext(Dispatchers.IO) {
-        val apiKey = BuildConfig.GEMINI_API_KEY
-        if (apiKey.isNotBlank() && apiKey != "MY_GEMINI_API_KEY") {
-            try {
-                val systemPrompt = "Analyze the provided music production prompt and suggest 5-8 relevant genre, mood, and instrumentation tags. " +
-                        "Return ONLY a comma-separated list of tags in lowercase. No sentences, no markdown."
-                val userText = "Prompt: '$polishedPrompt'"
-
-                val request = GeminiGenerateRequest(
-                    contents = listOf(
-                        GeminiContent(parts = listOf(GeminiPart(text = userText)))
-                    ),
-                    generationConfig = GeminiGenerationConfig(
-                        temperature = 0.5f,
-                        topP = 0.9f
-                    ),
-                    systemInstruction = GeminiContent(
-                        parts = listOf(GeminiPart(text = systemPrompt))
-                    )
-                )
-
-                val response = ApiClient.geminiService.generateContent(apiKey, request)
-                if (response.isSuccessful) {
-                    val candidateText = response.body()?.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                    if (!candidateText.isNullOrBlank()) {
-                        return@withContext candidateText.split(",").map { it.trim().lowercase() }.filter { it.isNotBlank() }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error invoking Gemini suggestTagsFromPrompt", e)
+    suspend fun suggestTagsFromPrompt(
+        polishedPrompt: String,
+        providerId: String = com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO
+    ): List<String> = withContext(Dispatchers.IO) {
+        val systemPrompt = "Analyze the music production prompt and suggest 5-8 genre, mood, and instrumentation tags. " +
+                "Return only comma-separated lowercase tags, without sentences or markdown."
+        try {
+            val provider = com.example.network.llm.LlmProviderFactory.create(providerId)
+            if (provider.isAvailable()) {
+                val tags = provider.generate("Prompt: '$polishedPrompt'", systemPrompt, 0.5f, 250)
+                    .text.split(",").map { it.trim().lowercase() }.filter { it.isNotBlank() }
+                if (tags.isNotEmpty()) return@withContext tags
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error invoking LLM provider '$providerId' for tag suggestions", e)
         }
         listOf("melodic", "electronic", "studio-quality")
     }
@@ -175,37 +141,23 @@ object MusicEngine {
         existingLyrics: String,
         genre: String,
         mood: String,
-        language: String
+        language: String,
+        providerId: String = com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO
     ): String = withContext(Dispatchers.IO) {
-        val apiKey = BuildConfig.GEMINI_API_KEY
-        if (apiKey.isNotBlank() && apiKey != "MY_GEMINI_API_KEY") {
-            try {
-                val lastLine = existingLyrics.lines().lastOrNull { it.isNotBlank() && !it.startsWith("[") } ?: ""
-                val promptText = "The user is writing a $genre song ($mood, $language). " +
-                        "Current lyrics so far:\n$existingLyrics\n\n" +
-                        "Generate EXACTLY ONE rhyming next line that naturally continues the verse and rhymes with the previous line ('$lastLine'). " +
-                        "Return ONLY the single next line string, with no quotes, no markdown, and no section tags."
-
-                val request = GeminiGenerateRequest(
-                    contents = listOf(
-                        GeminiContent(parts = listOf(GeminiPart(text = promptText)))
-                    ),
-                    generationConfig = GeminiGenerationConfig(
-                        temperature = 0.7f,
-                        topP = 0.9f
-                    )
-                )
-
-                val response = ApiClient.geminiService.generateContent(apiKey, request)
-                if (response.isSuccessful) {
-                    val candidateText = response.body()?.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                    if (!candidateText.isNullOrBlank()) {
-                        return@withContext candidateText.trim().lines().firstOrNull { it.isNotBlank() } ?: ""
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error invoking Gemini generateNextLine", e)
+        val lastLine = existingLyrics.lines().lastOrNull { it.isNotBlank() && !it.startsWith("[") } ?: ""
+        val promptText = "The user is writing a $genre song ($mood, $language). " +
+                "Current lyrics so far:\n$existingLyrics\n\n" +
+                "Generate exactly one rhyming next line that continues the verse and rhymes with '$lastLine'. " +
+                "Return only the single line, without quotes, markdown, or section tags."
+        try {
+            val provider = com.example.network.llm.LlmProviderFactory.create(providerId)
+            if (provider.isAvailable()) {
+                val line = provider.generate(promptText, temperature = 0.7f, maxTokens = 100)
+                    .text.trim().lineSequence().firstOrNull { it.isNotBlank() }
+                if (!line.isNullOrBlank()) return@withContext line
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error invoking LLM provider '$providerId' for next line", e)
         }
         if (language.contains("Arabic", true)) "ونجم الليل يسبق الأماني في سمانا" else "And every rhythm takes us higher than before"
     }
@@ -296,8 +248,13 @@ object MusicEngine {
     }
 
     suspend fun transcribeLyricsFromAudio(
-        audioMetadata: ImportedAudioMetadata
+        audioMetadata: ImportedAudioMetadata,
+        allowCloudUpload: Boolean = false
     ): GeneratedSongDraft? = withContext(Dispatchers.IO) {
+        if (!allowCloudUpload) {
+            Log.w(TAG, "Cloud audio transcription blocked because explicit upload consent was not supplied")
+            return@withContext null
+        }
         val apiKey = BuildConfig.GEMINI_API_KEY
         if (apiKey.isNotBlank() && apiKey != "MY_GEMINI_API_KEY") {
             try {

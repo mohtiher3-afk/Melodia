@@ -14,7 +14,7 @@ interface LlmProvider {
     /** Human readable name shown in the UI. */
     val displayName: String
 
-    /** Whether the provider is currently configured and usable. */
+    /** Whether static prerequisites are configured; device-local support may be checked in generate(). */
     fun isAvailable(): Boolean
 
     /**

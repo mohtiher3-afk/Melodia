@@ -123,14 +123,24 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     private val _llmProviderId = MutableStateFlow(
-        prefs.getString("llm_provider_id", com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI)
-            ?: com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI
+        prefs.getString("llm_provider_id", com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO)
+            ?: com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO
     )
     val llmProviderId: StateFlow<String> = _llmProviderId.asStateFlow()
 
     fun updateLlmProvider(id: String) {
         _llmProviderId.value = id
         prefs.edit().putString("llm_provider_id", id).apply()
+    }
+
+    private val _allowCloudTranscription = MutableStateFlow(
+        prefs.getBoolean("allow_cloud_audio_transcription", false)
+    )
+    val allowCloudTranscription: StateFlow<Boolean> = _allowCloudTranscription.asStateFlow()
+
+    fun setAllowCloudTranscription(allowed: Boolean) {
+        _allowCloudTranscription.value = allowed
+        prefs.edit().putBoolean("allow_cloud_audio_transcription", allowed).apply()
     }
 
     fun setActiveTab(tab: String) {
@@ -319,7 +329,8 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                     genre = _studioState.value.selectedGenre,
                     mood = _studioState.value.selectedMood,
                     vocalStyle = _studioState.value.vocalStyle,
-                    bpm = _studioState.value.selectedBpm
+                    bpm = _studioState.value.selectedBpm,
+                    providerId = _llmProviderId.value
                 )
                 val updatedDraft = draft.copy(promptText = polished)
                 _studioState.update {
@@ -388,8 +399,21 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             }
             val result = LocalAudioImporter.importAudio(context, uri)
             result.onSuccess { metadata ->
-                val canTranscribe = LocalAudioImporter.isWithinTranscriptionLimit(metadata.localFile)
-                val transcribed = if (canTranscribe) MusicEngine.transcribeLyricsFromAudio(metadata) else null
+                val withinCloudLimit = LocalAudioImporter.isWithinTranscriptionLimit(metadata.localFile)
+                val canTranscribe = withinCloudLimit && _allowCloudTranscription.value
+                _studioState.update {
+                    it.copy(
+                        isTranscribingAudio = canTranscribe,
+                        statusMessage = when {
+                            !withinCloudLimit -> "Audio imported // File is over the 14 MB cloud transcription limit"
+                            !_allowCloudTranscription.value -> "Audio imported locally // cloud transcription is off; no audio uploaded"
+                            else -> "Audio imported // Transcribing with Gemini cloud AI..."
+                        }
+                    )
+                }
+                val transcribed = if (canTranscribe) {
+                    MusicEngine.transcribeLyricsFromAudio(metadata, allowCloudUpload = true)
+                } else null
                 val draft = transcribed ?: fallbackDraftForImportedAudio(metadata)
 
                 val songEntity = Song(
@@ -409,13 +433,15 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 repository.insertSong(songEntity)
 
                 val status = when {
-                    transcribed != null -> "Local track imported // Lyrics transcribed"
-                    !canTranscribe -> "Local track imported // Transcription skipped (file over 14 MB)"
-                    else -> "Local track imported // Add lyrics or run alignment"
+                    transcribed != null -> "Local track imported // Lyrics transcribed via Gemini cloud"
+                    !withinCloudLimit -> "Local track imported // Cloud transcription skipped (file over 14 MB)"
+                    !_allowCloudTranscription.value -> "Local track imported // Kept on device; cloud transcription is off"
+                    else -> "Local track imported // Cloud AI transcription unavailable — retry from SYNC"
                 }
                 _studioState.update {
                     it.copy(
                         isImportingAudio = false,
+                        isTranscribingAudio = false,
                         isLocalAudioActive = true,
                         localAudioMetadata = metadata,
                         currentDraft = draft,
@@ -450,6 +476,62 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             coverConcept = "Nothing OS monochrome cover for an imported local recording"
         )
 
+    fun transcribeImportedAudio(context: Context, replaceExistingLyrics: Boolean = false) {
+        val state = _studioState.value
+        val metadata = state.localAudioMetadata
+        if (metadata == null || !metadata.localFile.exists()) {
+            _studioState.update { it.copy(statusMessage = "Import a local audio file before transcription") }
+            return
+        }
+        if (!_allowCloudTranscription.value) {
+            _studioState.update {
+                it.copy(statusMessage = "Cloud transcription is off. This build does not yet include a local Whisper model; no audio was uploaded.")
+            }
+            return
+        }
+        if (!LocalAudioImporter.isWithinTranscriptionLimit(metadata.localFile)) {
+            _studioState.update {
+                it.copy(statusMessage = "AI transcription supports audio files up to 14 MB. The imported audio is kept locally.")
+            }
+            return
+        }
+        if (!replaceExistingLyrics && !state.currentDraft?.lyrics.isNullOrBlank()) {
+            _studioState.update {
+                it.copy(statusMessage = "Lyrics already exist. Confirm replacement before transcribing this track.")
+            }
+            return
+        }
+        if (state.isTranscribingAudio) return
+
+        viewModelScope.launch {
+            _studioState.update {
+                it.copy(isTranscribingAudio = true, statusMessage = "Transcribing imported vocals with AI...")
+            }
+            try {
+                val transcribed = MusicEngine.transcribeLyricsFromAudio(metadata, allowCloudUpload = true)
+                    ?: throw IllegalStateException("No transcription was returned. Check the Gemini API key and network connection.")
+                val updatedDraft = transcribed.copy(coverImagePath = state.currentDraft?.coverImagePath)
+                _studioState.update {
+                    it.copy(
+                        isTranscribingAudio = false,
+                        currentDraft = updatedDraft,
+                        statusMessage = "Lyrics transcribed // Creating automatic word timing..."
+                    )
+                }
+                recordVersionHistory(updatedDraft)
+                triggerDebouncedAutoSave()
+                syncLyricsWithAudio(context)
+            } catch (e: Exception) {
+                _studioState.update {
+                    it.copy(
+                        isTranscribingAudio = false,
+                        statusMessage = "Transcription failed: ${e.localizedMessage ?: "Unknown error"}"
+                    )
+                }
+            }
+        }
+    }
+
     fun syncLyricsWithAudio(context: Context) {
         val metadata = _studioState.value.localAudioMetadata
         val lyrics = _studioState.value.currentDraft?.lyrics
@@ -469,7 +551,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             _studioState.update {
                 it.copy(
                     isAligningAudio = true,
-                    statusMessage = "Aligning lyrics with local audio (Whisper)..."
+                    statusMessage = "Creating automatic word timing from local audio duration..."
                 )
             }
             val result = LocalWhisperEngine.alignLyricsWithAudio(context, audioUri, lyrics)
@@ -478,7 +560,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                     it.copy(
                         isAligningAudio = false,
                         karaokeLyrics = karaoke,
-                        statusMessage = "Sync Complete // ${karaoke.wordTimings.size} word timestamps"
+                        statusMessage = "Estimated word timings created // ${karaoke.wordTimings.size} words — review and adjust"
                     )
                 }
             }.onFailure { err ->
@@ -879,7 +961,22 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     override fun onCleared() {
-        super.onCleared()
-        audioPlayerManager.stopAudio()
+            super.onCleared()
+            audioPlayerManager.stopAudio()
+        }
+
+    // Local model download methods
+    fun downloadModel(modelId: String) {
+        val model = com.example.domain.LocalModelManager.AVAILABLE_MODELS.firstOrNull { it.id == modelId } ?: return
+        viewModelScope.launch {
+            val manager = com.example.domain.LocalModelManager(getApplication())
+            manager.downloadModel(model)
+        }
+    }
+
+    fun deleteModel(modelId: String) {
+        val model = com.example.domain.LocalModelManager.AVAILABLE_MODELS.firstOrNull { it.id == modelId } ?: return
+        val manager = com.example.domain.LocalModelManager(getApplication())
+        manager.deleteModel(model)
     }
 }
