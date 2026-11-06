@@ -24,10 +24,10 @@ object LlmProviderFactory {
      * Creates the appropriate LlmProvider based on the given id.
      * Cloud providers are optional. Gemini Nano runs locally when supported by AICore.
      */
-    fun create(id: String): LlmProvider = when (id) {
+    fun create(id: String, context: android.content.Context? = null): LlmProvider = when (id) {
         PROVIDER_GEMINI -> GeminiLlmProvider()
         PROVIDER_GEMINI_NANO -> GeminiNanoLlmProvider()
-        PROVIDER_GEMMA3_LOCAL -> Gemma3LocalLlmProvider()
+        PROVIDER_GEMMA3_LOCAL -> Gemma3LocalLlmProvider(context ?: throw IllegalStateException("Context required for Gemma3LocalLlmProvider"))
         PROVIDER_OPENROUTER -> OpenRouterLlmProvider(
             baseUrl = safe(BuildConfig.FREELLM_BASE_URL),
             apiKey = safeOrNull(BuildConfig.FREELLM_API_KEY),

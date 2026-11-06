@@ -13,9 +13,9 @@ android {
   compileSdk { version = release(36) { minorApiLevel = 1 } }
 
   defaultConfig {
-    applicationId = "com.aistudio.melodia.nothing"
-    minSdk = 24
-    targetSdk = 36
+      applicationId = "com.aistudio.melodia.nothing"
+      minSdk = 26
+      targetSdk = 36
     versionCode = 1
     versionName = "1.0"
 
@@ -117,15 +117,20 @@ dependencies {
   implementation(libs.androidx.core.ktx)
   // implementation(libs.androidx.datastore.preferences)
   implementation(libs.androidx.lifecycle.runtime.compose)
-  implementation(libs.androidx.lifecycle.runtime.ktx)
-  implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.compose.runtime.livedata)
   // implementation(libs.androidx.navigation.compose)
   implementation(libs.androidx.room.ktx)
   implementation(libs.androidx.room.runtime)
   implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
-  implementation(libs.firebase.ai)
-  // On-device Gemini Nano via Android AICore; requires a supported device at runtime.
+    implementation(libs.moshi.kotlin)
+    implementation(libs.firebase.ai)
+    // kotlin-reflect is required for Moshi's KotlinJsonAdapterFactory
+    implementation("org.jetbrains.kotlin:kotlin-reflect:2.4.0")
+    // On-device Gemini Nano via Android AICore; requires a supported device at runtime.
   implementation("com.google.mlkit:genai-prompt:1.0.0-beta4")
   // Uncomment to use Firestore:
   // implementation(libs.firebase.firestore)

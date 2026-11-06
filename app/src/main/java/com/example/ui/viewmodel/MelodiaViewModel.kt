@@ -257,7 +257,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
     fun generateLyricsOnly() {
         viewModelScope.launch {
             val state = _studioState.value
-            val provider = com.example.network.llm.LlmProviderFactory.create(_llmProviderId.value)
+            val provider = com.example.network.llm.LlmProviderFactory.create(_llmProviderId.value, getApplication())
             if (!provider.isAvailable()) {
                 _studioState.update {
                     it.copy(

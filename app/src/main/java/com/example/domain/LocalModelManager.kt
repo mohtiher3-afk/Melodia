@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -71,10 +72,20 @@ class LocalModelManager(private val context: Context) {
         )
 
         fun getModel(id: String): ModelInfo? = AVAILABLE_MODELS.firstOrNull { it.id == id }
+
+        /** Format bytes for display */
+        fun formatBytes(bytes: Long): String {
+            return when {
+                bytes >= 1_000_000_000L -> String.format("%.1f GB", bytes / 1_000_000_000.0)
+                bytes >= 1_000_000L -> String.format("%.1f MB", bytes / 1_000_000.0)
+                bytes >= 1_000L -> String.format("%.1f KB", bytes / 1_000.0)
+                else -> "$bytes B"
+            }
+        }
     }
 
     // State for UI observation
-    private val _downloadStates = mutableMapOf<String, MutableLiveData<DownloadState>>()
+    private val _downloadStates = mutableMapOf<String, MediatorLiveData<DownloadState>>()
     val downloadStates: Map<String, LiveData<DownloadState>>
         get() = _downloadStates
 
@@ -89,7 +100,7 @@ class LocalModelManager(private val context: Context) {
     init {
         // Initialize states for all models
         for (model in AVAILABLE_MODELS) {
-            _downloadStates[model.id] = MutableLiveData(DownloadState.Idle(isModelPresent = isModelDownloaded(model)))
+            _downloadStates[model.id] = MediatorLiveData<DownloadState>(DownloadState.Idle(isModelPresent = isModelDownloaded(model)))
         }
     }
 
@@ -107,7 +118,7 @@ class LocalModelManager(private val context: Context) {
 
     /** Download a model with progress updates */
     suspend fun downloadModel(model: ModelInfo, onProgress: ((Float, Long, Long) -> Unit)? = null): Result<String> = withContext(Dispatchers.IO) {
-        val state = _downloadStates[model.id] ?: MutableLiveData(DownloadState.Idle(false)).also { _downloadStates[model.id] = it }
+        val state = _downloadStates[model.id] ?: MediatorLiveData<DownloadState>(DownloadState.Idle(false)).also { _downloadStates[model.id] = it }
         val file = File(context.filesDir, model.localPath)
         file.parentFile?.mkdirs()
 
@@ -198,18 +209,6 @@ class LocalModelManager(private val context: Context) {
         return AVAILABLE_MODELS.sumOf { model ->
             val file = File(context.filesDir, model.localPath)
             if (file.exists()) file.length() else 0L
-        }
-    }
-
-    /** Format bytes for display */
-    companion object {
-        fun formatBytes(bytes: Long): String {
-            return when {
-                bytes >= 1_000_000_000L -> String.format("%.1f GB", bytes / 1_000_000_000.0)
-                bytes >= 1_000_000L -> String.format("%.1f MB", bytes / 1_000_000.0)
-                bytes >= 1_000L -> String.format("%.1f KB", bytes / 1_000.0)
-                else -> "$bytes B"
-            }
         }
     }
 }

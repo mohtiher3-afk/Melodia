@@ -25,9 +25,9 @@ class Gemma3LocalLlmProvider(
 
     override suspend fun generate(
         prompt: String,
-        systemPrompt: String? = null,
-        temperature: Float = 0.7f,
-        maxTokens: Int = 1024
+        systemPrompt: String?,
+        temperature: Float,
+        maxTokens: Int
     ): LlmResponse = withContext(Dispatchers.Default) {
         val modelInfo = LocalModelManager.getModel("gemma3_1b")
             ?: throw LlmException("Gemma 3 1B model info not found")
