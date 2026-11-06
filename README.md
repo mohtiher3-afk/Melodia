@@ -1,22 +1,59 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Melodia
 
-# Run and deploy your AI Studio app
+Nothing OS-inspired AI Music & Lyrics Studio powered by Treblo API and Gemini.
 
-This contains everything you need to run your app locally.
+## Overview
 
-View your app in AI Studio: https://ai.studio/apps/005e91ba-cfb7-41aa-b4d7-a7abc2a3fd1a
+Melodia is a full-featured Android application for music creation, lyric writing, and audio production. It combines a clean Nothing OS aesthetic with on-device and cloud AI capabilities.
+
+### Features
+
+- **AI Music Generation** — Create melodies and chord progressions powered by Gemini
+- **Lyric Studio** — Write, auto-save, and rhyme lyrics with AI assistance
+- **Voice Dictation** — Convert speech to lyrics using on-device Whisper
+- **Rhyme Analyzer** — Find rhyming words and suggestions
+- **BPM Detection** — Analyze audio tempo from local files
+- **Cover Art Generation** — Generate album art via AI
+- **Karaoke Lyric Sync** — Sync lyrics to audio playback
+- **Audio Importer** — Import local audio files into the library
+- **Free AI APIs** — Multiple free LLM providers (HuggingFace, Together, OpenRouter, FreeLlm)
+- **Nothing OS Design** — Clean, minimalist UI with monospace typography
+
+## Tech Stack
+
+- **Language:** Kotlin
+- **Framework:** Jetpack Compose
+- **Architecture:** Room database, Repository pattern, ViewModel
+- **Networking:** Retrofit, Treblo API
+- **AI:** Gemini API, Whisper (on-device), Free LLM providers
+- **Build:** Gradle 9.3.1, KSP, Google Services
 
 ## Run Locally
 
-**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
-
+**Prerequisites:** Android Studio (latest), Android SDK 36, JDK 21
 
 1. Open Android Studio
 2. Select **Open** and choose the directory containing this project
 3. Allow Android Studio to fix any incompatibilities as it imports the project.
-4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
-5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
-6. Run the app on an emulator or physical device
-7. If you have already published your app in AI Studio, please [request upload key reset](https://support.google.com/googleplay/android-developer/answer/9842756#zippy=%2Crequest-an-upload-key-reset) in Google Play Console.
+4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in it (see `.env.example` for an example)
+5. Run the app on an emulator or physical device
+
+## Project Structure
+
+```
+app/
+├── src/main/java/com/example/
+│   ├── data/          # Room entities, DAOs, repositories
+│   ├── domain/        # Business logic, audio engines, AI analyzers
+│   ├── network/       # API clients, LLM providers
+│   ├── ui/            # Compose screens, components, dialogs, theme
+│   ├── security/      # Security manager
+│   └── MainActivity.kt
+├── src/main/cpp/      # Whisper native bridge
+├── src/main/res/      # Strings, colors, icons, fonts
+└── src/test/          # Unit and Robolectric tests
+```
+
+## License
+
+This project is for personal use.
