@@ -1,0 +1,149 @@
+{
+  "document_type": "project_context_for_ai_studio",
+  "language": "ar",
+  "project": {
+    "name": "Melodia",
+    "platform": "Android",
+    "package_name": "com.aistudio.melodia.nothing",
+    "min_android_api": 24,
+    "target_android_api": 36,
+    "technology": [
+      "Kotlin",
+      "Jetpack Compose",
+      "Material 3",
+      "Room",
+      "Retrofit",
+      "Android MediaPlayer"
+    ],
+    "design_theme": {
+      "style": "Material 3 dark interface with a high-contrast monochrome palette and Melodia red accents",
+      "tokens": "Use MaterialTheme color and typography roles; do not introduce unrelated hard-coded colors.",
+      "responsive_navigation": "Navigation Bar on compact screens and Navigation Rail on wider screens."
+    }
+  },
+  "implemented_features": [
+    {
+      "id": "material3_navigation",
+      "area": "Navigation and visual system",
+      "details": [
+        "Replaced the custom bottom navigation with Material 3 Navigation Bar on compact screens.",
+        "Added Material 3 Navigation Rail for wider screens.",
+        "Connected the Create, Library, and Settings destinations to the responsive navigation."
+      ],
+      "files": ["app/src/main/java/com/example/MainActivity.kt"]
+    },
+    {
+      "id": "treblo_song_generation",
+      "area": "Real song generation",
+      "details": [
+        "The Studio prepares a song draft and sends it to Treblo Melodia v3 from inside the app.",
+        "The app polls the task status, retrieves the completed result, and uses the returned audio URL.",
+        "The UI reports progress and errors instead of showing a simulated success or placeholder song.",
+        "A confirmation dialog explains the documented cost of 100 Treblo credits per v3 generation.",
+        "Generation requires a user-provided Treblo API key entered in Settings."
+      ],
+      "api": {
+        "base_url": "https://api.treblo.com",
+        "authentication": {
+          "scheme": "Bearer",
+          "secret_included": false,
+          "instruction": "Never embed an API key in source code, a prompt, or an APK. Enter a valid key in the app Settings."
+        },
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/v1/generations/v3",
+            "purpose": "Create a Melodia v3 song-generation task"
+          },
+          {
+            "method": "GET",
+            "path": "/v1/generations/status/{task_id}",
+            "purpose": "Check task progress and status"
+          },
+          {
+            "method": "GET",
+            "path": "/v1/generations/{task_id}",
+            "purpose": "Retrieve the completed generation result and audio path"
+          }
+        ],
+        "response_fields_used": ["task_id", "song_paths", "error_message"],
+        "documented_cost_credits_per_generation": 100
+      },
+      "files": [
+        "app/src/main/java/com/example/network/TrebloApiService.kt",
+        "app/src/main/java/com/example/network/Models.kt",
+        "app/src/main/java/com/example/domain/MusicEngine.kt",
+        "app/src/main/java/com/example/ui/viewmodel/MelodiaViewModel.kt",
+        "app/src/main/java/com/example/ui/screens/StudioScreen.kt",
+        "app/src/main/java/com/example/ui/screens/SettingsScreen.kt"
+      ]
+    },
+    {
+      "id": "api_key_storage",
+      "area": "Credential protection",
+      "details": [
+        "The API key field is masked by default and includes a show/hide control.",
+        "The key is encrypted with AES-GCM using a key held by Android Keystore.",
+        "Existing plaintext preference values are migrated to encrypted storage when possible.",
+        "No API key is included in the project deliverables."
+      ],
+      "file": "app/src/main/java/com/example/data/security/TrebloApiKeyStore.kt"
+    },
+    {
+      "id": "library_history_vault",
+      "area": "Saved songs and history management",
+      "details": [
+        "The Library has separate Vault, History, and Video Export tabs.",
+        "The History screen combines saved songs and auto-saved lyric drafts in chronological order.",
+        "Users can search titles, lyrics, genres, moods, and tags; filter all records, songs, or drafts; and sort newest-first or oldest-first.",
+        "Users can open a saved song or draft in Studio, play available song audio, toggle favorites, and delete records after confirmation.",
+        "The Vault retains its existing category filters, tag editing, and saved-song management.",
+        "Removed the fallback that played a sample sound for records without generated audio."
+      ],
+      "files": [
+        "app/src/main/java/com/example/ui/screens/LibraryScreen.kt",
+        "app/src/main/java/com/example/ui/screens/HistoryScreen.kt",
+        "app/src/main/java/com/example/ui/screens/VaultScreen.kt"
+      ]
+    },
+    {
+      "id": "in_app_audio_player",
+      "area": "Internal audio playback",
+      "details": [
+        "Added an in-app Material 3 player card in the Studio for Treblo-generated audio.",
+        "Playback stays inside Melodia and uses Android MediaPlayer.",
+        "Controls include play/pause, stop, seek, elapsed time, and total duration.",
+        "The player exposes preparing, buffering, playing, paused, and error states.",
+        "Playback can resume the current track, restart a completed track, or switch to another track.",
+        "Starting a new Treblo generation stops the previous audio to avoid stale playback."
+      ],
+      "files": [
+        "app/src/main/java/com/example/ui/components/InAppAudioPlayer.kt",
+        "app/src/main/java/com/example/domain/AudioPlayerManager.kt",
+        "app/src/main/java/com/example/ui/viewmodel/MelodiaViewModel.kt",
+        "app/src/main/java/com/example/ui/screens/StudioScreen.kt"
+      ]
+    }
+  ],
+  "verification": {
+    "unit_tests": "Passed: :app:testDebugUnitTest",
+    "debug_apk_build": "Passed: :app:assembleDebug",
+    "apk_signature_and_alignment": "Verified",
+    "source_archive_integrity": "Verified",
+    "live_treblo_generation_test": "Not performed; a successful build does not prove a live request. Test with a valid API key in the app."
+  },
+  "deliverables": {
+    "apk": "Melodia-Treblo-Internal-Player.apk",
+    "source_archive": "Melodia-Treblo-Internal-Player-source.zip",
+    "build_variant": "Debug; not a Play Store release build"
+  },
+  "constraints_for_future_changes": [
+    "Do not add or expose API keys in source code, prompts, logs, APKs, or archives.",
+    "Preserve the real Treblo task flow and the user's ability to see API failures.",
+    "Keep generated audio playback inside the app and retain player loading, seeking, and error behavior.",
+    "Preserve saved songs, drafts, favorites, Vault actions, and History filters when changing the UI.",
+    "Use Material 3 components and theme roles consistently with Melodia's dark, high-contrast palette.",
+    "Run unit tests and assembleDebug after changes."
+  ],
+  "prompt_for_google_ai_studio": "أنت تتابع تطوير تطبيق Android اسمه Melodia. استخدم هذا الملف كسياق للمشروع. افحص ملفات المصدر الموجودة قبل تعديلها، وحافظ على تكامل Treblo الفعلي ومشغل الصوت الداخلي وتخزين مفتاح API المشفر وسلوك السجل والخزنة. لا تضع أي مفتاح API في المصدر أو APK. اتبع Material 3 وثيم Melodia الداكن عالي التباين، ولا تحذف ميزات قائمة دون طلب. بعد التعديلات شغّل :app:testDebugUnitTest و:app:assembleDebug، واذكر بوضوح أي اختبار لم يُنفذ أو يحتاج إلى مفتاح/API حقيقي."
+}

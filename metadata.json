@@ -1,0 +1,7 @@
+{
+  "name": "Melodia",
+  "description": "Nothing OS inspired AI Music & Lyrics Studio powered by Treblo API and Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
