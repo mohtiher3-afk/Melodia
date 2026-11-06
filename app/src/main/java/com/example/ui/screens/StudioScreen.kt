@@ -104,7 +104,6 @@ fun StudioScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(NothingBlack)
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
             .testTag("studio_screen"),

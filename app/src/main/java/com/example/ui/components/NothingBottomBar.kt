@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,8 +37,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -49,25 +52,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
-import com.example.ui.theme.NothingDotMatrixFontFamily
+import com.example.ui.theme.NothingElevatedSurface
+import com.example.ui.theme.NothingOutline
+import com.example.ui.theme.SpaceMonoFontFamily
 import com.example.ui.theme.NothingMutedGrey
 import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingWhite
 
 enum class MelodiaTab(val title: String, val icon: ImageVector, val tag: String) {
-    STUDIO("STUDIO", Icons.Default.GraphicEq, "tab_studio"),
-    LYRICS("LYRICS", Icons.Default.EditNote, "tab_lyrics"),
-    LIBRARY("LIBRARY", Icons.Default.LibraryMusic, "tab_library"),
-    VISUALS("VISUALS", Icons.Default.Image, "tab_visuals"),
-    SYNC("SYNC", Icons.Default.Sync, "tab_sync"),
-    EXPORT("EXPORT", Icons.Default.Upload, "tab_export"),
-    SETTINGS("CONFIG", Icons.Default.Settings, "tab_settings")
+    STUDIO("Studio", Icons.Default.GraphicEq, "tab_studio"),
+    LYRICS("Lyrics", Icons.Default.EditNote, "tab_lyrics"),
+    LIBRARY("Library", Icons.Default.LibraryMusic, "tab_library"),
+    VISUALS("Visuals", Icons.Default.Image, "tab_visuals"),
+    SYNC("Sync", Icons.Default.Sync, "tab_sync"),
+    EXPORT("Export", Icons.Default.Upload, "tab_export"),
+    SETTINGS("Settings", Icons.Default.Settings, "tab_settings")
 }
 
 /**
- * Equal-width tab bar. Every destination keeps its icon AND its label visible
- * so navigation is discoverable at a glance, and the selected tab never
- * changes the layout of its neighbours (no more shifting tap targets).
+ * Equal-width tab bar for seven destinations. Only the selected tab shows its name, which lets
+ * the icons be larger and the label readable (10 sp instead of 8 sp). Every item reserves the
+ * same label slot, so nothing shifts when the selection changes. Unselected labels stay in the
+ * semantics tree (alpha 0), so screen readers and UI tests still find every tab by name.
  */
 @Composable
 fun NothingBottomBar(
@@ -85,9 +91,13 @@ fun NothingBottomBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(68.dp)
-                .clip(RoundedCornerShape(22.dp))
+                .clip(RoundedCornerShape(24.dp))
                 .background(NothingCardSurface)
-                .border(1.dp, NothingBorder, RoundedCornerShape(22.dp))
+                .border(
+                    1.dp,
+                    Brush.verticalGradient(listOf(NothingOutline, NothingBorder)),
+                    RoundedCornerShape(24.dp)
+                )
                 .padding(horizontal = 4.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(0.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -116,39 +126,34 @@ private fun BottomBarItem(
         animationSpec = tween(durationMillis = 180),
         label = "bottom_bar_item_color"
     )
+    val containerColor by animateColorAsState(
+        targetValue = if (selected) NothingElevatedSurface else Color.Transparent,
+        animationSpec = tween(durationMillis = 200),
+        label = "bottom_bar_item_container"
+    )
+    val labelAlpha by animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
+        animationSpec = tween(durationMillis = 160),
+        label = "bottom_bar_label_alpha"
+    )
+    // Fixed-height slot, only its width animates: the red marker grows under the selected tab.
+    val indicatorWidth by animateDpAsState(
+        targetValue = if (selected) 18.dp else 0.dp,
+        animationSpec = tween(durationMillis = 220),
+        label = "bottom_bar_indicator_width"
+    )
 
     val interactionSource = remember { MutableInteractionSource() }
     val pressScale = rememberPressScale(interactionSource, pressedScale = 0.9f)
     val haptics = LocalHapticFeedback.current
-
-    // Soft shadow elevation when tab is selected (using background alpha animation instead of elevation API)
-    val shadowAlpha by animateFloatAsState(
-        targetValue = if (selected) 0.15f else 0f,
-        animationSpec = tween(durationMillis = 200),
-        label = "bottom_bar_shadow"
-    )
-
-    // The indicator slot keeps its height while the bar itself grows, so the
-    // icon and label never move when the selection changes.
-    val indicatorWidth by animateDpAsState(
-        targetValue = if (selected) 18.dp else 4.dp,
-        animationSpec = tween(durationMillis = 220),
-        label = "bottom_bar_indicator_width"
-    )
-    val indicatorColor by animateColorAsState(
-        targetValue = if (selected) NothingRed else NothingBorder,
-        animationSpec = tween(durationMillis = 220),
-        label = "bottom_bar_indicator_color"
-    )
+    val itemShape = RoundedCornerShape(18.dp)
 
     Column(
         modifier = modifier
             .fillMaxHeight()
             .scale(pressScale)
-            .clip(RoundedCornerShape(18.dp))
-            .background(
-                if (selected) NothingCardSurface.copy(alpha = 0.6f) else NothingCardSurface
-            )
+            .clip(itemShape)
+            .background(containerColor)
             .selectable(
                 interactionSource = interactionSource,
                 indication = LocalIndication.current,
@@ -164,13 +169,12 @@ private fun BottomBarItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Soft shadow under the selected tab (via background alpha animation)
         Box(
             modifier = Modifier
                 .width(indicatorWidth)
-                .height(6.dp)
-                .clip(RoundedCornerShape(3.dp))
-                .background(indicatorColor.copy(alpha = shadowAlpha))
+                .height(3.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(NothingRed)
         )
 
         Spacer(modifier = Modifier.height(6.dp))
@@ -179,21 +183,24 @@ private fun BottomBarItem(
             imageVector = tab.icon,
             contentDescription = null,
             tint = contentColor,
-            modifier = Modifier.size(21.dp)
+            modifier = Modifier.size(24.dp)
         )
 
-        Spacer(modifier = Modifier.height(3.dp))
+        Spacer(modifier = Modifier.height(2.dp))
 
         Text(
             text = tab.title,
-            fontFamily = NothingDotMatrixFontFamily,
-            fontSize = 8.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            fontFamily = SpaceMonoFontFamily,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
             letterSpacing = 0.sp,
             color = contentColor,
             maxLines = 1,
             softWrap = false,
-            overflow = TextOverflow.Clip
+            overflow = TextOverflow.Visible,
+            modifier = Modifier
+                .wrapContentWidth(unbounded = true)
+                .alpha(labelAlpha)
         )
     }
 }

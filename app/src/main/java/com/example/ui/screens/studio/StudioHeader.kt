@@ -1,36 +1,55 @@
 package com.example.ui.screens.studio
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.components.pressable
+import com.example.ui.MelodiaActionButton
+import com.example.ui.MelodiaButtonStyle
+import com.example.ui.MelodiaRadius
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
+import com.example.ui.theme.NothingDotMatrixFontFamily
 import com.example.ui.theme.NothingGrey
+import com.example.ui.theme.NothingMutedGrey
 import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingWhite
 import com.example.ui.theme.SpaceMonoFontFamily
 import com.example.ui.viewmodel.StudioUiState
 
+/**
+ * Top of the Studio tab: the app name set large in the dot-matrix face (the one memorable
+ * element on the screen), the current mode, a quiet save indicator, and the three actions
+ * sized as proper 48 dp touch targets.
+ */
 @Composable
 fun StudioHeader(
     state: StudioUiState,
@@ -42,153 +61,144 @@ fun StudioHeader(
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Top Header Title & Badges
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             Column(modifier = Modifier.weight(1f, fill = false)) {
                 Text(
-                    text = "MELODIA STUDIO // 01",
-                    fontFamily = SpaceMonoFontFamily,
-                    fontSize = 11.sp,
-                    color = NothingRed,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.sp
-                )
-                Text(
-                    text = "TEXT-FIRST LYRIC STUDIO",
-                    fontFamily = SpaceMonoFontFamily,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = NothingWhite
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(NothingCardSurface)
-                    .border(1.dp, NothingBorder, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 8.dp, vertical = 6.dp)
-            ) {
-                Text(
-                    text = if (state.isLocalAudioActive) "AUDIO ON" else "TEXT ONLY",
-                    fontFamily = SpaceMonoFontFamily,
-                    fontSize = 9.sp,
-                    color = if (state.isLocalAudioActive) NothingRed else NothingWhite,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    softWrap = false
-                )
-            }
-        }
-
-        // Status & Local Toolbar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .background(NothingCardSurface)
-                .border(1.dp, NothingBorder, RoundedCornerShape(14.dp))
-                .padding(horizontal = 12.dp, vertical = 8.dp)
-                .testTag("autosave_status_bar"),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(if (state.isAutoSaving) NothingRed else NothingWhite)
-                )
-                Text(
-                    text = when {
-                        state.isAutoSaving -> "AUTO-SAVING DRAFT..."
-                        state.lastAutoSavedTime != null -> "SAVED AT ${state.lastAutoSavedTime}"
-                        else -> "AUTO-SAVE READY"
-                    },
-                    fontFamily = SpaceMonoFontFamily,
-                    fontSize = 10.sp,
+                    text = "Melodia",
+                    fontFamily = NothingDotMatrixFontFamily,
+                    fontSize = 36.sp,
+                    lineHeight = 40.sp,
                     color = NothingWhite,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    maxLines = 1
+                )
+                Text(
+                    text = "Text-first lyric studio",
+                    fontFamily = SpaceMonoFontFamily,
+                    fontSize = 12.sp,
+                    color = NothingGrey
                 )
             }
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(NothingRed)
-                        .pressable(
-                            pressedScale = 0.93f,
-                            haptic = com.example.ui.components.CommitHaptic
-                        ) { onImportAudio() }
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = "+ IMPORT AUDIO",
-                        fontFamily = SpaceMonoFontFamily,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = NothingWhite
-                    )
-                }
+            Spacer(modifier = Modifier.width(12.dp))
 
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(NothingCardSurface)
-                        .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                        .pressable(
-                            pressedScale = 0.93f,
-                            haptic = com.example.ui.components.TapHaptic
-                        ) { onOpenQueue() }
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                        .testTag("studio_open_queue")
-                ) {
-                    Text(
-                        text = "QUEUE",
-                        fontFamily = SpaceMonoFontFamily,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = NothingGrey
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(NothingCardSurface)
-                        .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                        .pressable(
-                            pressedScale = 0.93f,
-                            haptic = com.example.ui.components.TapHaptic
-                        ) { onOpenDrafts() }
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = "DRAFTS ($draftsCount)",
-                        fontFamily = SpaceMonoFontFamily,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = NothingGrey
-                    )
-                }
-            }
+            ModeChip(isAudioActive = state.isLocalAudioActive, modifier = Modifier.padding(top = 8.dp))
         }
+
+        SaveStatusLine(
+            isSaving = state.isAutoSaving,
+            lastSavedTime = state.lastAutoSavedTime,
+            modifier = Modifier.testTag("autosave_status_bar")
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            MelodiaActionButton(
+                text = "Import audio",
+                onClick = onImportAudio,
+                icon = Icons.Default.Upload,
+                style = MelodiaButtonStyle.Primary,
+                modifier = Modifier.weight(1.35f)
+            )
+            MelodiaActionButton(
+                text = "Queue",
+                onClick = onOpenQueue,
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("studio_open_queue")
+            )
+            MelodiaActionButton(
+                text = "Drafts ($draftsCount)",
+                onClick = onOpenDrafts,
+                modifier = Modifier.weight(1.1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ModeChip(isAudioActive: Boolean, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(MelodiaRadius.chip)
+    Row(
+        modifier = modifier
+            .clip(shape)
+            .background(NothingCardSurface)
+            .border(1.dp, NothingBorder, shape)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Spacer(
+            modifier = Modifier
+                .size(6.dp)
+                .clip(CircleShape)
+                .background(if (isAudioActive) NothingRed else NothingMutedGrey)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = if (isAudioActive) "Audio on" else "Text only",
+            fontFamily = SpaceMonoFontFamily,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (isAudioActive) NothingWhite else NothingGrey,
+            maxLines = 1,
+            softWrap = false
+        )
+    }
+}
+
+/** Single quiet line instead of a boxed bar; the dot pulses only while a save is running. */
+@Composable
+private fun SaveStatusLine(
+    isSaving: Boolean,
+    lastSavedTime: String?,
+    modifier: Modifier = Modifier
+) {
+    val dotAlpha = if (isSaving) {
+        val transition = rememberInfiniteTransition(label = "save_dot")
+        val pulse by transition.animateFloat(
+            initialValue = 0.3f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 600, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "save_dot_alpha"
+        )
+        pulse
+    } else {
+        1f
+    }
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Spacer(
+            modifier = Modifier
+                .size(7.dp)
+                .alpha(dotAlpha)
+                .clip(CircleShape)
+                .background(if (isSaving) NothingRed else NothingGrey)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = when {
+                isSaving -> "Saving draft\u2026"
+                lastSavedTime != null -> "Saved at $lastSavedTime"
+                else -> "Auto-save is on"
+            },
+            fontFamily = SpaceMonoFontFamily,
+            fontSize = 11.sp,
+            color = NothingGrey,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }

@@ -32,7 +32,6 @@ fun VisualsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(NothingBlack)
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)

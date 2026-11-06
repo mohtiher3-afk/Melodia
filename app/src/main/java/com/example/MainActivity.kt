@@ -57,6 +57,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.components.FloatingPlayerBar
 import com.example.ui.components.NothingBottomBar
 import com.example.ui.components.MelodiaTab
+import com.example.ui.dotGrid
 import com.example.ui.screens.*
 import com.example.ui.theme.MelodiaTheme
 import com.example.ui.theme.NothingBlack
@@ -96,6 +97,7 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(innerPadding)
                             .background(NothingBlack)
+                            .dotGrid()
                     ) {
                         AnimatedContent(
                             targetState = currentTab,

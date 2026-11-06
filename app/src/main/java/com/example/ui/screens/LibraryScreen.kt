@@ -46,7 +46,6 @@ fun LibraryScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(NothingBlack)
             .testTag("library_screen")
     ) {
         // Sub-navigation top bar

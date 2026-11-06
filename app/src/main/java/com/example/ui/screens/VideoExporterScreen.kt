@@ -68,7 +68,6 @@ fun VideoExporterScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(NothingBlack)
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
             .testTag("video_exporter_screen"),

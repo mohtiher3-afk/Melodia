@@ -98,7 +98,6 @@ fun LyricsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(NothingBlack)
             .imePadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)

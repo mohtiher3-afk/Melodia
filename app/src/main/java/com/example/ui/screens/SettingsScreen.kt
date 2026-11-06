@@ -59,7 +59,6 @@ fun SettingsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(NothingBlack)
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
             .testTag("settings_screen"),

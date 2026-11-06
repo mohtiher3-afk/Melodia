@@ -1,7 +1,9 @@
 package com.example.network
 
+import com.example.BuildConfig
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Response
@@ -31,12 +33,40 @@ object ApiClient {
         .addLast(KotlinJsonAdapterFactory())
         .build()
 
+    /**
+     * Moves the `key` query parameter into the `x-goog-api-key` header before the request is
+     * logged or sent, so the Gemini API key never appears in URLs (logcat, proxies, crash logs).
+     * The Retrofit interface keeps its `@Query("key")` signature so call sites don't change.
+     */
+    private val apiKeyToHeaderInterceptor = Interceptor { chain ->
+        val request = chain.request()
+        val key = request.url.queryParameter("key")
+        if (key.isNullOrBlank()) {
+            chain.proceed(request)
+        } else {
+            val cleanUrl = request.url.newBuilder().removeAllQueryParameters("key").build()
+            chain.proceed(
+                request.newBuilder()
+                    .url(cleanUrl)
+                    .header("x-goog-api-key", key)
+                    .build()
+            )
+        }
+    }
+
     private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(60, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
         .writeTimeout(60, TimeUnit.SECONDS)
+        // Must be added BEFORE the logging interceptor so logs see the key-free URL.
+        .addInterceptor(apiKeyToHeaderInterceptor)
         .addInterceptor(HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BASIC
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BASIC
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
+            redactHeader("x-goog-api-key")
         })
         .build()
 
