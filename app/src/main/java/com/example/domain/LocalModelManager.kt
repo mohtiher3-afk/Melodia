@@ -41,7 +41,7 @@ class LocalModelManager(private val context: Context) {
                 id = "gemma3_1b",
                 name = "Gemma 3 1B",
                 description = "Google's lightweight LLM for on-device text generation (1B params, ~500MB). Runs via LiteRT-LM.",
-                downloadUrl = "https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/main/gemma3-1b-it-int4.litertlm",
+                downloadUrl = "https://huggingface.co/aoiandroid/Gemma3-1B-IT-litert-lm/resolve/main/gemma3-1b-it-int4.litertlm",
                 expectedSizeBytes = 600_000_000L, // ~584 MB
                 localPath = "models/gemma-3-1b-it-int4.litertlm"
             ),
