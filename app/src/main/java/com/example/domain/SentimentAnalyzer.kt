@@ -66,9 +66,9 @@ object SentimentAnalyzer {
         val nosPct = 100 - (joyPct + energyPct + melPct)
 
         val dominant = when {
-            energyPct >= joyPct && energyPct >= melPct -> "High Energy & Drive"
-            joyPct >= energyPct && joyPct >= melPct -> "Euphoric & Uplifting"
-            melPct >= joyPct && melPct >= energyPct -> "Melancholic & Reflective"
+            energyPct >= joyPct && energyPct >= melPct && energyPct >= nosPct -> "High Energy & Drive"
+            joyPct >= energyPct && joyPct >= melPct && joyPct >= nosPct -> "Euphoric & Uplifting"
+            melPct >= energyPct && melPct >= joyPct && melPct >= nosPct -> "Melancholic & Reflective"
             else -> "Nostalgic & Atmospheric"
         }
 

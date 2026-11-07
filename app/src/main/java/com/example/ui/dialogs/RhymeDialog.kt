@@ -30,7 +30,6 @@ import com.example.domain.RhymeAnalyzer
 import com.example.domain.RhymeResult
 import com.example.ui.components.CommitHaptic
 import com.example.ui.components.NothingPillButton
-import com.example.ui.components.TapHaptic
 import com.example.ui.components.pressable
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingDarkSurface

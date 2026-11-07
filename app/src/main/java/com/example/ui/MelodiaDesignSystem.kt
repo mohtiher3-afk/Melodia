@@ -261,7 +261,7 @@ fun StatusBadge(
         "FAILED", "ERROR" -> NothingRed
         else -> MelodiaTheme.TextSecondary
     }
-    
+
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(4.dp))

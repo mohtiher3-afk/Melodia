@@ -190,7 +190,7 @@ class LocalModelManager(private val context: Context) {
         val state = _downloadStates[model.id]
         val current = state?.value
         if (current is DownloadState.Downloading) {
-            state?.postValue(DownloadState.Paused(current.downloadedBytes, current.totalBytes))
+            state.postValue(DownloadState.Paused(current.downloadedBytes, current.totalBytes))
         }
     }
 

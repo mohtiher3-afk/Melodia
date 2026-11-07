@@ -34,7 +34,6 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -63,7 +62,7 @@ fun SettingsScreen(
     val defaultExportFormat by viewModel.defaultExportFormat.collectAsStateWithLifecycle()
     val llmProviderId by viewModel.llmProviderId.collectAsStateWithLifecycle()
     val allowCloudTranscription by viewModel.allowCloudTranscription.collectAsStateWithLifecycle()
-    val isGeminiConfigured = BuildConfig.GEMINI_API_KEY.isNotBlank() && BuildConfig.GEMINI_API_KEY != "MY_GEMINI_API_KEY"
+    val isGeminiConfigured = BuildConfig.GEMINI_API_KEY.isNotBlank() && !BuildConfig.GEMINI_API_KEY.startsWith("MY_")
     val isFreeLlmConfigured = BuildConfig.FREELLM_BASE_URL.isNotBlank()
 
     Column(
@@ -168,7 +167,7 @@ fun SettingsScreen(
                                 .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
                                 .pressable(
                                     pressedScale = 0.95f,
-                                    haptic = com.example.ui.components.TapHaptic
+                                    haptic = TapHaptic
                                 ) { viewModel.updateLlmProvider(id) },
                             contentAlignment = Alignment.Center
                         ) {
@@ -412,7 +411,7 @@ fun LocalModelDownloadSection(
                                                                             is com.example.domain.LocalModelManager.DownloadState.Downloading -> {
                                                                                                                                                             Column(modifier = Modifier.fillMaxWidth()) {
                                                                                                                 LinearProgressIndicator(
-                                                                                                                    progress = state.progress,
+                                                                                                                    progress = { state.progress },
                                                                                                                     modifier = Modifier.fillMaxWidth(),
                                                                                                                     color = NothingRed,
                                                                                                                     trackColor = NothingDarkGrey

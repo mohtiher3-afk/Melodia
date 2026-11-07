@@ -3,14 +3,13 @@ package com.example.network.llm
 import com.example.BuildConfig
 import com.example.network.ApiClient
 import com.example.network.GeminiGenerateRequest
-import com.example.network.GeminiGenerateResponse
 
 class GeminiLlmProvider : LlmProvider {
     override val id: String = LlmProviderFactory.PROVIDER_GEMINI
     override val displayName: String = "Gemini (Google)"
 
     override fun isAvailable(): Boolean =
-        !BuildConfig.GEMINI_API_KEY.isNullOrBlank() && !BuildConfig.GEMINI_API_KEY.startsWith("MY_")
+        BuildConfig.GEMINI_API_KEY.isNotBlank() && !BuildConfig.GEMINI_API_KEY.startsWith("MY_")
 
     override suspend fun generate(
         prompt: String,

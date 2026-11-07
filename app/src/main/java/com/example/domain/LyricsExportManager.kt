@@ -174,7 +174,7 @@ object LyricsExportManager {
      */
     fun generatePureLyricsText(song: Song): String {
         val sb = StringBuilder()
-        sb.appendLine("${song.title.uppercase()}")
+        sb.appendLine(song.title.uppercase())
         sb.appendLine("${song.genre.uppercase()} // ${song.mood.uppercase()}")
         sb.appendLine("==========================================")
         sb.appendLine()
@@ -298,7 +298,7 @@ object LyricsExportManager {
 
     fun createLrcExportIntent(context: Context, song: Song): Intent {
         val safeTitle = song.title.lowercase().replace(Regex("[^a-z0-9]"), "_").take(24)
-        val fileName = "${safeTitle}.lrc"
+        val fileName = "$safeTitle.lrc"
         val file = File(context.cacheDir, fileName)
 
         val content = generateLrcContent(song)

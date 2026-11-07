@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.data.model.RecentSubGenre
 import com.example.ui.components.GenreSelection
-import com.example.ui.components.GenreSelection
 import com.example.ui.components.NothingPillButton
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder

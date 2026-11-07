@@ -28,7 +28,11 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "melodia_database"
-                ).fallbackToDestructiveMigration(true).build()
+                )
+                    // Only schemas from before the migration policy may be wiped. From version 7 on,
+                    // every schema change needs an explicit Migration so saved lyrics are never lost.
+                    .fallbackToDestructiveMigrationFrom(true, 1, 2, 3, 4, 5, 6)
+                    .build()
                 INSTANCE = instance
                 instance
             }

@@ -40,7 +40,6 @@ import com.example.ui.components.NothingPillButton
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
-import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingOffWhite
 import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingWhite

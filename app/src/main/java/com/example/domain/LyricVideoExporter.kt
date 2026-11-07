@@ -29,6 +29,22 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.ByteBuffer
 
+/**
+ * Computes the presentation timestamp (in nanoseconds) for a video frame rendered at a constant
+ * frame rate. Frame 0 is always 0 ns; frame N advances by exactly 1_000_000_000 / fps ns so the
+ * produced MP4 has a duration that matches the audio length instead of drifting with wall-clock
+ * time.
+ *
+ * @param frameIndex zero-based frame number.
+ * @param fps frames per second; must be positive.
+ * @return presentation time in nanoseconds.
+ */
+fun framePresentationTimeNs(frameIndex: Int, fps: Int): Long {
+    require(fps > 0) { "fps must be positive, was $fps" }
+    require(frameIndex >= 0) { "frameIndex must be non-negative, was $frameIndex" }
+    return (frameIndex.toLong() * 1_000_000_000L) / fps.toLong()
+}
+
 enum class VideoAspectRatio(val widthRatio: Int, val heightRatio: Int, val label: String) {
     PORTRAIT_9_16(9, 16, "9:16 (Story / Reel)"),
     LANDSCAPE_16_9(16, 9, "16:9 (YouTube)"),
@@ -161,6 +177,9 @@ object LyricVideoExporter {
 
             var videoTrackIndex = -1
             val bufferInfo = MediaCodec.BufferInfo()
+            // Tracks the last frame index written to the muxer so the drain loop can keep the
+            // frame-rate-locked cadence after the render loop ends.
+            var writtenFrameIndex = 0
 
             val lines = lyrics.lines().filter { it.isNotBlank() }
 
@@ -201,7 +220,12 @@ object LyricVideoExporter {
                             }
                             encodedData.position(bufferInfo.offset)
                             encodedData.limit(bufferInfo.offset + bufferInfo.size)
+                            // Frame-rate-locked timestamp: the MP4 duration then matches the audio
+                            // length instead of drifting with wall-clock time.
+                            bufferInfo.presentationTimeUs =
+                                framePresentationTimeNs(frameIndex, fps) / 1000L
                             muxer.writeSampleData(videoTrackIndex, encodedData, bufferInfo)
+                            writtenFrameIndex = frameIndex
                         }
                     }
                     videoCodec.releaseOutputBuffer(encoderStatus, false)
@@ -231,7 +255,11 @@ object LyricVideoExporter {
                         if (muxerStarted) {
                             encodedData.position(bufferInfo.offset)
                             encodedData.limit(bufferInfo.offset + bufferInfo.size)
+                            // Drain loop: keep the same frame-rate-locked cadence as the main loop.
+                            bufferInfo.presentationTimeUs =
+                                framePresentationTimeNs(writtenFrameIndex, fps) / 1000L
                             muxer.writeSampleData(videoTrackIndex, encodedData, bufferInfo)
+                            writtenFrameIndex++
                         }
                     }
                     videoCodec.releaseOutputBuffer(encoderStatus, false)
@@ -251,7 +279,7 @@ object LyricVideoExporter {
                     if (sampleSize < 0) break
                     val presentationTimeUs = audioExtractor!!.sampleTime
                     if (presentationTimeUs > totalDurationMs * 1000L) break
-                    audioInfo.set(0, sampleSize, presentationTimeUs, audioExtractor!!.sampleFlags)
+                    audioInfo.set(0, sampleSize, presentationTimeUs, 0)
                     audioBuffer.position(0)
                     audioBuffer.limit(sampleSize)
                     muxer.writeSampleData(audioTrackIndex, audioBuffer, audioInfo)
@@ -362,20 +390,34 @@ object LyricVideoExporter {
             }
         }
 
-        // Draw 3 lines centered (Previous, Active, Next)
+        // Draw 5 lines centered (2 Previous, Active, 2 Next)
         val startY = height * 0.45f
         val lineSpacing = width * 0.08f
 
-        for (offset in -1..1) {
+        for (offset in -2..2) {
             val targetLineIdx = activeLineIndex + offset
             if (targetLineIdx in displayLines.indices) {
                 val lineText = displayLines[targetLineIdx]
                 val lineY = startY + (offset * lineSpacing)
 
                 val linePaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-                    textSize = if (offset == 0) width * 0.052f else width * 0.038f
-                    typeface = if (offset == 0) Typeface.create(Typeface.DEFAULT, Typeface.BOLD) else Typeface.DEFAULT
-                    color = if (offset == 0) Color.WHITE else Color.parseColor("#80FFFFFF")
+                    when (offset) {
+                        0 -> {
+                            textSize = width * 0.052f
+                            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                            color = Color.WHITE
+                        }
+                        -1, 1 -> {
+                            textSize = width * 0.042f
+                            typeface = Typeface.DEFAULT
+                            color = Color.parseColor("#CCFFFFFF")
+                        }
+                        -2, 2 -> {
+                            textSize = width * 0.034f
+                            typeface = Typeface.DEFAULT
+                            color = Color.parseColor("#80FFFFFF")
+                        }
+                    }
                 }
 
                 val activeWordStart = if (offset == 0 && activeWord != null) {

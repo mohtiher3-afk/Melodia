@@ -106,4 +106,60 @@ class DomainLogicTest {
             big.delete()
         }
     }
+
+    // --- framePresentationTimeNs (lyric video exporter) ---------------------
+
+    @Test
+    fun framePresentationTimeNs_frame0_isZero() {
+        assertEquals(0L, framePresentationTimeNs(0, 30))
+        assertEquals(0L, framePresentationTimeNs(0, 60))
+        assertEquals(0L, framePresentationTimeNs(0, 24))
+    }
+
+    @Test
+    fun framePresentationTimeNs_frame30_at30fps_isOneSecond() {
+        assertEquals(1_000_000_000L, framePresentationTimeNs(30, 30))
+    }
+
+    @Test
+    fun framePresentationTimeNs_frame60_at30fps_isTwoSeconds() {
+        assertEquals(2_000_000_000L, framePresentationTimeNs(60, 30))
+    }
+
+    @Test
+    fun framePresentationTimeNs_frame24_at24fps_isOneSecond() {
+        assertEquals(1_000_000_000L, framePresentationTimeNs(24, 24))
+    }
+
+    @Test
+    fun framePresentationTimeNs_valuesAreStrictlyIncreasing() {
+        val times = (0 until 120).map { framePresentationTimeNs(it, 30) }
+        for (i in 1 until times.size) {
+            assertTrue(
+                "frame $i (${times[i]} ns) must be greater than frame ${i - 1} (${times[i - 1]} ns)",
+                times[i] > times[i - 1]
+            )
+        }
+    }
+
+    @Test
+    fun framePresentationTimeNs_subframePrecisionAt24fps() {
+        // Frame 1 at 24 fps is 1_000_000_000 / 24 ns, which is not a whole microsecond.
+        assertEquals(41_666_666L, framePresentationTimeNs(1, 24))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun framePresentationTimeNs_rejectsNonPositiveFps() {
+        framePresentationTimeNs(0, 0)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun framePresentationTimeNs_rejectsNegativeFps() {
+        framePresentationTimeNs(0, -30)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun framePresentationTimeNs_rejectsNegativeFrameIndex() {
+        framePresentationTimeNs(-1, 30)
+    }
 }

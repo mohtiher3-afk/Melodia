@@ -3,7 +3,6 @@ package com.example.ui.dialogs
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -74,7 +73,7 @@ fun EditTagsDialog(
 
     // Extract status tag if present in tags, else default to DRAFT
     var currentStatus by remember {
-        val statusFromTag = ProjectStatus.values().firstOrNull {
+        val statusFromTag = ProjectStatus.entries.firstOrNull {
             song.tags.contains("status:${it.tag}", ignoreCase = true) ||
                     song.tags.contains(it.tag, ignoreCase = true)
         }
@@ -171,7 +170,7 @@ fun EditTagsDialog(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        ProjectStatus.values().forEach { status ->
+                        ProjectStatus.entries.forEach { status ->
                             val isSelected = currentStatus == status
                             Box(
                                 modifier = Modifier

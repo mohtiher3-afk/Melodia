@@ -102,7 +102,7 @@ fun NothingBottomBar(
             horizontalArrangement = Arrangement.spacedBy(0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            MelodiaTab.values().forEach { tab ->
+            MelodiaTab.entries.forEach { tab ->
                 BottomBarItem(
                     tab = tab,
                     selected = currentTab == tab,

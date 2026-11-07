@@ -1,5 +1,12 @@
 # Changes
 
+## Iteration 7: lyric video audio/video sync
+- **Fix:** MP4 export drew frames with `Surface.lockCanvas()`, which stamps each frame with the wall-clock time it was drawn. The video therefore lasted as long as rendering took, not as long as the song, and lyrics drifted from the audio. Frames are now drawn on a Bitmap canvas and presented through EGL (`EncoderInputSurface.kt`) with an explicit timestamp from `framePresentationTimeNs(frameIndex, fps)` (unit-tested in `DomainLogicTest`).
+- **Fix:** the encoder drain loop gave up after one 10 ms timeout and could drop the last frames; it now waits for the real end-of-stream flag (up to ~5 s without output).
+- **Fix:** Room no longer wipes the library on any schema change; destructive fallback is limited to versions 1-6. Future schema bumps need an explicit `Migration`.
+- Default player artist is now "Melodia Studio".
+- Not compiled or run here (no Android SDK). Test an export on a device and check the last lyric line against the audio.
+
 ## Iteration 6: local models (offline-first)
 - Replaced cloud LLM dependency with multiple free on-device models downloadable directly from the app via a single button press per model.
 - Added **Gemma 3 1B** text generation via LiteRT-LM (`com.google.ai.edge.litertlm:litertlm:1.1.0`) — fully offline, no API key, ~500 MB download.

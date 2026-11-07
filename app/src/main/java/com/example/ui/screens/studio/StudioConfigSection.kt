@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.GlyphCard
 import com.example.ui.components.pressable
-import com.example.domain.SentimentResult
 import com.example.domain.SentimentAnalyzer
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
@@ -512,14 +511,8 @@ fun StudioConfigSection(
                             color = NothingRed
                         )
                     } else if (state.sentimentResult != null) {
-                        val r = state.sentimentResult!!
+                        val r = state.sentimentResult
                         val dominant = r.dominantTone
-                        val scores = listOf(
-                            "Joy" to r.joyScore,
-                            "Energy" to r.energyScore,
-                            "Melancholy" to r.melancholyScore,
-                            "Nostalgia" to r.nostalgiaScore
-                        )
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
                                 text = "DOMINANT: $dominant",

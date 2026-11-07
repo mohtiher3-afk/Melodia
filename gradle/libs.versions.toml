@@ -1,5 +1,5 @@
 [versions]
-agp = "9.1.1"
+agp = "9.5.1"
 coreKtx = "1.18.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
@@ -46,6 +46,7 @@ securityCrypto = "1.1.0-alpha06"
 # Local AI models
 litertLmVersion = "0.17.1"
 mediapipeImageGeneratorVersion = "0.10.26.1"
+leakcanary = "1.0.0"
 
 
 [libraries]
@@ -107,6 +108,7 @@ androidx-security-crypto = { group = "androidx.security", name = "security-crypt
 # Local AI models
 litertLm = { group = "com.google.ai.edge.litertlm", name = "litertlm-android", version.ref = "litertLmVersion" }
 mediapipeImageGenerator = { group = "com.google.mediapipe", name = "tasks-vision-image-generator", version.ref = "mediapipeImageGeneratorVersion" }
+leakcanary = { group = "com.android.tools.studio.leakcanary", name = "leakcanary", version.ref = "leakcanary" }
 
 
 [plugins]
