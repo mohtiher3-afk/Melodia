@@ -251,7 +251,7 @@ object LyricVideoExporter {
                     if (sampleSize < 0) break
                     val presentationTimeUs = audioExtractor!!.sampleTime
                     if (presentationTimeUs > totalDurationMs * 1000L) break
-                    audioInfo.set(0, sampleSize, presentationTimeUs, audioExtractor!!.sampleFlags)
+                    audioInfo.set(0, sampleSize, presentationTimeUs, 0)
                     audioBuffer.position(0)
                     audioBuffer.limit(sampleSize)
                     muxer.writeSampleData(audioTrackIndex, audioBuffer, audioInfo)

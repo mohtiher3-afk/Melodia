@@ -64,13 +64,13 @@ android {
     buildConfig = true
   }
 
-  // NDK install incomplete (source.properties missing). Re-enable after proper NDK install.
-  // externalNativeBuild {
-  //   cmake {
-  //     path = file("src/main/cpp/CMakeLists.txt")
-  //     version = "3.22.1"
-  //   }
-  // }
+  externalNativeBuild {
+    cmake {
+      path = file("src/main/cpp/CMakeLists.txt")
+      version = "3.22.1"
+    }
+  }
+  ndkVersion = "26.1.10909125"
   testOptions {
     unitTests { isIncludeAndroidResources = true }
     animationsDisabled = true
