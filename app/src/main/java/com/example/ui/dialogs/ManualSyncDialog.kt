@@ -1,13 +1,8 @@
 package com.example.ui.dialogs
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,26 +11,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -72,7 +61,6 @@ import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingWhite
 import com.example.ui.theme.SpaceMonoFontFamily
 import java.util.Locale
-import java.util.concurrent.atomic.AtomicInteger
 
 @Composable
 fun ManualSyncDialog(
@@ -81,18 +69,20 @@ fun ManualSyncDialog(
     songTitle: String,
     audioPlayerManager: AudioPlayerManager,
     onApplySyncedLyrics: (String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
 
     // Parse existing lines and clean out any existing timestamp prefixes for re-syncing
     val parsedLines = remember(lyrics) {
         lyrics.lines()
+            .asSequence()
             .map { line ->
                 // Remove [mm:ss.xx] or [mm:ss] if present
-                line.replace(Regex("\\[\\d{2}:\\d{2}(\\.\\d{1,3})?\\]"), "").trim()
+                line.replace(Regex("\\[\\d{2}:\\d{2}(\\.\\d{1,3})?]"), "").trim()
             }
             .filter { it.isNotBlank() }
+            .toList()
     }
 
     // Map line index -> recorded position in milliseconds
@@ -107,44 +97,44 @@ fun ManualSyncDialog(
 
     // Auto-scroll to active line
     LaunchedEffect(nextLineIndex) {
-        if (parsedLines.isNotEmpty() && nextLineIndex in parsedLines.indices) {
+        if (parsedLines.isNotEmpty() && (nextLineIndex in parsedLines.indices)) {
             listState.animateScrollToItem((nextLineIndex - 1).coerceAtLeast(0))
         }
     }
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
             modifier = Modifier
                 .fillMaxSize()
                 .background(NothingBlack)
                 .testTag("manual_sync_dialog"),
-            color = NothingBlack
+            color = NothingBlack,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 // Header Bar
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(8.dp)
                                     .clip(CircleShape)
-                                    .background(NothingRed)
+                                    .background(NothingRed),
                             )
                             Text(
                                 text = "TAP SYNC // MANUAL TIMESTAMP RECORDER",
@@ -152,7 +142,7 @@ fun ManualSyncDialog(
                                 fontSize = 10.sp,
                                 color = NothingRed,
                                 fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.sp
+                                letterSpacing = 1.sp,
                             )
                         }
                         Spacer(modifier = Modifier.height(2.dp))
@@ -163,7 +153,7 @@ fun ManualSyncDialog(
                             fontWeight = FontWeight.Bold,
                             color = NothingWhite,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
 
@@ -173,13 +163,13 @@ fun ManualSyncDialog(
                             .size(36.dp)
                             .clip(CircleShape)
                             .background(NothingCardSurface)
-                            .testTag("close_manual_sync_dialog")
+                            .testTag("close_manual_sync_dialog"),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Close",
                             tint = NothingWhite,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(18.dp),
                         )
                     }
                 }
@@ -187,9 +177,12 @@ fun ManualSyncDialog(
                 // Audio Status & Dot-Matrix Waveform
                 NothingDotMatrixWaveform(
                     isPlaying = isPlaying,
+                    currentPosition = currentPosition,
+                    duration = duration,
+                    onSeek = { audioPlayerManager.seekTo(it) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(70.dp)
+                        .height(70.dp),
                 )
 
                 // Playback Control & Timestamp Timer
@@ -201,11 +194,11 @@ fun ManualSyncDialog(
                         .border(1.dp, NothingBorder, RoundedCornerShape(16.dp))
                         .padding(horizontal = 14.dp, vertical = 10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         IconButton(
                             onClick = {
@@ -219,13 +212,13 @@ fun ManualSyncDialog(
                                 .size(40.dp)
                                 .clip(CircleShape)
                                 .background(NothingRed)
-                                .testTag("sync_play_pause_button")
+                                .testTag("sync_play_pause_button"),
                         ) {
                             Icon(
                                 imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                                 contentDescription = if (isPlaying) "Pause" else "Play",
                                 tint = NothingWhite,
-                                modifier = Modifier.size(22.dp)
+                                modifier = Modifier.size(22.dp),
                             )
                         }
 
@@ -235,13 +228,13 @@ fun ManualSyncDialog(
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = NothingWhite
+                                color = NothingWhite,
                             )
                             Text(
                                 text = if (isPlaying) "PLAYING // RECORDING READY" else "AUDIO PAUSED",
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 9.sp,
-                                color = if (isPlaying) NothingRed else NothingGrey
+                                color = if (isPlaying) NothingRed else NothingGrey,
                             )
                         }
                     }
@@ -253,12 +246,12 @@ fun ManualSyncDialog(
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (recordedTimestamps.size == parsedLines.size) NothingWhite else NothingGrey
+                    color = if (recordedTimestamps.size == parsedLines.size) NothingWhite else NothingGrey,
                 )
 
                 // PROMINENT TAP BUTTON // Record timestamp for current line
                 val currentTargetLine = parsedLines.getOrNull(nextLineIndex) ?: "ALL LINES STAMPED"
-                val canTap = isPlaying && nextLineIndex in parsedLines.indices
+                val canTap = isPlaying && (nextLineIndex in parsedLines.indices)
 
                 Box(
                     modifier = Modifier
@@ -269,40 +262,42 @@ fun ManualSyncDialog(
                         .pressable(
                             pressedScale = 0.94f,
                             haptic = com.example.ui.components.TapHaptic,
-                            enabled = canTap
+                            enabled = canTap,
                         ) {
                             if (nextLineIndex in parsedLines.indices) {
                                 recordedTimestamps[nextLineIndex] = currentPosition
                                 Toast.makeText(
                                     context,
                                     "Stamped Line ${nextLineIndex + 1}: ${formatLrcTimestamp(currentPosition)}",
-                                    Toast.LENGTH_SHORT
+                                    Toast.LENGTH_SHORT,
                                 ).show()
                                 nextLineIndex = (nextLineIndex + 1).coerceAtMost(parsedLines.size)
                             }
                         }
                         .padding(vertical = 16.dp, horizontal = 16.dp)
                         .testTag("tap_sync_line_button"),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Timer,
                                 contentDescription = "Tap Sync",
                                 tint = NothingWhite,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(20.dp),
                             )
                             Text(
-                                text = if (!isPlaying) "START AUDIO PLAYBACK TO TAP" else if (nextLineIndex >= parsedLines.size) "ALL LINES RECORDED!" else "TAP TO STAMP LINE ${nextLineIndex + 1}",
+                                text = if (!isPlaying) "START AUDIO PLAYBACK TO TAP"
+                                else if (nextLineIndex >= parsedLines.size) "ALL LINES RECORDED!"
+                                else "TAP TO STAMP LINE ${nextLineIndex + 1}",
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = NothingWhite,
-                                letterSpacing = 1.sp
+                                letterSpacing = 1.sp,
                             )
                         }
 
@@ -313,7 +308,7 @@ fun ManualSyncDialog(
                                 fontSize = 12.sp,
                                 color = NothingOffWhite,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                     }
@@ -327,12 +322,12 @@ fun ManualSyncDialog(
                         .clip(RoundedCornerShape(16.dp))
                         .background(NothingCardSurface)
                         .border(1.dp, NothingBorder, RoundedCornerShape(16.dp))
-                        .padding(12.dp)
+                        .padding(12.dp),
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = "LYRIC LINES & TIMESTAMPS",
@@ -340,7 +335,7 @@ fun ManualSyncDialog(
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = NothingRed,
-                            letterSpacing = 1.sp
+                            letterSpacing = 1.sp,
                         )
 
                         Text(
@@ -349,15 +344,15 @@ fun ManualSyncDialog(
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = NothingGrey,
-                            modifier = Modifier.pressable(
+                            modifier = Modifier
+                            .pressable(
                                 pressedScale = 0.94f,
                                 haptic = com.example.ui.components.TapHaptic,
-                                onClick = {
-                                    recordedTimestamps.clear()
-                                    nextLineIndex = 0
-                                    Toast.makeText(context, "Timestamps reset", Toast.LENGTH_SHORT).show()
-                                }
-                            )
+                            ) {
+                                recordedTimestamps.clear()
+                                nextLineIndex = 0
+                                Toast.makeText(context, "Timestamps reset", Toast.LENGTH_SHORT).show()
+                            },
                         )
                     }
 
@@ -366,7 +361,7 @@ fun ManualSyncDialog(
                     LazyColumn(
                         state = listState,
                         verticalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
                     ) {
                         itemsIndexed(parsedLines) { idx, lineText ->
                             val timestampMs = recordedTimestamps[idx]
@@ -382,7 +377,7 @@ fun ManualSyncDialog(
                                             isCurrentTarget -> NothingDarkGrey
                                             isRecorded -> NothingBlack
                                             else -> Color.Transparent
-                                        }
+                                        },
                                     )
                                     .border(
                                         1.dp,
@@ -391,21 +386,18 @@ fun ManualSyncDialog(
                                             isRecorded -> NothingBorder
                                             else -> Color.Transparent
                                         },
-                                        RoundedCornerShape(10.dp)
+                                        RoundedCornerShape(10.dp),
                                     )
                                     .pressable(
                                         pressedScale = 0.94f,
                                         haptic = com.example.ui.components.TapHaptic,
-                                        onClick = {
-                                            nextLineIndex = idx
-                                            if (timestampMs != null) {
-                                                audioPlayerManager.seekTo(timestampMs)
-                                            }
-                                        }
-                                    )
+                                    ) {
+                                        nextLineIndex = idx
+                                        timestampMs?.let { audioPlayerManager.seekTo(it) }
+                                    }
                                     .padding(horizontal = 10.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 // Index number
                                 Text(
@@ -413,7 +405,7 @@ fun ManualSyncDialog(
                                     fontFamily = SpaceMonoFontFamily,
                                     fontSize = 10.sp,
                                     color = if (isCurrentTarget) NothingRed else NothingGrey,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
                                 )
 
                                 // Timestamp Badge
@@ -421,14 +413,14 @@ fun ManualSyncDialog(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(6.dp))
                                         .background(if (isRecorded) NothingRed else NothingDarkGrey)
-                                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                                        .padding(horizontal = 6.dp, vertical = 3.dp),
                                 ) {
                                     Text(
-                                        text = if (isRecorded) formatLrcTimestamp(timestampMs!!) else "[--:--.--]",
+                                        text = if (isRecorded) formatLrcTimestamp(timestampMs) else "[--:--.--]",
                                         fontFamily = SpaceMonoFontFamily,
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isRecorded) NothingWhite else NothingGrey
+                                        color = if (isRecorded) NothingWhite else NothingGrey,
                                     )
                                 }
 
@@ -440,7 +432,7 @@ fun ManualSyncDialog(
                                     color = if (isCurrentTarget) NothingWhite else NothingOffWhite,
                                     modifier = Modifier.weight(1f),
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis,
                                 )
 
                                 // Manual Stamp / Overwrite Button
@@ -453,20 +445,19 @@ fun ManualSyncDialog(
                                             pressedScale = 0.94f,
                                             haptic = com.example.ui.components.TapHaptic,
                                             enabled = isPlaying,
-                                            onClick = {
-                                                recordedTimestamps[idx] = currentPosition
-                                                nextLineIndex = (idx + 1).coerceAtMost(parsedLines.size)
-                                                Toast.makeText(context, "Stamped line ${idx + 1}", Toast.LENGTH_SHORT).show()
-                                            }
-                                        )
-                                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                                        ) {
+                                            recordedTimestamps[idx] = currentPosition
+                                            nextLineIndex = (idx + 1).coerceAtMost(parsedLines.size)
+                                            Toast.makeText(context, "Stamped line ${idx + 1}", Toast.LENGTH_SHORT).show()
+                                        }
+                                        .padding(horizontal = 6.dp, vertical = 3.dp),
                                 ) {
                                     Text(
                                         text = "STAMP",
                                         fontFamily = SpaceMonoFontFamily,
                                         fontSize = 9.sp,
                                         color = if (isPlaying) NothingRed else NothingGrey,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
                                     )
                                 }
                             }
@@ -477,14 +468,14 @@ fun ManualSyncDialog(
                 // Bottom Action Buttons: Apply Timings or Copy LRC
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     NothingPillButton(
                         text = "CANCEL",
                         onClick = onDismiss,
                         isPrimary = false,
                         modifier = Modifier.weight(1f),
-                        testTag = "cancel_sync_button"
+                        testTag = "cancel_sync_button",
                     )
 
                     NothingPillButton(
@@ -508,7 +499,7 @@ fun ManualSyncDialog(
                         isRedAccent = true,
                         modifier = Modifier.weight(1.5f),
                         enabled = recordedTimestamps.isNotEmpty(),
-                        testTag = "apply_synced_lrc_button"
+                        testTag = "apply_synced_lrc_button",
                     )
                 }
             }

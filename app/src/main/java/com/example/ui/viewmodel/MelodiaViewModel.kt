@@ -965,17 +965,22 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
         }
 
     // Local model download methods
+    val localModelManager = com.example.domain.LocalModelManager(getApplication())
+
     fun downloadModel(modelId: String) {
         val model = com.example.domain.LocalModelManager.AVAILABLE_MODELS.firstOrNull { it.id == modelId } ?: return
         viewModelScope.launch {
-            val manager = com.example.domain.LocalModelManager(getApplication())
-            manager.downloadModel(model)
+            localModelManager.downloadModel(model)
         }
+    }
+
+    fun cancelDownload(modelId: String) {
+        val model = com.example.domain.LocalModelManager.AVAILABLE_MODELS.firstOrNull { it.id == modelId } ?: return
+        localModelManager.cancelDownload(model)
     }
 
     fun deleteModel(modelId: String) {
         val model = com.example.domain.LocalModelManager.AVAILABLE_MODELS.firstOrNull { it.id == modelId } ?: return
-        val manager = com.example.domain.LocalModelManager(getApplication())
-        manager.deleteModel(model)
+        localModelManager.deleteModel(model)
     }
 }

@@ -7,7 +7,7 @@ import com.example.ui.viewmodel.MelodiaViewModel
 @Composable
 fun ExportScreen(
     viewModel: MelodiaViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     VideoExporterScreen(viewModel = viewModel, modifier = modifier)
 }
