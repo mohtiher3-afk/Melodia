@@ -170,9 +170,10 @@ object LyricVideoExporter {
             }
 
             // Calculate total video duration in milliseconds based on word timings or audio length
-            val maxTimingMs = wordTimings.maxOfOrNull { it.endTimeMs } ?: 30_000L
-            val lyricsDurationMs = (maxTimingMs + 3000L).coerceAtLeast(10_000L)
-            val totalDurationMs = maxOf(lyricsDurationMs, audioDurationUs / 1000L)
+            // Use the longer of lyrics end-time or audio duration, with a minimum of 5 seconds
+            val lyricsEndMs = wordTimings.maxOfOrNull { it.endTimeMs } ?: 0L
+            val audioDurationMs = (audioDurationUs / 1000).toLong()
+            val totalDurationMs = maxOf(lyricsEndMs, audioDurationMs, 5000L)
             val totalFrames = ((totalDurationMs / 1000.0) * fps).toInt()
 
             var videoTrackIndex = -1
@@ -197,6 +198,7 @@ object LyricVideoExporter {
                         lines = lines,
                         wordTimings = wordTimings,
                         currentTimeMs = currentTimeMs,
+                        totalDurationMs = totalDurationMs,
                         coverBitmap = coverBitmap
                     )
                 } finally {
@@ -270,20 +272,21 @@ object LyricVideoExporter {
             }
 
             if (audioExtractor != null && audioTrackIndex >= 0 && muxerStarted) {
+                val extractor = audioExtractor!!
                 onProgress(0.9f, "Muxing imported audio without re-encoding...")
                 val audioBuffer = ByteBuffer.allocate(1024 * 1024)
                 val audioInfo = MediaCodec.BufferInfo()
                 while (true) {
                     audioBuffer.clear()
-                    val sampleSize = audioExtractor!!.readSampleData(audioBuffer, 0)
+                    val sampleSize = extractor.readSampleData(audioBuffer, 0)
                     if (sampleSize < 0) break
-                    val presentationTimeUs = audioExtractor!!.sampleTime
+                    val presentationTimeUs = extractor.sampleTime
                     if (presentationTimeUs > totalDurationMs * 1000L) break
                     audioInfo.set(0, sampleSize, presentationTimeUs, 0)
                     audioBuffer.position(0)
                     audioBuffer.limit(sampleSize)
                     muxer.writeSampleData(audioTrackIndex, audioBuffer, audioInfo)
-                    audioExtractor!!.advance()
+                    extractor.advance()
                 }
             }
 
@@ -323,6 +326,7 @@ object LyricVideoExporter {
         lines: List<String>,
         wordTimings: List<WordTiming>,
         currentTimeMs: Long,
+        totalDurationMs: Long,
         coverBitmap: Bitmap?
     ) {
         // Dark background
@@ -382,8 +386,7 @@ object LyricVideoExporter {
             val foundIdx = displayLines.indexOfFirst { line -> line.contains(activeWord.text) }
             if (foundIdx >= 0) activeLineIndex = foundIdx
         } else {
-            // Estimate line by time ratio
-            val totalDurationMs = wordTimings.maxOfOrNull { it.endTimeMs } ?: 30_000L
+            // Estimate line by time ratio using shared duration
             if (totalDurationMs > 0 && displayLines.isNotEmpty()) {
                 val ratio = (currentTimeMs.toFloat() / totalDurationMs.toFloat()).coerceIn(0f, 1f)
                 activeLineIndex = (ratio * (displayLines.size - 1)).toInt()
@@ -461,8 +464,7 @@ object LyricVideoExporter {
             wordProgress = activeWordProgress
         )
 
-        // Progress Bar at Bottom
-        val totalDurationMs = wordTimings.maxOfOrNull { it.endTimeMs } ?: 30_000L
+        // Progress Bar at Bottom using shared duration
         val progressRatio = (currentTimeMs.toFloat() / totalDurationMs.toFloat()).coerceIn(0f, 1f)
         
         val barHeight = height * 0.008f
