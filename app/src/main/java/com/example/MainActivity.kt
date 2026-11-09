@@ -8,11 +8,17 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.theme.AppAppearance
+import com.example.ui.theme.AppearanceRepository
 import com.example.ui.components.FloatingPlayerBar
 import com.example.ui.nothing.NtAppShell
 import com.example.ui.nothing.NtDestination
@@ -27,13 +33,24 @@ import com.example.ui.screens.SyncScreen
 import com.example.ui.screens.VisualsScreen
 import com.example.ui.theme.MelodiaTheme
 import com.example.ui.viewmodel.MelodiaViewModel
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MelodiaTheme {
+            val context = LocalContext.current
+            val appearanceRepository = remember(context) { AppearanceRepository(context) }
+            val appearance by appearanceRepository.appearance.collectAsStateWithLifecycle(
+                initialValue = AppAppearance()
+            )
+            val settingsScope = rememberCoroutineScope()
+
+            MelodiaTheme(
+                themeMode = appearance.themeMode,
+                accent = appearance.accentColor
+            ) {
                 val viewModel: MelodiaViewModel = viewModel()
                 var destination by rememberSaveable { mutableStateOf(NtDestination.PROJECT) }
                 var projectStep by rememberSaveable { mutableStateOf(ProjectStep.STUDIO) }
@@ -84,7 +101,16 @@ class MainActivity : ComponentActivity() {
                                     projectStep = ProjectStep.STUDIO
                                 }
                             )
-                            NtDestination.SETTINGS -> SettingsScreen(viewModel = viewModel)
+                            NtDestination.SETTINGS -> SettingsScreen(
+                                viewModel = viewModel,
+                                appearance = appearance,
+                                onThemeModeChange = { mode ->
+                                    settingsScope.launch { appearanceRepository.setThemeMode(mode) }
+                                },
+                                onAccentColorChange = { color ->
+                                    settingsScope.launch { appearanceRepository.setAccentColor(color) }
+                                }
+                            )
                         }
                     }
                 }
