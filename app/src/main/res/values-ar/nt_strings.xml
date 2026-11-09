@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nt_nav_project">المشروع</string>
+    <string name="nt_nav_library">المكتبة</string>
+    <string name="nt_nav_settings">الإعدادات</string>
+    <string name="nt_step_label">الخطوة %1$d / %2$d · %3$s</string>
+    <string name="nt_step_studio">الاستوديو</string>
+    <string name="nt_step_lyrics">الكلمات</string>
+    <string name="nt_step_visuals">المرئيات</string>
+    <string name="nt_step_sync">المزامنة</string>
+    <string name="nt_step_export">التصدير</string>
+    <string name="nt_studio_title">اكتب الكلمات</string>
+    <string name="nt_prompt">الوصف</string>
+    <string name="nt_generating">جارٍ توليد الكلمات…</string>
+    <string name="nt_generate">ولّد الكلمات</string>
+    <string name="nt_generating_desc">جارٍ توليد الكلمات</string>
+    <string name="nt_lyrics_title">حرّر الكلمات</string>
+    <string name="nt_add_section">إضافة مقطع</string>
+    <string name="nt_rhymes_for">قوافٍ لكلمة %1$s</string>
+    <string name="nt_autosaved">حُفظ تلقائياً</string>
+    <string name="nt_play">تشغيل</string>
+    <string name="nt_pause">إيقاف مؤقت</string>
+    <string name="nt_next_visuals">التالي: المرئيات</string>
+    <string name="nt_visuals_title">غلاف الأغنية</string>
+    <string name="nt_rendering_cover">جارٍ رسم الغلاف</string>
+    <string name="nt_generate_cover">ولّد الغلاف</string>
+    <string name="nt_cover_progress">تقدم الغلاف</string>
+    <string name="nt_sync_title">مزامنة الكلمات</string>
+    <string name="nt_estimated">معاينة مباشرة (تقديرية)</string>
+    <string name="nt_cancel">إلغاء</string>
+    <string name="nt_sync_progress">تقدم المزامنة</string>
+    <string name="nt_export_title">جارٍ تصدير الفيديو</string>
+    <string name="nt_progress">التقدم</string>
+    <string name="nt_share">مشاركة</string>
+    <string name="nt_export_progress">تقدم التصدير</string>
+    <string name="nt_background_note">يستمر التصدير إذا غادرت التطبيق.</string>
+    <string name="nt_library_title">المكتبة</string>
+    <string name="nt_search_songs">ابحث عن أغنية</string>
+    <string name="nt_settings_title">الإعدادات</string>
+    <string name="nt_language">اللغة</string>
+    <string name="nt_cloud">التفريغ السحابي</string>
+    <string name="nt_cloud_hint">متوقف افتراضياً. يرفع الصوت.</string>
+    <string name="nt_haptics">الاهتزاز</string>
+    <string name="nt_quality">جودة الفيديو</string>
+    <string name="nt_storage">المساحة المستخدمة</string>
+</resources>

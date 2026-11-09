@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nt_nav_project">PROJECT</string>
+    <string name="nt_nav_library">LIBRARY</string>
+    <string name="nt_nav_settings">SETTINGS</string>
+    <string name="nt_step_label">STEP %1$d / %2$d · %3$s</string>
+    <string name="nt_step_studio">STUDIO</string>
+    <string name="nt_step_lyrics">LYRICS</string>
+    <string name="nt_step_visuals">VISUALS</string>
+    <string name="nt_step_sync">SYNC</string>
+    <string name="nt_step_export">EXPORT</string>
+    <string name="nt_studio_title">Write the lyrics</string>
+    <string name="nt_prompt">PROMPT</string>
+    <string name="nt_generating">GENERATING LYRICS…</string>
+    <string name="nt_generate">GENERATE LYRICS</string>
+    <string name="nt_generating_desc">Generating lyrics</string>
+    <string name="nt_lyrics_title">Edit lyrics</string>
+    <string name="nt_add_section">Add section</string>
+    <string name="nt_rhymes_for">RHYMES FOR %1$s</string>
+    <string name="nt_autosaved">AUTO-SAVED</string>
+    <string name="nt_play">Play</string>
+    <string name="nt_pause">Pause</string>
+    <string name="nt_next_visuals">NEXT: VISUALS</string>
+    <string name="nt_visuals_title">Cover art</string>
+    <string name="nt_rendering_cover">Rendering cover</string>
+    <string name="nt_generate_cover">GENERATE COVER</string>
+    <string name="nt_cover_progress">Cover progress</string>
+    <string name="nt_sync_title">Syncing words</string>
+    <string name="nt_estimated">LIVE PREVIEW (ESTIMATED)</string>
+    <string name="nt_cancel">CANCEL</string>
+    <string name="nt_sync_progress">Sync progress</string>
+    <string name="nt_export_title">Rendering video</string>
+    <string name="nt_progress">PROGRESS</string>
+    <string name="nt_share">SHARE</string>
+    <string name="nt_export_progress">Export progress</string>
+    <string name="nt_background_note">Keeps running if you leave the app.</string>
+    <string name="nt_library_title">Library</string>
+    <string name="nt_search_songs">Search songs</string>
+    <string name="nt_settings_title">Settings</string>
+    <string name="nt_language">Language</string>
+    <string name="nt_cloud">Cloud transcription</string>
+    <string name="nt_cloud_hint">Off by default. Uploads audio.</string>
+    <string name="nt_haptics">Haptics</string>
+    <string name="nt_quality">Video quality</string>
+    <string name="nt_storage">Storage used</string>
+</resources>

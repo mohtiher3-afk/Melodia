@@ -175,17 +175,13 @@ object LyricVideoExporter {
             }
 
             // Calculate total video duration in milliseconds based on word timings or audio length
-            // Use the longer of lyrics end-time or audio duration, with a minimum of 5 seconds
-            val lyricsEndMs = wordTimings.maxOfOrNull { it.endTimeMs } ?: 0L
-            val audioDurationMs = (audioDurationUs / 1000).toLong()
-            val totalDurationMs = maxOf(lyricsEndMs, audioDurationMs, 5000L)
+            val maxTimingMs = wordTimings.maxOfOrNull { it.endTimeMs } ?: 30_000L
+            val lyricsDurationMs = (maxTimingMs + 3000L).coerceAtLeast(10_000L)
+            val totalDurationMs = maxOf(lyricsDurationMs, audioDurationUs / 1000L)
             val totalFrames = ((totalDurationMs / 1000.0) * fps).toInt()
 
             var videoTrackIndex = -1
             val bufferInfo = MediaCodec.BufferInfo()
-            // Tracks the last frame index written to the muxer so the drain loop can keep the
-            // frame-rate-locked cadence after the render loop ends.
-            var writtenFrameIndex = 0
 
             val lines = lyrics.lines().filter { it.isNotBlank() }
 
@@ -201,10 +197,8 @@ object LyricVideoExporter {
                     lines = lines,
                     wordTimings = wordTimings,
                     currentTimeMs = currentTimeMs,
-                    totalDurationMs = totalDurationMs,
                     coverBitmap = coverBitmap
                 )
-
                 renderer.drawFrame(bitmap, framePresentationTimeNs(frameIndex, fps))
 
                 // Poll encoder output
@@ -224,12 +218,7 @@ object LyricVideoExporter {
                             }
                             encodedData.position(bufferInfo.offset)
                             encodedData.limit(bufferInfo.offset + bufferInfo.size)
-                            // Frame-rate-locked timestamp: the MP4 duration then matches the audio
-                            // length instead of drifting with wall-clock time.
-                            bufferInfo.presentationTimeUs =
-                                framePresentationTimeNs(frameIndex, fps) / 1000L
                             muxer.writeSampleData(videoTrackIndex, encodedData, bufferInfo)
-                            writtenFrameIndex = frameIndex
                         }
                     }
                     videoCodec.releaseOutputBuffer(encoderStatus, false)
@@ -262,11 +251,7 @@ object LyricVideoExporter {
                         if (muxerStarted) {
                             encodedData.position(bufferInfo.offset)
                             encodedData.limit(bufferInfo.offset + bufferInfo.size)
-                            // Drain loop: keep the same frame-rate-locked cadence as the main loop.
-                            bufferInfo.presentationTimeUs =
-                                framePresentationTimeNs(writtenFrameIndex, fps) / 1000L
                             muxer.writeSampleData(videoTrackIndex, encodedData, bufferInfo)
-                            writtenFrameIndex++
                         }
                     }
                     videoCodec.releaseOutputBuffer(encoderStatus, false)
@@ -295,6 +280,8 @@ object LyricVideoExporter {
             }
 
             onProgress(0.95f, "Finalizing MP4 video container...")
+            audioExtractor?.release()
+            audioExtractor = null
             Result.success(outputFile)
         } catch (e: Exception) {
             Log.e(TAG, "Error encoding lyric video", e)
@@ -334,7 +321,6 @@ object LyricVideoExporter {
         lines: List<String>,
         wordTimings: List<WordTiming>,
         currentTimeMs: Long,
-        totalDurationMs: Long,
         coverBitmap: Bitmap?
     ) {
         // Dark background
@@ -394,41 +380,28 @@ object LyricVideoExporter {
             val foundIdx = displayLines.indexOfFirst { line -> line.contains(activeWord.text) }
             if (foundIdx >= 0) activeLineIndex = foundIdx
         } else {
-            // Estimate line by time ratio using shared duration
+            // Estimate line by time ratio
+            val totalDurationMs = wordTimings.maxOfOrNull { it.endTimeMs } ?: 30_000L
             if (totalDurationMs > 0 && displayLines.isNotEmpty()) {
                 val ratio = (currentTimeMs.toFloat() / totalDurationMs.toFloat()).coerceIn(0f, 1f)
                 activeLineIndex = (ratio * (displayLines.size - 1)).toInt()
             }
         }
 
-        // Draw 5 lines centered (2 Previous, Active, 2 Next)
+        // Draw 3 lines centered (Previous, Active, Next)
         val startY = height * 0.45f
         val lineSpacing = width * 0.08f
 
-        for (offset in -2..2) {
+        for (offset in -1..1) {
             val targetLineIdx = activeLineIndex + offset
             if (targetLineIdx in displayLines.indices) {
                 val lineText = displayLines[targetLineIdx]
                 val lineY = startY + (offset * lineSpacing)
 
                 val linePaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-                    when (offset) {
-                        0 -> {
-                            textSize = width * 0.052f
-                            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                            color = Color.WHITE
-                        }
-                        -1, 1 -> {
-                            textSize = width * 0.042f
-                            typeface = Typeface.DEFAULT
-                            color = Color.parseColor("#CCFFFFFF")
-                        }
-                        -2, 2 -> {
-                            textSize = width * 0.034f
-                            typeface = Typeface.DEFAULT
-                            color = Color.parseColor("#80FFFFFF")
-                        }
-                    }
+                    textSize = if (offset == 0) width * 0.052f else width * 0.038f
+                    typeface = if (offset == 0) Typeface.create(Typeface.DEFAULT, Typeface.BOLD) else Typeface.DEFAULT
+                    color = if (offset == 0) Color.WHITE else Color.parseColor("#80FFFFFF")
                 }
 
                 val activeWordStart = if (offset == 0 && activeWord != null) {
@@ -472,9 +445,10 @@ object LyricVideoExporter {
             wordProgress = activeWordProgress
         )
 
-        // Progress Bar at Bottom using shared duration
+        // Progress Bar at Bottom
+        val totalDurationMs = wordTimings.maxOfOrNull { it.endTimeMs } ?: 30_000L
         val progressRatio = (currentTimeMs.toFloat() / totalDurationMs.toFloat()).coerceIn(0f, 1f)
-
+        
         val barHeight = height * 0.008f
         val barY = height * 0.92f
         val barPaintBg = Paint().apply { color = Color.parseColor("#33FFFFFF") }
