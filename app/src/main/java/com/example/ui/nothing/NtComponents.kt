@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -402,9 +403,14 @@ fun NtStepList(steps: List<NtStep>, modifier: Modifier = Modifier) {
     }
 }
 
-/** Project progress: [total] segments, finished ones red, the current one has a sweeping bar. */
+/** Project progress: selectable segments, finished ones red, current one has a sweeping bar. */
 @Composable
-fun NtStepIndicator(current: Int, modifier: Modifier = Modifier, total: Int = 5) {
+fun NtStepIndicator(
+    current: Int,
+    modifier: Modifier = Modifier,
+    total: Int = 5,
+    onSelectStep: ((Int) -> Unit)? = null
+) {
     val reduced = rememberReducedMotion()
     val transition = rememberInfiniteTransition(label = "steps")
     val sweep by transition.animateFloat(
@@ -412,17 +418,37 @@ fun NtStepIndicator(current: Int, modifier: Modifier = Modifier, total: Int = 5)
     )
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         repeat(total) { k ->
-            Canvas(
+            val stepName = when (k) {
+                0 -> androidx.compose.ui.res.stringResource(com.example.R.string.nt_step_studio)
+                1 -> androidx.compose.ui.res.stringResource(com.example.R.string.nt_step_lyrics)
+                2 -> androidx.compose.ui.res.stringResource(com.example.R.string.nt_step_visuals)
+                3 -> androidx.compose.ui.res.stringResource(com.example.R.string.nt_step_sync)
+                else -> androidx.compose.ui.res.stringResource(com.example.R.string.nt_step_export)
+            }
+            val description = androidx.compose.ui.res.stringResource(
+                com.example.R.string.nt_step_label, k + 1, total, stepName
+            )
+            Box(
                 Modifier
                     .weight(1f)
-                    .height(4.dp)
-                    .clipToBounds()
+                    .heightIn(min = 48.dp)
+                    .selectable(
+                        selected = k == current,
+                        enabled = onSelectStep != null,
+                        role = Role.Tab,
+                        onClick = { onSelectStep?.invoke(k) }
+                    )
+                    .semantics { contentDescription = description }
+                    .testTag(ProjectStep.entries.getOrNull(k)?.testTag ?: "project_step_${k + 1}"),
+                contentAlignment = Alignment.Center
             ) {
-                val radius = CornerRadius(size.height / 2f)
-                drawRoundRect(if (k < current) Nt.Red else Nt.Track, cornerRadius = radius)
-                if (k == current) {
-                    val x = size.width * (if (reduced) 0.25f else sweep)
-                    drawRoundRect(Nt.Red, Offset(x, 0f), Size(size.width * 0.5f, size.height), radius)
+                Canvas(Modifier.fillMaxWidth().height(4.dp).clipToBounds()) {
+                    val radius = CornerRadius(size.height / 2f)
+                    drawRoundRect(if (k < current) Nt.Red else Nt.Track, cornerRadius = radius)
+                    if (k == current) {
+                        val x = size.width * (if (reduced) 0.25f else sweep)
+                        drawRoundRect(Nt.Red, Offset(x, 0f), Size(size.width * 0.5f, size.height), radius)
+                    }
                 }
             }
         }

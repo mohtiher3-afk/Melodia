@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -36,7 +37,7 @@ import com.example.ui.dotGrid
 import com.example.ui.theme.NothingDotMatrixFontFamily
 import com.example.ui.theme.SpaceMonoFontFamily
 
-data class NtNavItem(val label: String, val icon: DotIcon)
+data class NtNavItem(val label: String, val icon: DotIcon, val testTag: String)
 
 /** The three bottom destinations: Project, Library, Settings. */
 @Composable
@@ -46,9 +47,9 @@ fun rememberNtNavItems(): List<NtNavItem> {
     val settings = stringResource(R.string.nt_nav_settings)
     return remember(project, library, settings) {
         listOf(
-            NtNavItem(project, DotIcon.STUDIO),
-            NtNavItem(library, DotIcon.LIBRARY),
-            NtNavItem(settings, DotIcon.SETTINGS)
+            NtNavItem(project, DotIcon.STUDIO, NtDestination.PROJECT.testTag),
+            NtNavItem(library, DotIcon.LIBRARY, NtDestination.LIBRARY.testTag),
+            NtNavItem(settings, DotIcon.SETTINGS, NtDestination.SETTINGS.testTag)
         )
     }
 }
@@ -112,6 +113,7 @@ fun NtBottomNav(
                     .drawBehind {
                         if (selected) drawRect(Nt.Red, size = Size(size.width, 2.dp.toPx()))
                     }
+                    .testTag(item.testTag)
                     .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(index) }),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
@@ -148,6 +150,8 @@ fun NtAppShell(
     topLabel: String,
     modifier: Modifier = Modifier,
     stepIndex: Int? = null,
+    onSelectStep: ((Int) -> Unit)? = null,
+    scrollContent: Boolean = true,
     bottomExtra: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -159,16 +163,36 @@ fun NtAppShell(
                 .dotGrid(spacing = 20.dp)
                 .statusBarsPadding()
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = Nt.ScreenPadding, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                NtTopBar(topLabel)
-                if (stepIndex != null) NtStepIndicator(stepIndex)
-                content()
+            if (scrollContent) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = Nt.ScreenPadding, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    NtTopBar(topLabel)
+                    if (stepIndex != null) {
+                        NtStepIndicator(stepIndex, onSelectStep = onSelectStep)
+                    }
+                    content()
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = Nt.ScreenPadding, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    NtTopBar(topLabel)
+                    if (stepIndex != null) {
+                        NtStepIndicator(stepIndex, onSelectStep = onSelectStep)
+                    }
+                    Column(Modifier.weight(1f).fillMaxWidth()) {
+                        content()
+                    }
+                }
             }
             bottomExtra?.invoke()
             NtBottomNav(

@@ -14,15 +14,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import kotlinx.coroutines.test.runTest
 import com.example.ui.viewmodel.MelodiaViewModel
-import com.example.ui.components.MelodiaTab
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.EditNote
-import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material.icons.filled.Upload
+import com.example.ui.nothing.NtDestination
+import com.example.ui.nothing.ProjectStep
 
 
 /**
@@ -67,36 +60,39 @@ class MainActivityTest {
     }
 
     @Test
-    fun `melodia tab has correct icon`() {
-        assertEquals(Icons.Default.GraphicEq, MelodiaTab.STUDIO.icon)
-        assertEquals(Icons.Default.EditNote, MelodiaTab.LYRICS.icon)
-        assertEquals(Icons.Default.LibraryMusic, MelodiaTab.LIBRARY.icon)
-        assertEquals(Icons.Default.Image, MelodiaTab.VISUALS.icon)
-        assertEquals(Icons.Default.Sync, MelodiaTab.SYNC.icon)
-        assertEquals(Icons.Default.Upload, MelodiaTab.EXPORT.icon)
-        assertEquals(Icons.Default.Settings, MelodiaTab.SETTINGS.icon)
+    fun `top level navigation has three design destinations and stable tags`() {
+        assertEquals(3, NtDestination.entries.size)
+        assertEquals(
+            listOf(NtDestination.PROJECT, NtDestination.LIBRARY, NtDestination.SETTINGS),
+            NtDestination.entries
+        )
+        assertEquals(listOf(0, 1, 2), NtDestination.entries.map { it.navigationIndex })
+        assertEquals(
+            listOf("nav_project", "nav_library", "nav_settings"),
+            NtDestination.entries.map { it.testTag }
+        )
     }
 
     @Test
-    fun `melodia tab has correct title`() {
-        assertEquals("Studio", MelodiaTab.STUDIO.title)
-        assertEquals("Lyrics", MelodiaTab.LYRICS.title)
-        assertEquals("Library", MelodiaTab.LIBRARY.title)
-        assertEquals("Visuals", MelodiaTab.VISUALS.title)
-        assertEquals("Sync", MelodiaTab.SYNC.title)
-        assertEquals("Export", MelodiaTab.EXPORT.title)
-        assertEquals("Settings", MelodiaTab.SETTINGS.title)
+    fun `project navigation has five ordered steps and stable tags`() {
+        assertEquals(
+            listOf(ProjectStep.STUDIO, ProjectStep.LYRICS, ProjectStep.VISUALS, ProjectStep.SYNC, ProjectStep.EXPORT),
+            ProjectStep.entries
+        )
+        assertEquals(listOf(0, 1, 2, 3, 4), ProjectStep.entries.map { it.index })
+        assertEquals(
+            listOf("project_step_1", "project_step_2", "project_step_3", "project_step_4", "project_step_5"),
+            ProjectStep.entries.map { it.testTag }
+        )
     }
 
     @Test
-    fun `melodia tab has correct tag`() {
-        assertEquals("tab_studio", MelodiaTab.STUDIO.tag)
-        assertEquals("tab_lyrics", MelodiaTab.LYRICS.tag)
-        assertEquals("tab_library", MelodiaTab.LIBRARY.tag)
-        assertEquals("tab_visuals", MelodiaTab.VISUALS.tag)
-        assertEquals("tab_sync", MelodiaTab.SYNC.tag)
-        assertEquals("tab_export", MelodiaTab.EXPORT.tag)
-        assertEquals("tab_settings", MelodiaTab.SETTINGS.tag)
+    fun `navigation index mapping falls back to the project and studio routes`() {
+        assertEquals(NtDestination.PROJECT, NtDestination.fromIndex(-1))
+        assertEquals(NtDestination.SETTINGS, NtDestination.fromIndex(2))
+        assertEquals(ProjectStep.STUDIO, ProjectStep.fromIndex(-1))
+        assertEquals(ProjectStep.EXPORT, ProjectStep.fromIndex(4))
+        assertEquals(ProjectStep.STUDIO, ProjectStep.fromIndex(5))
     }
 
     @Test
@@ -131,32 +127,4 @@ class MainActivityTest {
         assertEquals("MP3", viewModel.defaultExportFormat.value)
     }
 
-    @Test
-    fun `melodia tabs ordinal order`() {
-        // Verify ordinal ordering matches expected navigation sequence
-        assertEquals(0, MelodiaTab.STUDIO.ordinal)
-        assertEquals(1, MelodiaTab.LYRICS.ordinal)
-        assertEquals(2, MelodiaTab.LIBRARY.ordinal)
-        assertEquals(3, MelodiaTab.VISUALS.ordinal)
-        assertEquals(4, MelodiaTab.SYNC.ordinal)
-        assertEquals(5, MelodiaTab.EXPORT.ordinal)
-        assertEquals(6, MelodiaTab.SETTINGS.ordinal)
-    }
-
-    @Test
-    fun `melodia tabs total count`() {
-        assertEquals(7, MelodiaTab.entries.size)
-    }
-
-    @Test
-    fun `melodia tabs contains all expected values`() {
-        val tabValues = MelodiaTab.entries.toSet()
-        assertTrue(tabValues.contains(MelodiaTab.STUDIO))
-        assertTrue(tabValues.contains(MelodiaTab.LYRICS))
-        assertTrue(tabValues.contains(MelodiaTab.LIBRARY))
-        assertTrue(tabValues.contains(MelodiaTab.VISUALS))
-        assertTrue(tabValues.contains(MelodiaTab.SYNC))
-        assertTrue(tabValues.contains(MelodiaTab.EXPORT))
-        assertTrue(tabValues.contains(MelodiaTab.SETTINGS))
-    }
 }
