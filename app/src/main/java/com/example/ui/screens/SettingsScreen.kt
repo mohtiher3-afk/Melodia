@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,20 +46,19 @@ import com.example.domain.LocalModelManager.DownloadState
 import com.example.ui.components.GlyphCard
 import com.example.ui.components.TapHaptic
 import com.example.ui.components.pressable
-import com.example.ui.theme.NothingBlack
-import com.example.ui.theme.NothingBorder
-import com.example.ui.theme.NothingCardSurface
-import com.example.ui.theme.NothingDarkGrey
-import com.example.ui.theme.NothingGrey
-import com.example.ui.theme.NothingRed
-import com.example.ui.theme.NothingWhite
+import com.example.ui.theme.AccentColor
+import com.example.ui.theme.AppAppearance
 import com.example.ui.theme.SpaceMonoFontFamily
+import com.example.ui.theme.ThemeMode
 import com.example.ui.viewmodel.MelodiaViewModel
 
 @Composable
 fun SettingsScreen(
     viewModel: MelodiaViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    appearance: AppAppearance = AppAppearance(),
+    onThemeModeChange: (ThemeMode) -> Unit = {},
+    onAccentColorChange: (AccentColor) -> Unit = {}
 ) {
     val defaultExportFormat by viewModel.defaultExportFormat.collectAsStateWithLifecycle()
     val llmProviderId by viewModel.llmProviderId.collectAsStateWithLifecycle()
@@ -80,7 +80,7 @@ fun SettingsScreen(
                 text = "CONFIG // SYSTEM",
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 11.sp,
-                color = NothingRed,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 2.sp
             )
@@ -89,9 +89,15 @@ fun SettingsScreen(
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = NothingWhite
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
+
+        AppearanceSettingsCard(
+            appearance = appearance,
+            onThemeModeChange = onThemeModeChange,
+            onAccentColorChange = onAccentColorChange
+        )
 
         // Cloud key status (not required by the local provider)
         GlyphCard(headerTitle = "GEMINI CLOUD API") {
@@ -107,7 +113,7 @@ fun SettingsScreen(
                     Icon(
                         imageVector = Icons.Default.Key,
                         contentDescription = "Key Icon",
-                        tint = NothingRed,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
                     Column {
@@ -116,20 +122,20 @@ fun SettingsScreen(
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = NothingWhite
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = if (isGeminiConfigured) "Configured; cloud requests may use quota/billing" else "Not configured — not needed for local Nano",
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 11.sp,
-                            color = NothingGrey
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
                 Icon(
                     imageVector = if (isGeminiConfigured) Icons.Default.CheckCircle else Icons.Default.Warning,
                     contentDescription = if (isGeminiConfigured) "Active" else "Not configured",
-                    tint = if (isGeminiConfigured) NothingRed else NothingGrey,
+                    tint = if (isGeminiConfigured) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -142,7 +148,7 @@ fun SettingsScreen(
                     text = "Nano runs on-device on supported phones; Android AICore may download its model once. Cloud options may have quotas or charges:",
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 12.sp,
-                    color = NothingGrey
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -164,8 +170,8 @@ fun SettingsScreen(
                                 .weight(1f)
                                 .height(44.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSel) NothingRed else NothingCardSurface)
-                                .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
+                                .background(if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
+                                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
                                 .pressable(
                                     pressedScale = 0.95f,
                                     haptic = TapHaptic
@@ -178,7 +184,7 @@ fun SettingsScreen(
                                     fontFamily = SpaceMonoFontFamily,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isSel) NothingBlack else NothingWhite
+                                    color = if (isSel) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     text = when {
@@ -188,7 +194,7 @@ fun SettingsScreen(
                                     },
                                     fontFamily = SpaceMonoFontFamily,
                                     fontSize = 9.sp,
-                                    color = if (isSel) NothingBlack else NothingGrey
+                                    color = if (isSel) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -204,7 +210,7 @@ fun SettingsScreen(
                     text = "Download free, open-source AI models directly to this device. No API keys, no cloud. Each model downloads with one tap.",
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 11.sp,
-                    color = NothingGrey
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 LocalModelDownloadSection(viewModel = viewModel)
             }
@@ -223,13 +229,13 @@ fun SettingsScreen(
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = NothingWhite
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = if (allowCloudTranscription) "Imported audio may be sent online (up to 14 MB)." else "Off by default. Local audio stays on this device; Whisper model integration is pending.",
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 10.sp,
-                        color = NothingGrey
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Switch(
@@ -246,7 +252,7 @@ fun SettingsScreen(
                     text = "Select default timing format when exporting synced lyrics:",
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 12.sp,
-                    color = NothingGrey
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -259,8 +265,8 @@ fun SettingsScreen(
                                 .weight(1f)
                                 .height(40.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSel) NothingRed else NothingCardSurface)
-                                .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
+                                .background(if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
+                                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
                                 .pressable(
                                     pressedScale = 0.95f,
                                     haptic = TapHaptic
@@ -272,7 +278,7 @@ fun SettingsScreen(
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isSel) NothingBlack else NothingWhite
+                                color = if (isSel) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -288,13 +294,13 @@ fun SettingsScreen(
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = NothingWhite
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "// Gemini Nano lyrics on supported phones\n// Cloud audio transcription is OFF by default\n// Local Whisper and image-diffusion models are pending",
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 11.sp,
-                    color = NothingGrey
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -322,7 +328,7 @@ fun LocalModelDownloadSection(
                         text = model.description,
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 10.sp,
-                        color = NothingGrey,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 2
                     )
 
@@ -348,7 +354,7 @@ fun LocalModelDownloadSection(
                                         Icon(
                                             imageVector = Icons.Default.CheckCircle,
                                             contentDescription = "Downloaded",
-                                            tint = NothingRed,
+                                            tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(18.dp)
                                         )
                                         Text(
@@ -356,13 +362,13 @@ fun LocalModelDownloadSection(
                                             fontFamily = SpaceMonoFontFamily,
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = NothingRed
+                                            color = MaterialTheme.colorScheme.primary
                                         )
                                         Text(
                                             text = "Remove",
                                             fontFamily = SpaceMonoFontFamily,
                                             fontSize = 10.sp,
-                                            color = NothingGrey,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.clickable { viewModel.deleteModel(model.id) }
                                         )
                                     }
@@ -377,21 +383,21 @@ fun LocalModelDownloadSection(
                                         text = "Size: ${LocalModelManager.formatBytes(model.expectedSizeBytes)}",
                                         fontFamily = SpaceMonoFontFamily,
                                         fontSize = 10.sp,
-                                        color = NothingGrey
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Button(
                                         onClick = { viewModel.downloadModel(model.id) },
                                         modifier = Modifier.testTag("download_${model.id}"),
                                         colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                            containerColor = NothingRed,
-                                            contentColor = NothingBlack
+                                            containerColor = MaterialTheme.colorScheme.primary,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary
                                         )
                                     ) {
                                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                             Icon(
                                                 imageVector = Icons.Default.ArrowDownward,
                                                 contentDescription = "Download",
-                                                tint = NothingBlack,
+                                                tint = MaterialTheme.colorScheme.onPrimary,
                                                 modifier = Modifier.size(16.dp)
                                             )
                                             Text(
@@ -399,7 +405,7 @@ fun LocalModelDownloadSection(
                                                 fontFamily = SpaceMonoFontFamily,
                                                 fontSize = 11.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = NothingBlack
+                                                color = MaterialTheme.colorScheme.onPrimary
                                             )
                                         }
                                     }
@@ -411,8 +417,8 @@ fun LocalModelDownloadSection(
                                 LinearProgressIndicator(
                                     progress = { state.progress },
                                     modifier = Modifier.fillMaxWidth(),
-                                    color = NothingRed,
-                                    trackColor = NothingDarkGrey
+                                    color = MaterialTheme.colorScheme.primary,
+                                    trackColor = MaterialTheme.colorScheme.surfaceVariant
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Row(
@@ -423,13 +429,13 @@ fun LocalModelDownloadSection(
                                         text = "${(state.progress * 100).toInt()}% • ${LocalModelManager.formatBytes(state.downloadedBytes)} / ${LocalModelManager.formatBytes(state.totalBytes)}",
                                         fontFamily = SpaceMonoFontFamily,
                                         fontSize = 10.sp,
-                                        color = NothingGrey
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     Text(
                                         text = "PAUSE",
                                         fontFamily = SpaceMonoFontFamily,
                                         fontSize = 10.sp,
-                                        color = NothingGrey,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.clickable { viewModel.cancelDownload(model.id) }
                                     )
                                 }
@@ -448,7 +454,7 @@ fun LocalModelDownloadSection(
                                     Icon(
                                         imageVector = Icons.Default.CheckCircle,
                                         contentDescription = "Downloaded",
-                                        tint = NothingRed,
+                                        tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Text(
@@ -456,13 +462,13 @@ fun LocalModelDownloadSection(
                                         fontFamily = SpaceMonoFontFamily,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = NothingRed
+                                        color = MaterialTheme.colorScheme.primary
                                     )
                                     Text(
                                         text = "Remove",
                                         fontFamily = SpaceMonoFontFamily,
                                         fontSize = 10.sp,
-                                        color = NothingGrey,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.clickable { viewModel.deleteModel(model.id) }
                                     )
                                 }
@@ -479,22 +485,22 @@ fun LocalModelDownloadSection(
                                         text = "PAUSED: ${LocalModelManager.formatBytes(state.downloadedBytes)} / ${LocalModelManager.formatBytes(state.totalBytes)}",
                                         fontFamily = SpaceMonoFontFamily,
                                         fontSize = 10.sp,
-                                        color = NothingGrey
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                                 Button(
                                     onClick = { viewModel.downloadModel(model.id) },
                                     modifier = Modifier.padding(top = 4.dp),
                                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                        containerColor = NothingRed,
-                                        contentColor = NothingBlack
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
                                     )
                                 ) {
                                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                         Icon(
                                             imageVector = Icons.Default.ArrowDownward,
                                             contentDescription = "Resume",
-                                            tint = NothingBlack,
+                                            tint = MaterialTheme.colorScheme.onPrimary,
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Text(
@@ -502,7 +508,7 @@ fun LocalModelDownloadSection(
                                             fontFamily = SpaceMonoFontFamily,
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = NothingBlack
+                                            color = MaterialTheme.colorScheme.onPrimary
                                         )
                                     }
                                 }
@@ -522,14 +528,14 @@ fun LocalModelDownloadSection(
                                         Icon(
                                             imageVector = Icons.Default.Warning,
                                             contentDescription = "Error",
-                                            tint = NothingRed,
+                                            tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Text(
                                             text = "FAILED: ${state.error}",
                                             fontFamily = SpaceMonoFontFamily,
                                             fontSize = 10.sp,
-                                            color = NothingRed
+                                            color = MaterialTheme.colorScheme.primary
                                         )
                                     }
                                 }
@@ -537,15 +543,15 @@ fun LocalModelDownloadSection(
                                     onClick = { viewModel.downloadModel(model.id) },
                                     modifier = Modifier.padding(top = 4.dp),
                                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                        containerColor = NothingRed,
-                                        contentColor = NothingBlack
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
                                     )
                                 ) {
                                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                         Icon(
                                             imageVector = Icons.Default.ArrowDownward,
                                             contentDescription = "Retry",
-                                            tint = NothingBlack,
+                                            tint = MaterialTheme.colorScheme.onPrimary,
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Text(
@@ -553,7 +559,7 @@ fun LocalModelDownloadSection(
                                             fontFamily = SpaceMonoFontFamily,
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = NothingBlack
+                                            color = MaterialTheme.colorScheme.onPrimary
                                         )
                                     }
                                 }

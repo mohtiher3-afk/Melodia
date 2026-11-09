@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
@@ -76,7 +77,7 @@ fun NtTopBar(label: String, modifier: Modifier = Modifier) {
     ) {
         Text(
             text = stringResource(R.string.app_name).uppercase(),
-            color = Nt.White,
+            color = MaterialTheme.colorScheme.onBackground,
             fontFamily = NothingDotMatrixFontFamily,
             fontSize = 22.sp,
             letterSpacing = 0.04.em
@@ -96,12 +97,13 @@ fun NtBottomNav(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = MaterialTheme.colorScheme
     Row(
         modifier
             .fillMaxWidth()
             .background(Nt.Black)
             .drawBehind {
-                drawRect(Nt.Border, size = Size(size.width, 1.dp.toPx()))
+                    drawRect(colors.outline, size = Size(size.width, 1.dp.toPx()))
             }
     ) {
         items.forEachIndexed { index, item ->
@@ -111,7 +113,7 @@ fun NtBottomNav(
                     .weight(1f)
                     .heightIn(min = 64.dp)
                     .drawBehind {
-                        if (selected) drawRect(Nt.Red, size = Size(size.width, 2.dp.toPx()))
+                        if (selected) drawRect(colors.primary, size = Size(size.width, 2.dp.toPx()))
                     }
                     .testTag(item.testTag)
                     .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(index) }),
@@ -122,13 +124,13 @@ fun NtBottomNav(
                     icon = item.icon,
                     contentDescription = null,
                     iconSize = 28.dp,
-                    tint = if (selected) Nt.White else Nt.Grey,
+                    tint = if (selected) colors.onSurface else colors.onSurfaceVariant,
                     animated = selected
                 )
                 Text(
                     text = item.label,
                     modifier = Modifier.padding(top = 6.dp),
-                    color = if (selected) Nt.White else Nt.Grey,
+                    color = if (selected) colors.onSurface else colors.onSurfaceVariant,
                     fontFamily = SpaceMonoFontFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = 10.sp,
@@ -155,12 +157,15 @@ fun NtAppShell(
     bottomExtra: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    CompositionLocalProvider(LocalContentColor provides Nt.White) {
+    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
         Column(
             modifier
                 .fillMaxSize()
-                .background(Nt.Black)
-                .dotGrid(spacing = 20.dp)
+                .background(MaterialTheme.colorScheme.background)
+                .dotGrid(
+                    spacing = 20.dp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
+                )
                 .statusBarsPadding()
         ) {
             if (scrollContent) {

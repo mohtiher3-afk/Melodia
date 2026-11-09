@@ -36,6 +36,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -411,6 +412,7 @@ fun NtStepIndicator(
     total: Int = 5,
     onSelectStep: ((Int) -> Unit)? = null
 ) {
+    val colors = MaterialTheme.colorScheme
     val reduced = rememberReducedMotion()
     val transition = rememberInfiniteTransition(label = "steps")
     val sweep by transition.animateFloat(
@@ -444,10 +446,10 @@ fun NtStepIndicator(
             ) {
                 Canvas(Modifier.fillMaxWidth().height(4.dp).clipToBounds()) {
                     val radius = CornerRadius(size.height / 2f)
-                    drawRoundRect(if (k < current) Nt.Red else Nt.Track, cornerRadius = radius)
+                    drawRoundRect(if (k < current) colors.primary else colors.surfaceVariant, cornerRadius = radius)
                     if (k == current) {
                         val x = size.width * (if (reduced) 0.25f else sweep)
-                        drawRoundRect(Nt.Red, Offset(x, 0f), Size(size.width * 0.5f, size.height), radius)
+                        drawRoundRect(colors.primary, Offset(x, 0f), Size(size.width * 0.5f, size.height), radius)
                     }
                 }
             }
