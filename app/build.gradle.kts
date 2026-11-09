@@ -10,7 +10,9 @@ plugins {
 
 android {
   namespace = "com.example"
-  compileSdk { version = release(36) { minorApiLevel = 1 } }
+  compileSdk {
+    version = release(37)
+  }
 
   defaultConfig {
       applicationId = "com.aistudio.melodia.nothing"
@@ -152,7 +154,9 @@ dependencies {
     implementation(libs.mediapipeImageGenerator)
   // implementation(libs.play.services.location)
   implementation(libs.retrofit)
+  testImplementation(platform(libs.androidx.compose.bom))
   testImplementation(libs.androidx.compose.ui.test.junit4)
+  testImplementation(libs.androidx.compose.material.icons.extended)
   testImplementation(libs.androidx.core)
   testImplementation(libs.androidx.junit)
   testImplementation(libs.junit)

@@ -26,12 +26,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Forward10
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material3.Icon
@@ -53,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -119,40 +117,35 @@ fun FloatingPlayerBar(
                 ) {
                     // Cover Art & Title
                     Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         NothingCoverArt(
                             title = title,
-                            genre = artist,
+                            genre = "",
                             imagePath = coverPath,
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(RoundedCornerShape(21.dp))
+                            modifier = Modifier.size(42.dp),
+                            testTag = "floating_player_cover_art"
                         )
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.GraphicEq,
-                                    contentDescription = null,
-                                    tint = if (isPlaying) NothingRed else NothingGrey,
-                                    modifier = Modifier.size(12.dp)
-                                )
-                                Text(
-                                    text = title,
-                                    fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = NothingWhite,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = title,
+                                fontFamily = SpaceMonoFontFamily,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = NothingWhite,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                             Text(
                                 text = artist,
                                 fontFamily = SpaceMonoFontFamily,
@@ -163,41 +156,24 @@ fun FloatingPlayerBar(
                             )
                         }
                     }
-
-                    // Playback Controls
+                    // Controls - Play/Pause and Close
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         IconButton(
-                            onClick = { audioPlayerManager.restartTrack() },
+                            onClick = { audioPlayerManager.pauseAudio() },
                             modifier = Modifier
                                 .size(32.dp)
                                 .clip(CircleShape)
                                 .background(NothingBlack)
-                                .testTag("floating_restart_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Replay,
-                                contentDescription = "Restart Track",
-                                tint = NothingWhite,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-
-                        IconButton(
-                            onClick = { audioPlayerManager.pauseAudio() },
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(NothingRed)
                                 .testTag("floating_play_pause_button")
                         ) {
-                            Icon(
-                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            DotMatrixIcon(
+                                icon = if (isPlaying) DotIcon.PAUSE else DotIcon.PLAY,
                                 contentDescription = if (isPlaying) "Pause" else "Play",
+                                size = 20.dp,
                                 tint = NothingWhite,
-                                modifier = Modifier.size(20.dp)
+                                animated = isPlaying
                             )
                         }
 
@@ -209,32 +185,32 @@ fun FloatingPlayerBar(
                                 .background(NothingBlack)
                                 .testTag("floating_close_button")
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
+                            DotMatrixIcon(
+                                icon = DotIcon.CLOSE,
                                 contentDescription = "Close Player",
-                                tint = NothingGrey,
-                                modifier = Modifier.size(16.dp)
+                                size = 16.dp,
+                                tint = NothingGrey
                             )
                         }
                     }
                 }
             }
         }
-    }
 
-    if (showExpandedPlayer) {
-        ExpandedPlayerSheet(
-            title = title,
-            artist = artist,
-            lyrics = lyrics,
-            coverPath = coverPath,
-            isPlaying = isPlaying,
-            currentPosition = currentPosition,
-            duration = duration,
-            onTogglePlay = { audioPlayerManager.pauseAudio() },
-            onSeekTo = { ms -> audioPlayerManager.seekTo(ms) },
-            onDismiss = { showExpandedPlayer = false }
-        )
+        if (showExpandedPlayer) {
+            ExpandedPlayerSheet(
+                title = title,
+                artist = artist,
+                lyrics = lyrics,
+                coverPath = coverPath,
+                isPlaying = isPlaying,
+                currentPosition = currentPosition,
+                duration = duration,
+                onTogglePlay = { audioPlayerManager.pauseAudio() },
+                onSeekTo = { pos -> audioPlayerManager.seekTo(pos) },
+                onDismiss = { showExpandedPlayer = false }
+            )
+        }
     }
 }
 
@@ -243,7 +219,7 @@ fun ExpandedPlayerSheet(
     title: String,
     artist: String,
     lyrics: String,
-    coverPath: String?,
+    coverPath: String? = null,
     isPlaying: Boolean,
     currentPosition: Int,
     duration: Int,
@@ -251,26 +227,17 @@ fun ExpandedPlayerSheet(
     onSeekTo: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var isDraggingSlider by remember { mutableStateOf(false) }
-    var sliderValue by remember { mutableFloatStateOf(0f) }
-
-    val effectivePosition = if (isDraggingSlider) sliderValue.toInt() else currentPosition
-    val progress = if (duration > 0) (effectivePosition.toFloat() / duration).coerceIn(0f, 1f) else 0f
-
-    val lines = remember(lyrics) {
-        lyrics.lines().filter { it.isNotBlank() }
-    }
-
-    // Determine active lyric index based on current playback progress
-    val activeLineIndex = remember(progress, lines.size) {
-        if (lines.isEmpty()) 0
-        else ((progress * lines.size).toInt()).coerceIn(0, lines.size - 1)
-    }
-
     val lazyListState = rememberLazyListState()
+    val lines = remember(lyrics) {
+        if (lyrics.isBlank()) emptyList()
+        else lyrics.split("\n").filter { it.isNotBlank() }
+    }
+    val progress = if (duration > 0) (currentPosition.toFloat() / duration).coerceIn(0f, 1f) else 0f
+    val activeLineIndex = if (lines.isEmpty()) 0
+    else ((progress * lines.size).toInt()).coerceIn(0, lines.size - 1)
 
-    LaunchedEffect(activeLineIndex) {
-        if (lines.isNotEmpty()) {
+    LaunchedEffect(activeLineIndex, lazyListState) {
+        if (lines.isNotEmpty() && activeLineIndex > 2) {
             lazyListState.animateScrollToItem((activeLineIndex - 2).coerceAtLeast(0))
         }
     }
@@ -308,11 +275,11 @@ fun ExpandedPlayerSheet(
                             .background(NothingCardSurface)
                             .testTag("close_expanded_player_button")
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowDown,
+                        DotMatrixIcon(
+                            icon = DotIcon.CLOSE,
                             contentDescription = "Minimize",
-                            tint = NothingWhite,
-                            modifier = Modifier.size(22.dp)
+                            size = 22.dp,
+                            tint = NothingWhite
                         )
                     }
 
@@ -328,102 +295,143 @@ fun ExpandedPlayerSheet(
                         Text(
                             text = "MELODIA v3 AUDIO SYNTHESIS",
                             fontFamily = SpaceMonoFontFamily,
-                            fontSize = 11.sp,
-                            color = NothingGrey
+                            fontSize = 8.sp,
+                            color = NothingGrey,
+                            letterSpacing = 1.sp
                         )
                     }
 
                     Spacer(modifier = Modifier.size(36.dp))
                 }
 
-                // Syncing Audio Waveform Visualizer with Playback State & Scrubbing
-                SyncingAudioWaveformView(
-                    isPlaying = isPlaying,
-                    currentPosition = currentPosition,
-                    duration = duration,
-                    onSeek = { ms -> onSeekTo(ms) },
+                // Album Art
+                NothingCoverArt(
+                    title = title,
+                    genre = "",
+                    imagePath = coverPath,
                     modifier = Modifier
+                        .height(240.dp)
                         .fillMaxWidth()
-                        .height(110.dp)
+                        .clip(RoundedCornerShape(20.dp)),
+                    testTag = "expanded_player_cover_art"
                 )
 
-                // Track Cover Art & Metadata
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(NothingCardSurface)
-                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
-                        .padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                // Title & Artist
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    NothingCoverArt(
-                        title = title,
-                        genre = artist,
-                        imagePath = coverPath,
-                        modifier = Modifier.size(76.dp)
+                    Text(
+                        text = title,
+                        fontFamily = SpaceMonoFontFamily,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = NothingWhite,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = artist,
+                        fontFamily = SpaceMonoFontFamily,
+                        fontSize = 12.sp,
+                        color = NothingGrey,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
 
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = title,
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = NothingWhite,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = artist,
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 12.sp,
-                            color = NothingGrey
-                        )
+                // Lyrics
+                if (lines.isNotEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(110.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(NothingCardSurface)
+                            .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                            .padding(14.dp),
+                        contentAlignment = Alignment.TopStart
+                    ) {
+                        LazyColumn(
+                            state = lazyListState,
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            itemsIndexed(lines) { index, line ->
+                                val isActive = index == activeLineIndex
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = line,
+                                        fontFamily = SpaceMonoFontFamily,
+                                        fontSize = 14.sp,
+                                        color = if (isActive) NothingWhite else NothingGrey,
+                                        fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    if (isActive) {
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(NothingRed.copy(alpha = 0.2f))
+                                                .border(1.dp, NothingRed, RoundedCornerShape(6.dp))
+                                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        ) {
+                                            Text(
+                                                text = "ACTIVE",
+                                                fontFamily = SpaceMonoFontFamily,
+                                                fontSize = 8.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = NothingRed,
+                                                letterSpacing = 1.sp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
-                // Seek Bar & Duration
+                // Progress Bar
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(NothingCardSurface)
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .padding(horizontal = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Slider(
-                        value = if (isDraggingSlider) sliderValue else currentPosition.toFloat(),
-                        onValueChange = {
-                            isDraggingSlider = true
-                            sliderValue = it
-                        },
-                        onValueChangeFinished = {
-                            isDraggingSlider = false
-                            onSeekTo(sliderValue.toInt())
-                        },
-                        valueRange = 0f..duration.coerceAtLeast(1000).toFloat(),
+                        value = progress,
+                        onValueChange = { onSeekTo((it * duration).toInt()) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp),
                         colors = SliderDefaults.colors(
                             thumbColor = NothingRed,
                             activeTrackColor = NothingRed,
-                            inactiveTrackColor = NothingDarkGrey
+                            inactiveTrackColor = NothingGrey.copy(alpha = 0.3f)
                         ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("player_seek_bar")
+                        valueRange = 0f..duration.coerceAtLeast(1000).toFloat()
                     )
-
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = formatMs(effectivePosition),
+                            text = formatMs(currentPosition),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 11.sp,
-                            color = NothingWhite,
-                            fontWeight = FontWeight.Bold
+                            color = NothingGrey
                         )
                         Text(
                             text = formatMs(duration),
@@ -434,157 +442,63 @@ fun ExpandedPlayerSheet(
                     }
                 }
 
-                // Main Playback Controls
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = { onSeekTo((currentPosition - 10000).coerceAtLeast(0)) },
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(NothingCardSurface)
-                            .testTag("rewind_10s_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Replay10,
-                            contentDescription = "Rewind 10s",
-                            tint = NothingWhite,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onTogglePlay,
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape)
-                            .background(NothingRed)
-                            .testTag("main_play_pause_button")
-                    ) {
-                        Icon(
-                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (isPlaying) "Pause" else "Play",
-                            tint = NothingWhite,
-                            modifier = Modifier.size(36.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = { onSeekTo((currentPosition + 10000).coerceAtMost(duration)) },
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(NothingCardSurface)
-                            .testTag("forward_10s_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Forward10,
-                            contentDescription = "Forward 10s",
-                            tint = NothingWhite,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-
-                // Live Synchronized Lyrics Section
+                // Controls
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(240.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(NothingCardSurface)
-                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
-                        .padding(14.dp)
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "LIVE SYNCHRONIZED LYRICS",
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = NothingRed,
-                            letterSpacing = 1.sp
-                        )
-                        Box(
+                        IconButton(
+                            onClick = { onSeekTo((currentPosition - 10000).coerceAtLeast(0)) },
                             modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(NothingRed.copy(alpha = 0.2f))
-                                .border(1.dp, NothingRed, RoundedCornerShape(6.dp))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(NothingCardSurface)
+                                .testTag("rewind_10s_button")
                         ) {
-                            Text(
-                                text = "REALTIME SYNC",
-                                fontFamily = SpaceMonoFontFamily,
-                                fontSize = 8.sp,
-                                color = NothingRed,
-                                fontWeight = FontWeight.Bold
+                            Icon(
+                                imageVector = Icons.Default.Replay10,
+                                contentDescription = "Rewind 10s",
+                                tint = NothingWhite,
+                                modifier = Modifier.size(24.dp)
                             )
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    if (lines.isEmpty()) {
-                        Text(
-                            text = lyrics.ifBlank { "No lyrics recorded for this track." },
-                            fontSize = 13.sp,
-                            color = NothingGrey
-                        )
-                    } else {
-                        LazyColumn(
-                            state = lazyListState,
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxSize()
+                        IconButton(
+                            onClick = onTogglePlay,
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(CircleShape)
+                                .background(NothingBlack)
+                                .border(2.dp, NothingRed, CircleShape)
+                                .testTag("main_play_pause_button")
                         ) {
-                            itemsIndexed(lines) { idx, line ->
-                                val isCurrent = isPlaying && idx == activeLineIndex
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(if (isCurrent) NothingDarkGrey else Color.Transparent)
-                                        .border(
-                                            1.dp,
-                                            if (isCurrent) NothingRed else Color.Transparent,
-                                            RoundedCornerShape(10.dp)
-                                        )
-                                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = line,
-                                        fontSize = 14.sp,
-                                        fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isCurrent) NothingWhite else NothingGrey,
-                                        modifier = Modifier.weight(1f)
-                                    )
+                            DotMatrixIcon(
+                                icon = if (isPlaying) DotIcon.PAUSE else DotIcon.PLAY,
+                                contentDescription = if (isPlaying) "Pause" else "Play",
+                                size = 36.dp,
+                                tint = NothingWhite,
+                                animated = isPlaying
+                            )
+                        }
 
-                                    if (isCurrent) {
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(6.dp))
-                                                .background(NothingRed)
-                                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                                        ) {
-                                            Text(
-                                                text = "ACTIVE",
-                                                fontFamily = SpaceMonoFontFamily,
-                                                fontSize = 8.sp,
-                                                color = NothingWhite,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                        IconButton(
+                            onClick = { onSeekTo((currentPosition + 10000).coerceAtMost(duration)) },
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(NothingCardSurface)
+                                .testTag("forward_10s_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Forward10,
+                                contentDescription = "Forward 10s",
+                                tint = NothingWhite,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
                     }
                 }
