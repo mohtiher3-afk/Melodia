@@ -17,4 +17,38 @@
     <string name="player_live_lyrics">LIVE SYNCHRONIZED LYRICS</string>
     <string name="player_realtime_sync">REALTIME SYNC</string>
     <string name="player_state_active">ACTIVE</string>
+
+    <!-- Settings screen (SettingsScreen) -->
+    <string name="settings_header_kicker">CONFIG // SYSTEM</string>
+    <string name="settings_title">Melodia Studio Settings</string>
+    <string name="settings_gemini_api_key_label">Cloud Gemini API Key</string>
+    <string name="settings_provider_help">Nano runs on-device on supported phones (AICore may download its model once). Gemma 3 runs fully offline after a Settings download. Cloud options may have quotas or charges:</string>
+    <string name="settings_model_downloads_help">Download free, open-source AI models directly to this device. No API keys, no cloud. Each model downloads with one tap.</string>
+    <string name="settings_allow_cloud_transcription">Allow Gemini cloud transcription</string>
+    <string name="settings_floating_playback_controls">Floating playback controls</string>
+    <string name="settings_timing_format_help">Select default timing format when exporting synced lyrics:</string>
+    <string name="settings_about_title">Melodia v3.2 Text-First Lyric Studio</string>
+    <string name="settings_about_body">// Gemini Nano lyrics on supported phones\n// Cloud audio transcription is OFF by default\n// Local Whisper and image-diffusion models are pending</string>
+
+    <!-- Local model download states & actions (SettingsScreen) -->
+    <string name="model_state_ready">READY</string>
+    <string name="model_state_paused">PAUSED: %1$s / %2$s</string>
+    <string name="model_state_failed">FAILED: %1$s</string>
+    <string name="model_action_download">DOWNLOAD</string>
+    <string name="model_action_pause">PAUSE</string>
+    <string name="model_action_resume">RESUME</string>
+    <string name="model_action_retry">RETRY</string>
+    <string name="model_action_remove">Remove</string>
+    <string name="model_size_format">Size: %1$s</string>
+    <string name="model_download_progress">%1$s%% • %2$s / %3$s</string>
+
+    <!-- Video exporter screen (VideoExporterScreen) -->
+    <string name="exporter_header_kicker">EXPORT // LYRIC VIDEO STUDIO</string>
+    <string name="exporter_title">Hardware MP4 Video Exporter</string>
+    <string name="exporter_no_draft">NO ACTIVE SONG DRAFT // CREATE LYRICS FIRST IN STUDIO</string>
+    <string name="exporter_bitrate_label">BITRATE</string>
+    <string name="exporter_bitrate_mbps">%1$s Mbps</string>
+    <string name="exporter_share_video">SHARE VIDEO</string>
+    <string name="exporter_complete_title">EXPORT COMPLETE</string>
+    <string name="exporter_complete_default">Lyric video exported</string>
 </resources>

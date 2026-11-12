@@ -29,6 +29,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -79,7 +81,7 @@ fun VideoExporterScreen(
         // Header
         Column {
             Text(
-                text = "EXPORT // LYRIC VIDEO STUDIO",
+                text = stringResource(R.string.exporter_header_kicker),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 11.sp,
                 color = NothingRed,
@@ -87,7 +89,7 @@ fun VideoExporterScreen(
                 letterSpacing = 2.sp
             )
             Text(
-                text = "Hardware MP4 Video Exporter",
+                text = stringResource(R.string.exporter_title),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
@@ -105,7 +107,7 @@ fun VideoExporterScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "NO ACTIVE SONG DRAFT // CREATE LYRICS FIRST IN STUDIO",
+                    text = stringResource(R.string.exporter_no_draft),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 12.sp,
                     color = NothingGrey
@@ -161,7 +163,7 @@ fun VideoExporterScreen(
 
                 // Bitrate selector (F-6: was hardcoded at 12 Mbps with no UI)
                 Text(
-                    text = "BITRATE",
+                    text = stringResource(R.string.exporter_bitrate_label),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 10.sp,
                     color = NothingGrey
@@ -183,7 +185,7 @@ fun VideoExporterScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "$mbps Mbps",
+                                text = stringResource(R.string.exporter_bitrate_mbps, mbps),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
@@ -250,6 +252,30 @@ fun VideoExporterScreen(
             }
         }
 
+        // Export complete state (was invisible: the progress card vanished on
+        // completion and the Share button appearing was the only cue)
+        val outputFilePath = exportProgress.outputFilePath
+        val exportFinished = !exportProgress.isExporting &&
+            outputFilePath != null && File(outputFilePath).exists()
+        if (exportFinished) {
+            GlyphCard(headerTitle = stringResource(R.string.exporter_complete_title)) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = exportProgress.statusText.ifBlank { stringResource(R.string.exporter_complete_default) },
+                        fontFamily = SpaceMonoFontFamily,
+                        fontSize = 12.sp,
+                        color = NothingRed
+                    )
+                    Text(
+                        text = File(outputFilePath).name,
+                        fontFamily = SpaceMonoFontFamily,
+                        fontSize = 10.sp,
+                        color = NothingGrey
+                    )
+                }
+            }
+        }
+
         // Export Action Button (guarded: one encode at a time — double MediaCodec
         // encodes would race on the muxer and corrupt output)
         NothingPillButton(
@@ -268,10 +294,9 @@ fun VideoExporterScreen(
         )
 
         // Share the finished export (F-6: result was previously unreachable outside app cache)
-        val outputFilePath = exportProgress.outputFilePath
-        if (!exportProgress.isExporting && outputFilePath != null && File(outputFilePath).exists()) {
+        if (exportFinished) {
             NothingPillButton(
-                text = "SHARE VIDEO",
+                text = stringResource(R.string.exporter_share_video),
                 onClick = {
                     try {
                         val videoUri = FileProvider.getUriForFile(

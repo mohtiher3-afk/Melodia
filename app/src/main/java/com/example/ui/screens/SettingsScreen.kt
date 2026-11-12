@@ -39,6 +39,8 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -105,7 +107,7 @@ fun SettingsScreen(
         // Header
         Column {
             Text(
-                text = "CONFIG // SYSTEM",
+                text = stringResource(R.string.settings_header_kicker),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 11.sp,
                 color = NothingRed,
@@ -113,7 +115,7 @@ fun SettingsScreen(
                 letterSpacing = 2.sp
             )
             Text(
-                text = "Melodia Studio Settings",
+                text = stringResource(R.string.settings_title),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
@@ -140,7 +142,7 @@ fun SettingsScreen(
                     )
                     Column {
                         Text(
-                            text = "Cloud Gemini API Key",
+                            text = stringResource(R.string.settings_gemini_api_key_label),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
@@ -167,7 +169,7 @@ fun SettingsScreen(
         GlyphCard(headerTitle = "LLM PROVIDER") {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "Nano runs on-device on supported phones (AICore may download its model once). Gemma 3 runs fully offline after a Settings download. Cloud options may have quotas or charges:",
+                    text = stringResource(R.string.settings_provider_help),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 12.sp,
                     color = NothingGrey
@@ -233,7 +235,7 @@ fun SettingsScreen(
                         GlyphCard(headerTitle = "LOCAL MODEL DOWNLOADS") {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(
-                                    text = "Download free, open-source AI models directly to this device. No API keys, no cloud. Each model downloads with one tap.",
+                                    text = stringResource(R.string.settings_model_downloads_help),
                                     fontFamily = SpaceMonoFontFamily,
                                     fontSize = 11.sp,
                                     color = NothingGrey
@@ -251,7 +253,7 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                     Text(
-                        text = "Allow Gemini cloud transcription",
+                        text = stringResource(R.string.settings_allow_cloud_transcription),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
@@ -279,7 +281,7 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                     Text(
-                        text = "Floating playback controls",
+                        text = stringResource(R.string.settings_floating_playback_controls),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
@@ -321,7 +323,7 @@ fun SettingsScreen(
         GlyphCard(headerTitle = "DEFAULT TIMING EXPORT FORMAT") {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "Select default timing format when exporting synced lyrics:",
+                    text = stringResource(R.string.settings_timing_format_help),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 12.sp,
                     color = NothingGrey
@@ -362,14 +364,14 @@ fun SettingsScreen(
         GlyphCard(headerTitle = "MELODIA STUDIO ARCHITECTURE") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = "Melodia v3.2 Text-First Lyric Studio",
+                    text = stringResource(R.string.settings_about_title),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = NothingWhite
                 )
                 Text(
-                    text = "// Gemini Nano lyrics on supported phones\n// Cloud audio transcription is OFF by default\n// Local Whisper and image-diffusion models are pending",
+                    text = stringResource(R.string.settings_about_body),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 11.sp,
                     color = NothingGrey
@@ -436,14 +438,14 @@ fun LocalModelDownloadSection(
                                                                                                 modifier = Modifier.size(18.dp)
                                                                                             )
                                                                                             Text(
-                                                                                                text = "READY",
+                                                                                                text = stringResource(R.string.model_state_ready),
                                                                                                 fontFamily = SpaceMonoFontFamily,
                                                                                                 fontSize = 12.sp,
                                                                                                 fontWeight = FontWeight.Bold,
                                                                                                 color = NothingRed
                                                                                             )
                                                                                             Text(
-                                                                                                text = "Remove",
+                                                                                                text = stringResource(R.string.model_action_remove),
                                                                                                 fontFamily = SpaceMonoFontFamily,
                                                                                                 fontSize = 10.sp,
                                                                                                 color = NothingGrey,
@@ -458,7 +460,7 @@ fun LocalModelDownloadSection(
                                                                                         horizontalArrangement = Arrangement.SpaceBetween
                                                                                     ) {
                                                                                         Text(
-                                                                                            text = "Size: ${LocalModelManager.formatBytes(model.expectedSizeBytes)}",
+                                                                                            text = stringResource(R.string.model_size_format, LocalModelManager.formatBytes(model.expectedSizeBytes)),
                                                                                             fontFamily = SpaceMonoFontFamily,
                                                                                             fontSize = 10.sp,
                                                                                             color = NothingGrey
@@ -479,7 +481,7 @@ fun LocalModelDownloadSection(
                                                                                                     modifier = Modifier.size(16.dp)
                                                                                                 )
                                                                                                 Text(
-                                                                                                    text = "DOWNLOAD",
+                                                                                                    text = stringResource(R.string.model_action_download),
                                                                                                     fontFamily = SpaceMonoFontFamily,
                                                                                                     fontSize = 11.sp,
                                                                                                     fontWeight = FontWeight.Bold,
@@ -504,13 +506,13 @@ fun LocalModelDownloadSection(
                                                                                                                     horizontalArrangement = Arrangement.SpaceBetween
                                                                                                                 ) {
                                                                                                                     Text(
-                                                                                                                        text = "${(state.progress * 100).toInt()}% • ${LocalModelManager.formatBytes(state.downloadedBytes)} / ${LocalModelManager.formatBytes(state.totalBytes)}",
+                                                                                                                        text = stringResource(R.string.model_download_progress, (state.progress * 100).toInt().toString(), LocalModelManager.formatBytes(state.downloadedBytes), LocalModelManager.formatBytes(state.totalBytes)),
                                                                                                                         fontFamily = SpaceMonoFontFamily,
                                                                                                                         fontSize = 10.sp,
                                                                                                                         color = NothingGrey
                                                                                                                     )
                                                                                                                     Text(
-                                                                                                                        text = "PAUSE",
+                                                                                                                        text = stringResource(R.string.model_action_pause),
                                                                                                                         fontFamily = SpaceMonoFontFamily,
                                                                                                                         fontSize = 10.sp,
                                                                                                                         color = NothingGrey,
@@ -536,14 +538,14 @@ fun LocalModelDownloadSection(
                                                                 modifier = Modifier.size(18.dp)
                                                             )
                                                             Text(
-                                                                text = "READY",
+                                                                text = stringResource(R.string.model_state_ready),
                                                                 fontFamily = SpaceMonoFontFamily,
                                                                 fontSize = 12.sp,
                                                                 fontWeight = FontWeight.Bold,
                                                                 color = NothingRed
                                                             )
                                                             Text(
-                                                                text = "Remove",
+                                                                text = stringResource(R.string.model_action_remove),
                                                                 fontFamily = SpaceMonoFontFamily,
                                                                 fontSize = 10.sp,
                                                                 color = NothingGrey,
@@ -560,7 +562,7 @@ fun LocalModelDownloadSection(
                                                                                                     ) {
                                                                                                         Column(modifier = Modifier.weight(1f)) {
                                                                                                             Text(
-                                                                                                                text = "PAUSED: ${LocalModelManager.formatBytes(state.downloadedBytes)} / ${LocalModelManager.formatBytes(state.totalBytes)}",
+                                                                                                                text = stringResource(R.string.model_state_paused, LocalModelManager.formatBytes(state.downloadedBytes), LocalModelManager.formatBytes(state.totalBytes)),
                                                                                                                 fontFamily = SpaceMonoFontFamily,
                                                                                                                 fontSize = 10.sp,
                                                                                                                 color = NothingGrey
@@ -582,7 +584,7 @@ fun LocalModelDownloadSection(
                                                                                                                     modifier = Modifier.size(16.dp)
                                                                                                                 )
                                                                                                                 Text(
-                                                                                                                    text = "RESUME",
+                                                                                                                    text = stringResource(R.string.model_action_resume),
                                                                                                                     fontFamily = SpaceMonoFontFamily,
                                                                                                                     fontSize = 11.sp,
                                                                                                                     fontWeight = FontWeight.Bold,
@@ -610,7 +612,7 @@ fun LocalModelDownloadSection(
                                                                                                                                             modifier = Modifier.size(16.dp)
                                                                                                                                         )
                                                                                                                                         Text(
-                                                                                                                                            text = "FAILED: ${state.error}",
+                                                                                                                                            text = stringResource(R.string.model_state_failed, state.error),
                                                                                                                                             fontFamily = SpaceMonoFontFamily,
                                                                                                                                             fontSize = 10.sp,
                                                                                                                                             color = NothingRed
@@ -633,7 +635,7 @@ fun LocalModelDownloadSection(
                                                                                                                                             modifier = Modifier.size(16.dp)
                                                                                                                                         )
                                                                                                                                         Text(
-                                            text = "RETRY",
+                                            text = stringResource(R.string.model_action_retry),
                                             fontFamily = SpaceMonoFontFamily,
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
