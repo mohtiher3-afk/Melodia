@@ -132,7 +132,9 @@ Gemini Nano remains unverified until a physical device is available (checklist a
 - MusicEngine log noise: the 4 `Log.e(TAG, …, e)` sites that rethrow now log `Log.w` with the message only (the caller owns the failure); the 2 sites that swallow the exception (JSON parse, transcription) keep the stack — the only diagnostic — but downgrade to `Log.w`. Same rule as Stage G.
 - i18n slice 6: all 10 conditional `text = if/when` UI sites extracted to 18 new resources (`studio_drafting_lyrics`, `studio_polishing`, `studio_generate_prompt`, `studio_header_*`, `studio_autosave_*`, `lyrics_writing`, `lyrics_generate`, `player_play`, `wave_*`, `rhyme_*`, `settings_gemini_*_note`, `settings_cloud_transcription_*`, `settings_island_*`); shared strings reused (`queue_create_lyrics`, `model_action_pause`). Verified on the emulator: CREATE LYRICS / GENERATE PROMPT / Auto-save is on / Text only render identically from resources.
 
-**Still hardcoded (documented, not hidden):** user-visible status/error message strings in `MelodiaViewModel` (~54 sites), genre/mood option lists in `GenreSelection`, and assorted dialog strings. These are runtime-composed messages, many parameterized — a separate slice if wanted.
+**Still hardcoded (documented, not hidden):** genre/mood option lists in `GenreSelection` (content labels), data defaults (genre/mood/language names), and assorted dialog strings.
+
+**i18n slice 7 (same day):** all 67 user-visible status/feedback message sites in `MelodiaViewModel` extracted to 71 `status_*` resources with placeholders; ViewModel uses a `s(id, args)` helper (`getApplication().getString`) since Compose `stringResource` is unavailable outside composables. Live-verified on the emulator: parameterized strings render correctly through a full Gemma 3 generation cycle ("Creating lyrics with Gemma 3 1B (Local)…" → "Lyrics ready: Crimson Echoes").
 
 ## Physical-device verification — Redmi Note 13 Pro 5G (2026-11-12)
 
