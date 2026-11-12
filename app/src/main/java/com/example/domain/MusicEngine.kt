@@ -13,6 +13,7 @@ import com.example.network.GeneratedSongDraft
 import com.example.network.LyricSection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import org.json.JSONObject
 
 data class PromptPolishResult(
@@ -106,7 +107,7 @@ object MusicEngine {
             val provider = com.example.network.llm.LlmProviderFactory.create(providerId, appContext)
             if (provider.checkReady()) {
                 val tags = provider.generate("Prompt: '$polishedPrompt'", systemPrompt, 0.5f, 250)
-                    .text.split(",").map { it.trim().lowercase() }.filter { it.isNotBlank() }
+                    .text.split(",").map { it.trim().lowercase(Locale.ROOT) }.filter { it.isNotBlank() }
                 if (tags.isNotEmpty()) return@withContext tags
             }
         } catch (e: Exception) {
@@ -243,7 +244,7 @@ object MusicEngine {
                     tags.add(tagsArray.getString(i))
                 }
             } else {
-                tags.addAll(listOf(genre.lowercase(), mood.lowercase(), "melodic"))
+                tags.addAll(listOf(genre.lowercase(Locale.ROOT), mood.lowercase(Locale.ROOT), "melodic"))
             }
             val lyrics = obj.optString("lyrics", "[Verse 1]\nEchoes in the dark...")
             val sections = parseLyricsIntoSections(lyrics)

@@ -47,6 +47,7 @@ import com.example.ui.theme.NothingOffWhite
 import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingWhite
 import com.example.ui.theme.SpaceMonoFontFamily
+import java.util.Locale
 
 @Composable
 fun LocalAudioPlayer(
@@ -150,13 +151,13 @@ fun LocalAudioPlayer(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = String.format("%02d:%02d", currentSec / 60, currentSec % 60),
+                text = String.format(Locale.US, "%02d:%02d", currentSec / 60, currentSec % 60),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 10.sp,
                 color = NothingWhite
             )
             Text(
-                text = String.format("%02d:%02d", durationSec / 60, durationSec % 60),
+                text = String.format(Locale.US, "%02d:%02d", durationSec / 60, durationSec % 60),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 10.sp,
                 color = NothingGrey

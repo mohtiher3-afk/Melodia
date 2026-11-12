@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.nio.ByteOrder
+import java.util.Locale
 
 /** Result of a Whisper transcription attempt, distinct from the outer Result<KaraokeLyrics>. */
 private sealed interface WhisperResult<out T> {
@@ -39,7 +40,7 @@ object LocalWhisperEngine {
             // Keep letters/marks/digits (Arabic and Latin) and whitespace only, so that
             // Arabic punctuation such as ، ؛ ؟ is stripped too.
             .replace(Regex("[^\\p{L}\\p{M}\\p{N}\\s]"), "")
-            .lowercase()
+            .lowercase(Locale.ROOT)
             .trim()
     }
 
@@ -277,7 +278,7 @@ object LocalWhisperEngine {
         try {
             val jsonObj = JSONObject(json)
             val wordsArray = jsonObj.getJSONArray("words")
-            val expectedWords = extractAlignableWords(expectedLyrics).map { it.display.lowercase() }
+            val expectedWords = extractAlignableWords(expectedLyrics).map { it.display.lowercase(Locale.ROOT) }
 
             if (wordsArray.length() == 0) {
                 return alignLyricsWithAudioHeuristicFallback(expectedLyrics)
@@ -382,7 +383,7 @@ object LocalWhisperEngine {
             // Look ahead up to 5 tokens for the best fuzzy match
             val searchEnd = minOf(tokenIdx + 5, tokens.size)
             for (i in tokenIdx until searchEnd) {
-                val tokenText = tokens[i].text.lowercase().trim()
+                val tokenText = tokens[i].text.lowercase(Locale.ROOT).trim()
                 if (tokenText.isEmpty()) continue
 
                 val score = similarity(expected, tokenText)

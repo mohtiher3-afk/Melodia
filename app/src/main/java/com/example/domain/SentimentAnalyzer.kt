@@ -3,6 +3,7 @@ package com.example.domain
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import org.json.JSONObject
 
 data class SentimentResult(
@@ -56,7 +57,7 @@ object SentimentAnalyzer {
         }
 
         // Heuristic fallback sentiment analysis
-        val lower = lyrics.lowercase()
+        val lower = lyrics.lowercase(Locale.ROOT)
         val joyWords = listOf("hope", "light", "smile", "joy", "sun", "أمل", "نور", "فرح", "سعادة")
         val energyWords = listOf("fire", "burn", "run", "fast", "night", "neon", "شعلة", "نار", "سرعة")
         val melancholyWords = listOf("rain", "tear", "alone", "dark", "shadow", "حزن", "دموع", "وحدة", "ظلام")
@@ -91,7 +92,7 @@ object SentimentAnalyzer {
     }
 
     fun getWordSentimentColor(word: String): androidx.compose.ui.graphics.Color {
-        val w = word.lowercase().trim()
+        val w = word.lowercase(Locale.ROOT).trim()
         val joy = listOf("hope", "light", "smile", "joy", "sun", "free", "أمل", "نور", "فرح", "حرية")
         val energy = listOf("fire", "burn", "run", "fast", "night", "neon", "beat", "شعلة", "نار", "سرعة", "نبض")
         val melancholy = listOf("rain", "tear", "alone", "dark", "shadow", "cold", "حزن", "دموع", "وحدة", "ظلام", "برد")
