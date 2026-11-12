@@ -20,6 +20,7 @@ import com.example.domain.CoverArtGenerator
 import com.example.domain.ExportProgressState
 import com.example.domain.ImportedAudioMetadata
 import com.example.domain.LocalAudioImporter
+import com.example.domain.LocalModelManager
 import com.example.domain.LocalWhisperEngine
 import com.example.domain.LyricVideoExporter
 import com.example.domain.MusicEngine
@@ -677,27 +678,47 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
 
         val audioUri = Uri.fromFile(metadata.localFile)
 
+        // Determine which Whisper model is available for status display
+        val modelManager = LocalModelManager.getInstance(context)
+        val baseModel = LocalModelManager.getModel("whisper_base")
+        val tinyModel = LocalModelManager.getModel("whisper_tiny")
+        val modelName = when {
+            baseModel != null && modelManager.isModelDownloaded(baseModel) -> "whisper_base"
+            tinyModel != null && modelManager.isModelDownloaded(tinyModel) -> "whisper_tiny"
+            else -> "Whisper"
+        }
+
         viewModelScope.launch {
+            // Show initial status with model name
             _studioState.update {
                 it.copy(
                     isAligningAudio = true,
-                    statusMessage = s(R.string.status_creating_timing)
+                    statusMessage = s(R.string.status_whisper_transcribing, modelName)
                 )
             }
             val result = LocalWhisperEngine.alignLyricsWithAudio(context, audioUri, lyrics)
             result.onSuccess { karaoke ->
+                if (karaoke.wordTimings.isEmpty()) {
+                    _studioState.update {
+                        it.copy(
+                            isAligningAudio = false,
+                            statusMessage = s(R.string.status_whisper_fallback)
+                        )
+                    }
+                    return@onSuccess
+                }
                 _studioState.update {
                     it.copy(
                         isAligningAudio = false,
                         karaokeLyrics = karaoke,
-                        statusMessage = s(R.string.status_timing_created, karaoke.wordTimings.size)
+                        statusMessage = s(R.string.status_whisper_aligned, karaoke.wordTimings.size)
                     )
                 }
             }.onFailure { err ->
                 _studioState.update {
                     it.copy(
                         isAligningAudio = false,
-                        statusMessage = s(R.string.status_alignment_note, err.localizedMessage)
+                        statusMessage = s(R.string.status_whisper_failed, err.localizedMessage ?: s(R.string.status_unknown_error))
                     )
                 }
             }

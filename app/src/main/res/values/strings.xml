@@ -278,6 +278,14 @@ Use [Verse 1], [Chorus], [Bridge] tags to structure the song.</string>
     <string name="status_transcription_failed">Transcription failed: %1$s</string>
     <string name="status_need_lyrics_align">Add lyrics before aligning audio</string>
     <string name="status_need_audio_align">Import a local audio file first</string>
+
+    <!-- Whisper.cpp local transcription -->
+    <string name="status_whisper_transcribing">Transcribing with local Whisper (%1$s)…</string>
+    <string name="status_whisper_aligned">Word timings aligned via Whisper // %1$d words</string>
+    <string name="status_whisper_failed">Whisper transcription failed: %1$s</string>
+    <string name="status_whisper_model_missing">No Whisper model downloaded. Download whisper_tiny or whisper_base in Settings.</string>
+    <string name="status_whisper_fallback">Whisper unavailable — using estimated timing.</string>
+
     <string name="status_creating_timing">Creating automatic word timing from local audio duration…</string>
     <string name="status_timing_created">Estimated word timings created // %1$d words — review and adjust</string>
     <string name="status_alignment_note">Alignment note: %1$s</string>

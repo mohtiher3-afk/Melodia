@@ -277,6 +277,14 @@
     <string name="status_transcription_failed">فشل النسخ: %1$s</string>
     <string name="status_need_lyrics_align">أضف كلمات قبل محاذاة الصوت</string>
     <string name="status_need_audio_align">استورد ملف صوتي محلي أولًا</string>
+
+    <!-- Whisper.cpp local transcription -->
+    <string name="status_whisper_transcribing">جارٍ النسخ بـ Whisper المحلي (%1$s)…</string>
+    <string name="status_whisper_aligned">توقيتات الكلمات تمت محاذاتها عبر Whisper // %1$d كلمة</string>
+    <string name="status_whisper_failed">فشل النسخ بـ Whisper: %1$s</string>
+    <string name="status_whisper_model_missing">لا يوجد نموذج Whisper محمل. حمّل whisper_tiny أو whisper_base من الإعدادات.</string>
+    <string name="status_whisper_fallback">Whisper غير متاح — جارٍ استخدام التوقيت التقديري.</string>
+
     <string name="status_creating_timing">جارٍ إنشاء توقيت تلقائي للكلمات من مدة الصوت المحلي…</string>
     <string name="status_timing_created">أُنشئت توقيتات تقديرية للكلمات // %1$d كلمة — راجعها وعدّلها</string>
     <string name="status_alignment_note">ملاحظة المحاذاة: %1$s</string>

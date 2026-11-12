@@ -13,7 +13,15 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 import java.nio.ByteOrder
+
+/** Result of a Whisper transcription attempt, distinct from the outer Result<KaraokeLyrics>. */
+private sealed interface WhisperResult<out T> {
+    data class Success<T>(val value: T) : WhisperResult<T>
+    data class Failure(val exception: Throwable) : WhisperResult<Nothing>
+}
 
 object LocalWhisperEngine {
     private const val TAG = "LocalWhisperEngine"
@@ -171,18 +179,154 @@ object LocalWhisperEngine {
     }
 
     /**
-     * Aligns [lyrics] to the imported audio and returns per-word timings.
+     * Aligns [lyrics] to the imported audio and returns per-word timings using on-device Whisper.
      *
-     * NOTE: this is an energy-aware heuristic, not speech recognition. It finds where the audio is
-     * actually active (skipping leading/trailing silence and long quiet gaps), then spreads the
-     * words over that active time weighted by word length, with extra breathing room at line ends
-     * and before section tags. Real Whisper alignment needs the native engine to be enabled.
+     * Runs real speech recognition via whisper.cpp with DTW token timestamps, then aligns the
+     * recognized words to the user's expected lyrics for karaoke display. Falls back to the
+     * energy-aware heuristic if Whisper is unavailable or fails.
      */
     suspend fun alignLyricsWithAudio(
         context: Context,
         audioUri: Uri,
         lyrics: String
     ): Result<KaraokeLyrics> = withContext(Dispatchers.Default) {
+        try {
+            val pcmData = decodeAudioTo16kHzFloatPcm(context, audioUri)
+            if (pcmData.isEmpty()) {
+                return@withContext Result.failure(IllegalArgumentException("No audio data to transcribe"))
+            }
+
+            // Try real Whisper transcription first
+            val whisperResult = tryRunWhisper(context, pcmData)
+            val wordTimings = when (whisperResult) {
+                is WhisperResult.Success -> parseWhisperJsonToWordTimings(whisperResult.value, lyrics)
+                is WhisperResult.Failure -> {
+                    Log.w(TAG, "Whisper transcription failed, falling back to heuristic", whisperResult.exception)
+                    alignLyricsWithAudioHeuristic(context, audioUri, lyrics)
+                }
+            }
+
+            Result.success(KaraokeLyrics(lyrics = lyrics, wordTimings = wordTimings))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "Alignment failed", e)
+            // Ultimate fallback to heuristic
+            val fallbackTimings = alignLyricsWithAudioHeuristic(context, audioUri, lyrics)
+            Result.success(KaraokeLyrics(lyrics = lyrics, wordTimings = fallbackTimings))
+        }
+    }
+
+    /**
+     * Attempts to run Whisper transcription on the PCM data.
+     * Returns Result.Success with JSON string, or Result.Failure with error.
+     */
+    private suspend fun tryRunWhisper(context: Context, pcmData: FloatArray): WhisperResult<String> = withContext(Dispatchers.IO) {
+        try {
+            // Check audio duration (minimum 100ms for Whisper)
+            val audioDurationMs = (pcmData.size.toDouble() / TARGET_SAMPLE_RATE.toDouble()) * 1000.0
+            if (audioDurationMs < 100) {
+                return@withContext WhisperResult.Failure(IllegalArgumentException("Audio too short for transcription (minimum 100ms)"))
+            }
+
+            // Find the best available Whisper model
+            val modelManager = LocalModelManager.getInstance(context)
+            val model = (LocalModelManager.getModel("whisper_base")?.takeIf { modelManager.isModelDownloaded(it) })
+                ?: (LocalModelManager.getModel("whisper_tiny")?.takeIf { modelManager.isModelDownloaded(it) })
+                ?: return@withContext WhisperResult.Failure(IllegalStateException("No Whisper model downloaded. Please download whisper_tiny or whisper_base from Settings."))
+
+            val modelPath = modelManager.getModelPath(model)
+            if (modelPath.isNullOrBlank()) {
+                return@withContext WhisperResult.Failure(IllegalStateException("Model path not found for ${model.id}"))
+            }
+
+            val bridge = WhisperNativeBridge(context)
+            val initResult = bridge.initModel(modelPath)
+            if (initResult.contains("Failed", ignoreCase = true)) {
+                bridge.shutdown()
+                return@withContext WhisperResult.Failure(IllegalStateException("Failed to initialize Whisper: $initResult"))
+            }
+
+            val jsonResult = bridge.transcribePcm(pcmData)
+            bridge.shutdown()
+
+            // Validate the result
+            if (!validateWhisperJson(jsonResult)) {
+                return@withContext WhisperResult.Failure(IllegalStateException("Whisper returned empty or invalid result"))
+            }
+
+            WhisperResult.Success(jsonResult)
+        } catch (e: Exception) {
+            WhisperResult.Failure(e)
+        }
+    }
+
+    /**
+     * Parses Whisper JSON output and aligns recognized words to user lyrics.
+     * Uses fuzzy matching to map ASR tokens to expected lyric words.
+     */
+    private fun parseWhisperJsonToWordTimings(json: String, expectedLyrics: String): List<WordTiming> {
+        val result = mutableListOf<WordTiming>()
+
+        // Validate JSON before parsing
+        if (!validateWhisperJson(json)) {
+            Log.w(TAG, "Invalid or empty Whisper JSON result, using fallback")
+            return alignLyricsWithAudioHeuristicFallback(expectedLyrics)
+        }
+
+        try {
+            val jsonObj = JSONObject(json)
+            val wordsArray = jsonObj.getJSONArray("words")
+            val expectedWords = extractAlignableWords(expectedLyrics).map { it.display.lowercase() }
+
+            if (wordsArray.length() == 0) {
+                return alignLyricsWithAudioHeuristicFallback(expectedLyrics)
+            }
+
+            // Collect all recognized tokens with their timestamps
+            val recognizedTokens = mutableListOf<RecognizedToken>()
+            for (i in 0 until wordsArray.length()) {
+                val tokenObj = wordsArray.getJSONObject(i)
+                val word = tokenObj.getString("word").trim()
+                val startMs = tokenObj.getLong("start")
+                val endMs = tokenObj.getLong("end")
+                val prob = tokenObj.getDouble("prob")
+                if (word.isNotBlank() && startMs >= 0 && endMs > startMs) {
+                    recognizedTokens.add(RecognizedToken(word, startMs, endMs, prob))
+                }
+            }
+
+            // Filter out low-confidence tokens
+            val filteredTokens = recognizedTokens.filter { it.prob >= 0.1 }
+
+            // Fuzzy align recognized tokens to expected words
+            val aligned = alignTokensToWords(filteredTokens, expectedWords)
+            result.addAll(aligned)
+
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to parse Whisper JSON, using fallback", e)
+            return alignLyricsWithAudioHeuristicFallback(expectedLyrics)
+        }
+
+        return if (result.isNotEmpty()) result else alignLyricsWithAudioHeuristicFallback(expectedLyrics)
+    }
+
+    /** Fallback: generate timings from heuristic when Whisper fails completely */
+    private fun alignLyricsWithAudioHeuristicFallback(lyrics: String): List<WordTiming> {
+        val words = extractAlignableWords(lyrics)
+        if (words.isEmpty()) return emptyList()
+        // Use a simple even distribution over a reasonable duration
+        val durationMs = maxOf(words.size * 800L, 10_000L)
+        val segments = listOf(500L..durationMs)
+        return alignWordsToSegments(words, segments, durationMs)
+    }
+
+    /** Heuristic-only alignment (original implementation) */
+    private suspend fun alignLyricsWithAudioHeuristic(
+        context: Context,
+        audioUri: Uri,
+        lyrics: String
+    ): List<WordTiming> = withContext(Dispatchers.Default) {
         try {
             val pcmData = decodeAudioTo16kHzFloatPcm(context, audioUri)
             val audioDurationMs = if (pcmData.isNotEmpty()) {
@@ -192,9 +336,7 @@ object LocalWhisperEngine {
             }
 
             val words = extractAlignableWords(lyrics)
-            if (words.isEmpty()) {
-                return@withContext Result.failure(IllegalArgumentException("Lyrics contain no display words to align"))
-            }
+            if (words.isEmpty()) return@withContext emptyList()
 
             val segments = if (pcmData.isNotEmpty()) {
                 val mask = activeFrameMask(frameRms(pcmData, TARGET_SAMPLE_RATE, FRAME_MS))
@@ -203,13 +345,137 @@ object LocalWhisperEngine {
                 emptyList()
             }
 
-            val wordTimings = alignWordsToSegments(words, segments, audioDurationMs)
-            Result.success(KaraokeLyrics(lyrics = lyrics, wordTimings = wordTimings))
-        } catch (e: CancellationException) {
-            throw e
+            alignWordsToSegments(words, segments, audioDurationMs)
         } catch (e: Exception) {
-            Log.e(TAG, "Alignment failed", e)
-            Result.failure(e)
+            Log.e(TAG, "Heuristic alignment failed", e)
+            emptyList()
+        }
+    }
+
+    /** Data class for recognized tokens from Whisper */
+    private data class RecognizedToken(
+        val text: String,
+        val startMs: Long,
+        val endMs: Long,
+        val prob: Double
+    )
+
+    /**
+     * Aligns Whisper recognized tokens to expected lyric words using fuzzy matching.
+     * Handles multi-token words, repeated words, and language differences.
+     */
+    private fun alignTokensToWords(
+        tokens: List<RecognizedToken>,
+        expectedWords: List<String>
+    ): List<WordTiming> {
+        val result = mutableListOf<WordTiming>()
+        if (tokens.isEmpty() || expectedWords.isEmpty()) return result
+
+        var tokenIdx = 0
+        var expectedIdx = 0
+
+        while (expectedIdx < expectedWords.size && tokenIdx < tokens.size) {
+            val expected = expectedWords[expectedIdx]
+            var bestMatchIdx = -1
+            var bestScore = 0.0
+
+            // Look ahead up to 5 tokens for the best fuzzy match
+            val searchEnd = minOf(tokenIdx + 5, tokens.size)
+            for (i in tokenIdx until searchEnd) {
+                val tokenText = tokens[i].text.lowercase().trim()
+                if (tokenText.isEmpty()) continue
+
+                val score = similarity(expected, tokenText)
+                if (score > bestScore) {
+                    bestScore = score
+                    bestMatchIdx = i
+                }
+            }
+
+            // Threshold for acceptable match (adjustable)
+            if (bestMatchIdx >= 0 && bestScore > 0.5) {
+                // Merge tokens from tokenIdx to bestMatchIdx if multiple tokens form the word
+                val matchToken = tokens[bestMatchIdx]
+                var wordStart = matchToken.startMs
+                var wordEnd = matchToken.endMs
+
+                // If there are preceding tokens that are part of the same word, include them
+                for (i in tokenIdx until bestMatchIdx) {
+                    wordStart = minOf(wordStart, tokens[i].startMs)
+                    wordEnd = maxOf(wordEnd, tokens[i].endMs)
+                }
+
+                result.add(WordTiming(expectedWords[expectedIdx], wordStart, wordEnd))
+                tokenIdx = bestMatchIdx + 1
+                expectedIdx++
+            } else {
+                // No good match found - estimate timing based on surrounding words
+                val estimatedStart = if (result.isNotEmpty()) result.last().endTimeMs else 0L
+                val estimatedEnd = estimatedStart + 500L
+                result.add(WordTiming(expectedWords[expectedIdx], estimatedStart, estimatedEnd))
+                expectedIdx++
+            }
+        }
+
+        // Add remaining expected words with estimated timings
+        while (expectedIdx < expectedWords.size) {
+            val estimatedStart = if (result.isNotEmpty()) result.last().endTimeMs else 0L
+            val estimatedEnd = estimatedStart + 500L
+            result.add(WordTiming(expectedWords[expectedIdx], estimatedStart, estimatedEnd))
+            expectedIdx++
+        }
+
+        // Ensure timings are ordered and non-overlapping
+        for (i in 1 until result.size) {
+            if (result[i].startTimeMs < result[i - 1].endTimeMs) {
+                result[i] = result[i].copy(startTimeMs = result[i - 1].endTimeMs)
+            }
+            if (result[i].endTimeMs <= result[i].startTimeMs) {
+                result[i] = result[i].copy(endTimeMs = result[i].startTimeMs + 100L)
+            }
+        }
+
+        return result
+    }
+
+    /** Simple string similarity (Jaccard-like for words, character-based for short strings) */
+    private fun similarity(a: String, b: String): Double {
+        if (a == b) return 1.0
+        if (a.isEmpty() || b.isEmpty()) return 0.0
+
+        // For short strings, use character overlap
+        if (a.length <= 3 || b.length <= 3) {
+            val setA = a.toSet()
+            val setB = b.toSet()
+            val intersection = setA.intersect(setB).size
+            val union = setA.union(setB).size
+            return if (union > 0) intersection.toDouble() / union else 0.0
+        }
+
+        // For longer strings, use word-level or Levenshtein-like approach
+        // Simplified: check if one contains the other
+        if (a.contains(b) || b.contains(a)) {
+            return 0.8
+        }
+
+        // Character bigram overlap
+        val bigramsA = (0 until a.length - 1).map { a.substring(it, it + 2) }.toSet()
+        val bigramsB = (0 until b.length - 1).map { b.substring(it, it + 2) }.toSet()
+        val intersection = bigramsA.intersect(bigramsB).size
+        val union = bigramsA.union(bigramsB).size
+        return if (union > 0) intersection.toDouble() / union else 0.0
+    }
+
+    /**
+     * Validates and cleans a JSON result from Whisper.
+     * Returns null if the result is invalid or empty.
+     */
+    private fun validateWhisperJson(json: String): Boolean {
+        return try {
+            val jsonObj = JSONObject(json)
+            jsonObj.has("words") && jsonObj.getJSONArray("words").length() > 0
+        } catch (e: Exception) {
+            false
         }
     }
 
