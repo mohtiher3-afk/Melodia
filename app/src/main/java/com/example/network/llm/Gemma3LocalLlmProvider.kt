@@ -9,6 +9,7 @@ import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.LogSeverity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Local LLM provider using Gemma 3 1B via LiteRT-LM.
@@ -19,6 +20,48 @@ class Gemma3LocalLlmProvider(
 ) : LlmProvider {
 
     private val modelManager: LocalModelManager by lazy { LocalModelManager.getInstance(context) }
+
+    /**
+     * Cached engine (F-18): loading the 584 MB Gemma 3 model takes multiple
+     * seconds, so the engine is created once and reused across generate()
+     * calls. Invalidated when the model path changes or inference fails.
+     */
+    private val cachedEngine = AtomicReference<CachedEngine?>(null)
+
+    private class CachedEngine(val modelPath: String, val engine: Engine)
+
+    private fun obtainEngine(modelPath: String): Engine {
+        cachedEngine.get()?.let { cached ->
+            if (cached.modelPath == modelPath && cached.engine.isInitialized()) {
+                return cached.engine
+            }
+            runCatching { cached.engine.close() }
+            cachedEngine.compareAndSet(cached, null)
+        }
+        synchronized(this) {
+            cachedEngine.get()?.let { cached ->
+                if (cached.modelPath == modelPath && cached.engine.isInitialized()) {
+                    return cached.engine
+                }
+                runCatching { cached.engine.close() }
+                cachedEngine.compareAndSet(cached, null)
+            }
+            Engine.setNativeMinLogSeverity(LogSeverity.ERROR)
+            val engineConfig = EngineConfig(
+                modelPath = modelPath,
+                backend = Backend.CPU(),
+                cacheDir = context.cacheDir.absolutePath
+            )
+            val engine = Engine(engineConfig)
+            engine.initialize()
+            cachedEngine.set(CachedEngine(modelPath, engine))
+            return engine
+        }
+    }
+
+    private fun invalidateEngine() {
+        cachedEngine.getAndSet(null)?.let { runCatching { it.engine.close() } }
+    }
 
     override val id: String = LlmProviderFactory.PROVIDER_GEMMA3_LOCAL
     override val displayName: String = "Gemma 3 1B (Local)"
@@ -47,18 +90,11 @@ class Gemma3LocalLlmProvider(
             prompt
         }
 
-        // Initialize LiteRT-LM engine
-        Engine.setNativeMinLogSeverity(LogSeverity.ERROR)
+        // Reuse the cached engine when possible (F-18) — model load is the
+        // dominant cost of every generation otherwise.
+        val engine = obtainEngine(modelPath)
 
-        val engineConfig = EngineConfig(
-            modelPath = modelPath,
-            backend = Backend.CPU(),
-            cacheDir = context.cacheDir.absolutePath
-        )
-
-        Engine(engineConfig).use { engine ->
-            engine.initialize()
-
+        try {
             engine.createConversation().use { conversation ->
                 val responseBuilder = StringBuilder()
                 val chunkCount = intArrayOf(0)
@@ -91,6 +127,11 @@ class Gemma3LocalLlmProvider(
                     finishReason = "stop"
                 )
             }
+        } catch (e: Exception) {
+            // A failed engine must not be reused — drop the cache so the next
+            // call starts from a fresh engine.
+            invalidateEngine()
+            throw e
         }
     }
 }
