@@ -49,7 +49,7 @@ object MusicEngine {
                 return@withContext parseGeminiJson(response.text, genre, mood, language)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error invoking LLM provider '$providerId'", e)
+            Log.w(TAG, "LLM provider '$providerId' failed: ${e.message}")
             throw e
         }
         null
@@ -85,7 +85,7 @@ object MusicEngine {
                 fallbackReason = "The selected provider is not available on this device."
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error invoking LLM provider '$providerId' for prompt polishing", e)
+            Log.w(TAG, "LLM provider '$providerId' prompt polishing failed: ${e.message}")
             fallbackReason = "The selected provider could not complete the request."
         }
         PromptPolishResult(
@@ -110,7 +110,7 @@ object MusicEngine {
                 if (tags.isNotEmpty()) return@withContext tags
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error invoking LLM provider '$providerId' for tag suggestions", e)
+            Log.w(TAG, "LLM provider '$providerId' tag suggestions failed: ${e.message}")
         }
         listOf("melodic", "electronic", "studio-quality")
     }
@@ -180,7 +180,7 @@ object MusicEngine {
                 if (!line.isNullOrBlank()) return@withContext line
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error invoking LLM provider '$providerId' for next line", e)
+            Log.w(TAG, "LLM provider '$providerId' next-line failed: ${e.message}")
         }
         if (language.contains("Arabic", true)) "ونجم الليل يسبق الأماني في سمانا" else "And every rhythm takes us higher than before"
     }
@@ -265,7 +265,7 @@ object MusicEngine {
                 coverConcept = coverConcept
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse JSON response from Gemini", e)
+            Log.w(TAG, "Failed to parse JSON response from Gemini", e)
             null
         }
     }
@@ -342,7 +342,7 @@ object MusicEngine {
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error invoking Gemini audio transcription", e)
+                Log.w(TAG, "Gemini audio transcription failed", e)
             }
         }
         null

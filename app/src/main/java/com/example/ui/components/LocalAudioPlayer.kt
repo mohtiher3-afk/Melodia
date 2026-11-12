@@ -216,7 +216,7 @@ fun LocalAudioPlayer(
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        text = if (isPlaying) "PAUSE" else "PLAY",
+                        text = if (isPlaying) stringResource(R.string.model_action_pause) else stringResource(R.string.player_play),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,

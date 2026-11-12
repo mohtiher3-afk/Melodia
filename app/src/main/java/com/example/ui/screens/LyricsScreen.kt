@@ -159,7 +159,7 @@ fun LyricsScreen(
                             .testTag("lyrics_rhyme_button")
                     )
                     NothingPillButton(
-                        text = if (state.isGenerating) "WRITING..." else "GENERATE",
+                        text = if (state.isGenerating) stringResource(R.string.lyrics_writing) else stringResource(R.string.lyrics_generate),
                         onClick = {
                             if (editorText.isNotBlank()) showGenerateConfirmation = true
                             else viewModel.generateLyricsOnly()

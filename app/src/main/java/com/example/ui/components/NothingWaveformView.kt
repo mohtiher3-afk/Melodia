@@ -361,7 +361,7 @@ fun WaveformLyricsDialog(
                             modifier = Modifier.size(18.dp)
                         )
                         Text(
-                            text = if (isPlaying) "PLAYING // SYNC ACTIVE" else "AUDIO PAUSED",
+                            text = if (isPlaying) stringResource(R.string.wave_sync_active) else stringResource(R.string.wave_paused),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -389,7 +389,7 @@ fun WaveformLyricsDialog(
                                 modifier = Modifier.size(14.dp)
                             )
                             Text(
-                                text = if (isPlaying) "PAUSE" else "PLAY AUDIO",
+                                text = if (isPlaying) stringResource(R.string.model_action_pause) else stringResource(R.string.wave_play_audio),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,

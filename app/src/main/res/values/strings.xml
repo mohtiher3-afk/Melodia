@@ -198,5 +198,32 @@ Use [Verse 1], [Chorus], [Bridge] tags to structure the song.</string>
     <!-- Studio screen + Visuals screen -->
     <string name="studio_copy_prompt_lyrics">COPY PROMPT &amp; LYRICS</string>
     <string name="studio_music_prompt_label">Music Prompt: %1$s</string>
+    <string name="studio_drafting_lyrics">DRAFTING LYRICS…</string>
+    <string name="studio_polishing">POLISHING…</string>
+    <string name="studio_generate_prompt">GENERATE PROMPT</string>
+    <string name="studio_header_audio_on">Audio on</string>
+    <string name="studio_header_text_only">Text only</string>
+    <string name="studio_autosave_saving">Saving draft…</string>
+    <string name="studio_autosave_saved_at">Saved at %1$s</string>
+    <string name="studio_autosave_on">Auto-save is on</string>
     <string name="visuals_preview_header">VISUAL PREVIEW</string>
+    <!-- Conditional/derived strings (i18n slice 6) -->
+    <string name="lyrics_writing">WRITING…</string>
+    <string name="lyrics_generate">GENERATE</string>
+    <string name="player_play">PLAY</string>
+    <string name="wave_sync_active">PLAYING // SYNC ACTIVE</string>
+    <string name="wave_paused">AUDIO PAUSED</string>
+    <string name="wave_play_audio">PLAY AUDIO</string>
+    <string name="rhyme_exact">EXACT RHYMES</string>
+    <string name="rhyme_slant">SLANT RHYMES</string>
+    <string name="rhyme_synonyms">POETIC SYNONYMS</string>
+    <string name="rhyme_inserted">INSERTED: %1$s</string>
+    <string name="rhyme_tap_to_insert">TAP A WORD TO INSERT IT INTO THE DRAFT</string>
+    <string name="settings_gemini_configured_note">Configured; cloud requests may use quota/billing</string>
+    <string name="settings_gemini_not_configured_note">Not configured — not needed for local Nano</string>
+    <string name="settings_cloud_transcription_on">Imported audio may be sent online (up to 14 MB).</string>
+    <string name="settings_cloud_transcription_off">Off by default. Local audio stays on this device; Whisper model integration is pending.</string>
+    <string name="settings_island_enabled">Enabled. The Island appears while a track is active.</string>
+    <string name="settings_island_off_default">Off by default. You can turn it on at any time.</string>
+    <string name="settings_island_off_permission">Off by default. Android asks for display-over-apps access only if enabled.</string>
 </resources>

@@ -109,23 +109,24 @@ fun RhymeDialog(
                     else -> {
                         val rhymes = result!!
                         SuggestionRow(
-                            title = "EXACT RHYMES",
+                            title = stringResource(R.string.rhyme_exact),
                             values = rhymes.exactRhymes,
                             onPick = { onInsert(it); lastInserted = it }
                         )
                         SuggestionRow(
-                            title = "SLANT RHYMES",
+                            title = stringResource(R.string.rhyme_slant),
                             values = rhymes.slantRhymes,
                             onPick = { onInsert(it); lastInserted = it }
                         )
                         SuggestionRow(
-                            title = "POETIC SYNONYMS",
+                            title = stringResource(R.string.rhyme_synonyms),
                             values = rhymes.synonyms,
                             onPick = { onInsert(it); lastInserted = it }
                         )
 
                         Text(
-                            text = lastInserted?.let { "INSERTED: $it" } ?: "TAP A WORD TO INSERT IT INTO THE DRAFT",
+                            text = lastInserted?.let { stringResource(R.string.rhyme_inserted, it) }
+                                ?: stringResource(R.string.rhyme_tap_to_insert),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 10.sp,
                             color = if (lastInserted != null) NothingRed else NothingGrey,

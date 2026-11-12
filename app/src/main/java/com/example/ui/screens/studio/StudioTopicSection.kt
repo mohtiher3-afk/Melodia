@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import com.example.ui.components.GlyphCard
 import com.example.ui.components.GenerationActionFeedback
 import com.example.ui.components.NothingPillButton
@@ -69,7 +71,7 @@ fun StudioTopicSection(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 NothingPillButton(
-                    text = if (state.isGenerating) "DRAFTING LYRICS..." else "CREATE LYRICS",
+                    text = if (state.isGenerating) stringResource(R.string.studio_drafting_lyrics) else stringResource(R.string.queue_create_lyrics),
                     onClick = onGenerateLyrics,
                     isPrimary = true,
                     enabled = !state.isGenerating && !state.isPolishingPrompt,
@@ -77,7 +79,7 @@ fun StudioTopicSection(
                 )
 
                 NothingPillButton(
-                    text = if (state.isPolishingPrompt) "POLISHING..." else "GENERATE PROMPT",
+                    text = if (state.isPolishingPrompt) stringResource(R.string.studio_polishing) else stringResource(R.string.studio_generate_prompt),
                     onClick = onGeneratePrompt,
                     enabled = state.currentDraft != null && !state.isGenerating && !state.isPolishingPrompt,
                     modifier = Modifier.weight(1f)

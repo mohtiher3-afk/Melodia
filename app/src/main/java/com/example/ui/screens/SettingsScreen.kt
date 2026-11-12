@@ -149,7 +149,7 @@ fun SettingsScreen(
                             color = NothingWhite
                         )
                         Text(
-                            text = if (isGeminiConfigured) "Configured; cloud requests may use quota/billing" else "Not configured — not needed for local Nano",
+                            text = if (isGeminiConfigured) stringResource(R.string.settings_gemini_configured_note) else stringResource(R.string.settings_gemini_not_configured_note),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 11.sp,
                             color = NothingGrey
@@ -260,7 +260,7 @@ fun SettingsScreen(
                         color = NothingWhite
                     )
                     Text(
-                        text = if (allowCloudTranscription) "Imported audio may be sent online (up to 14 MB)." else "Off by default. Local audio stays on this device; Whisper model integration is pending.",
+                        text = if (allowCloudTranscription) stringResource(R.string.settings_cloud_transcription_on) else stringResource(R.string.settings_cloud_transcription_off),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 10.sp,
                         color = NothingGrey
@@ -289,9 +289,9 @@ fun SettingsScreen(
                     )
                     Text(
                         text = when {
-                            systemIslandEnabled -> "Enabled. The Island appears while a track is active."
-                            hasOverlayPermission -> "Off by default. You can turn it on at any time."
-                            else -> "Off by default. Android asks for display-over-apps access only if enabled."
+                            systemIslandEnabled -> stringResource(R.string.settings_island_enabled)
+                            hasOverlayPermission -> stringResource(R.string.settings_island_off_default)
+                            else -> stringResource(R.string.settings_island_off_permission)
                         },
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 10.sp,

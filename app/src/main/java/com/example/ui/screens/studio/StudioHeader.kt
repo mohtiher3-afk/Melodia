@@ -144,7 +144,7 @@ private fun ModeChip(isAudioActive: Boolean, modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.width(6.dp))
         Text(
-            text = if (isAudioActive) "Audio on" else "Text only",
+            text = if (isAudioActive) stringResource(R.string.studio_header_audio_on) else stringResource(R.string.studio_header_text_only),
             fontFamily = SpaceMonoFontFamily,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
@@ -192,9 +192,9 @@ private fun SaveStatusLine(
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = when {
-                isSaving -> "Saving draft\u2026"
-                lastSavedTime != null -> "Saved at $lastSavedTime"
-                else -> "Auto-save is on"
+                isSaving -> stringResource(R.string.studio_autosave_saving)
+                lastSavedTime != null -> stringResource(R.string.studio_autosave_saved_at, lastSavedTime)
+                else -> stringResource(R.string.studio_autosave_on)
             },
             fontFamily = SpaceMonoFontFamily,
             fontSize = 11.sp,

@@ -124,6 +124,16 @@ Gemini Nano remains unverified until a physical device is available (checklist a
 
 **Process lesson:** the on-device check initially ran a stale APK because only `compileDebugKotlin` had been run after the edit — `assembleDebug` must run before every install-and-verify cycle. (Also: a long "dead button" detour was a false alarm — CREATE LYRICS with the default Nano provider fails in <100 ms, faster than the 10 s UI-poll interval; grep patterns must match the actual failure feedback strings.)
 
+## Stage I — log hygiene + i18n gap closure (2026-11-12)
+
+**Discovery:** the F-15 extraction greps used `text = "` as the pattern, which misses conditional assignments (`text = if (…) "A" else "B"`, `text = when {…}`) and non-`text` parameters (dialog titles, parameter defaults). The claim "zero hardcoded literals remain" was therefore too strong — corrected here.
+
+**Fixed in this stage:**
+- MusicEngine log noise: the 4 `Log.e(TAG, …, e)` sites that rethrow now log `Log.w` with the message only (the caller owns the failure); the 2 sites that swallow the exception (JSON parse, transcription) keep the stack — the only diagnostic — but downgrade to `Log.w`. Same rule as Stage G.
+- i18n slice 6: all 10 conditional `text = if/when` UI sites extracted to 18 new resources (`studio_drafting_lyrics`, `studio_polishing`, `studio_generate_prompt`, `studio_header_*`, `studio_autosave_*`, `lyrics_writing`, `lyrics_generate`, `player_play`, `wave_*`, `rhyme_*`, `settings_gemini_*_note`, `settings_cloud_transcription_*`, `settings_island_*`); shared strings reused (`queue_create_lyrics`, `model_action_pause`). Verified on the emulator: CREATE LYRICS / GENERATE PROMPT / Auto-save is on / Text only render identically from resources.
+
+**Still hardcoded (documented, not hidden):** user-visible status/error message strings in `MelodiaViewModel` (~54 sites), genre/mood option lists in `GenreSelection`, and assorted dialog strings. These are runtime-composed messages, many parameterized — a separate slice if wanted.
+
 ## Physical-device verification — Redmi Note 13 Pro 5G (2026-11-12)
 
 Device: `23090RA98G` (zircon, Dimensity 7200 Ultra, arm64-v8a), Android 16, 11.6 GB RAM, unmetered Wi-Fi. Debug build installed via adb.
