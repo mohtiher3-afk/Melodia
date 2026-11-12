@@ -136,6 +136,12 @@ Gemini Nano remains unverified until a physical device is available (checklist a
 
 **i18n slice 7 (same day):** all 67 user-visible status/feedback message sites in `MelodiaViewModel` extracted to 71 `status_*` resources with placeholders; ViewModel uses a `s(id, args)` helper (`getApplication().getString`) since Compose `stringResource` is unavailable outside composables. Live-verified on the emulator: parameterized strings render correctly through a full Gemma 3 generation cycle ("Creating lyrics with Gemma 3 1B (Local)…" → "Lyrics ready: Crimson Echoes").
 
+**i18n slice 8 — Arabic locale (`values-ar`):** all 255 resources translated to Arabic (placeholders verified to match per-string, 0 mismatches; aapt validates). Live-verified on the emulator via per-app locale `cmd locale set-app-locales … --locales ar`: Studio screen renders fully in Arabic, RTL mirroring confirmed (Studio tab moves from the left edge to the right side), parameterized strings ("المسودات (4)") interpolate correctly.
+
+**Remaining English in Arabic locale — by design and by gap:**
+- *By design (data labels):* genre/mood/language/vocal-style/reverb option lists and `statusOptions` (DRAFT/IN PROGRESS/…) — these are data values fed to AI prompts and stored/matched in the Room DB (VaultScreen maps them to colors by string equality); translating them would change prompts and break DB lookups.
+- *Gap (~55 sites, slice 9 candidate):* `GlyphCard` section headers across 11 screen files (TOPIC & SONG INSPIRATION, CONFIGURATION // DROPDOWNS, GEMINI CLOUD API, KARAOKE PREVIEW, …), status/badge pills (READY, TRANSCRIBING, NOT SUPPORTED, CONFIGURED, …), and a few button/feedback fallbacks in `StudioTopicSection` and `SyncScreen`. All user-visible chrome, none data-bound.
+
 ## Physical-device verification — Redmi Note 13 Pro 5G (2026-11-12)
 
 Device: `23090RA98G` (zircon, Dimensity 7200 Ultra, arm64-v8a), Android 16, 11.6 GB RAM, unmetered Wi-Fi. Debug build installed via adb.

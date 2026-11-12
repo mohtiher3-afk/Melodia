@@ -1,0 +1,301 @@
+<resources>
+    <string name="app_name">Melodia</string>
+
+    <!-- Bottom navigation (NothingBottomBar) -->
+    <string name="tab_studio">الاستوديو</string>
+    <string name="tab_lyrics">الكلمات</string>
+    <string name="tab_library">المكتبة</string>
+    <string name="tab_sync">المزامنة</string>
+    <string name="tab_more">المزيد</string>
+    <string name="tab_visuals">المرئيات</string>
+    <string name="tab_export">التصدير</string>
+    <string name="tab_settings">الإعدادات</string>
+
+    <!-- Floating player bar (FloatingPlayerBar) -->
+    <string name="player_now_playing">يُشغَّل الآن // مشغّل NOTHING</string>
+    <string name="player_app_badge">تشغيل MELODIA v3</string>
+    <string name="player_live_lyrics">كلمات متزامنة مباشرة</string>
+    <string name="player_realtime_sync">مزامنة فورية</string>
+    <string name="player_state_active">نشط</string>
+
+    <!-- Settings screen (SettingsScreen) -->
+    <string name="settings_header_kicker">إعدادات // النظام</string>
+    <string name="settings_title">إعدادات استوديو Melodia</string>
+    <string name="settings_gemini_api_key_label">مفتاح Gemini السحابي</string>
+    <string name="settings_provider_help">يعمل Nano على الجهاز في الهواتف المدعومة (قد يُنزِّل AICore نموذجه مرة واحدة). يعمل Gemma 3 دون اتصال تمامًا بعد التنزيل من الإعدادات. قد تخضع الخيارات السحابية لحصص أو رسوم:</string>
+    <string name="settings_model_downloads_help">نزِّل نماذج ذكاء اصطناعي مجانية مفتوحة المصدر إلى هذا الجهاز مباشرة. بلا مفاتيح API وبلا سحابة. يُنزَّل كل نموذج بلمسة واحدة.</string>
+    <string name="settings_allow_cloud_transcription">السماح بنسخ الصوت عبر Gemini السحابي</string>
+    <string name="settings_floating_playback_controls">أزرار التشغيل العائمة</string>
+    <string name="settings_timing_format_help">اختر تنسيق التوقيت الافتراضي عند تصدير الكلمات المتزامنة:</string>
+    <string name="settings_about_title">Melodia v3.2 — استوديو كلمات نصي أولًا</string>
+    <string name="settings_about_body">// كلمات عبر Gemini Nano على الهواتف المدعومة\n// نسخ الصوت السحابي متوقف افتراضيًا\n// نماذج Whisper المحلية ونماذج توليد الصور قيد الانتظار</string>
+
+    <!-- Local model download states & actions (SettingsScreen) -->
+    <string name="model_state_ready">جاهز</string>
+    <string name="model_state_paused">متوقف مؤقتًا: %1$s / %2$s</string>
+    <string name="model_state_failed">فشل: %1$s</string>
+    <string name="model_action_download">تنزيل</string>
+    <string name="model_action_pause">إيقاف مؤقت</string>
+    <string name="model_action_resume">استئناف</string>
+    <string name="model_action_retry">إعادة المحاولة</string>
+    <string name="model_action_remove">إزالة</string>
+    <string name="model_size_format">الحجم: %1$s</string>
+    <string name="model_download_progress">%1$s%% • %2$s / %3$s</string>
+
+    <!-- Video exporter screen (VideoExporterScreen) -->
+    <string name="exporter_header_kicker">تصدير // استوديو فيديو الكلمات</string>
+    <string name="exporter_title">مُصدِّر فيديو MP4 بعتاد الجهاز</string>
+    <string name="exporter_no_draft">لا مسودة أغنية نشطة // أنشئ الكلمات في الاستوديو أولًا</string>
+    <string name="exporter_bitrate_label">معدل البِت</string>
+    <string name="exporter_bitrate_mbps">%1$s ميغابت/ث</string>
+    <string name="exporter_share_video">مشاركة الفيديو</string>
+    <string name="exporter_complete_title">اكتمل التصدير</string>
+    <string name="exporter_complete_default">تم تصدير فيديو الكلمات</string>
+
+    <!-- Vault / library screen (VaultScreen) -->
+    <string name="vault_header_kicker">المكتبة // الفئات والوسوم</string>
+    <string name="vault_action_import">استيراد</string>
+    <string name="vault_action_import_audio">+ استيراد صوت</string>
+    <string name="vault_all_tag">كل %1$s</string>
+    <string name="vault_tag_hash">#%1$s</string>
+    <string name="vault_drafts_count">%1$s مسودة محفوظة تلقائيًا في قاعدة البيانات</string>
+    <string name="vault_tracks_matching">%1$s مسارًا مطابقًا للوسوم</string>
+    <string name="vault_selected_count">%1$s محدد</string>
+    <string name="vault_empty_drafts">لا مسودات محفوظة تلقائيًا</string>
+    <string name="vault_empty_drafts_help">تُحفظ تعديلات الكلمات والموجّهات في الاستوديو تلقائيًا في قاعدة مسوداتك المحلية.</string>
+    <string name="vault_empty_tracks">لا مسارات مطابقة للوسوم</string>
+    <string name="vault_empty_tracks_help">جرّب مسح نص البحث أو اختيار نوع أو مزاج أو حالة مختلفة.</string>
+    <string name="vault_reset_filters">إعادة ضبط المرشحات</string>
+    <string name="vault_edit_tags">تعديل الوسوم</string>
+    <string name="vault_track_local_badge">محلي</string>
+    <string name="vault_matched_snippet">مطابق: %1$s</string>
+
+    <!-- Sync screen (SyncScreen) -->
+    <string name="sync_alignment_status">حالة المحاذاة</string>
+    <string name="sync_imported_audio">الصوت المستورد: %1$s</string>
+    <string name="sync_no_audio">لم يُستورد مسار صوتي محلي</string>
+    <string name="sync_import_audio">استيراد ملف صوتي محلي</string>
+    <string name="sync_timing_help">يتبع التوقيت مناطق الصوت النشطة وأقسام الكلمات. هذه تقديرات وليست تعرفًا على الكلام؛ راجعها قبل التصدير.</string>
+    <string name="sync_word_timestamps">طُوّرت طوابع زمنية للكلمات (%1$s كلمة)</string>
+    <string name="sync_share_lrc">مشاركة LRC</string>
+    <string name="sync_share_json">مشاركة JSON</string>
+    <string name="sync_position_clock">%1$s / %2$s</string>
+
+    <!-- Queue screen (QueueScreen) -->
+    <string name="queue_header_kicker">قائمة الاستوديو // مراقبة المسودات</string>
+    <string name="queue_active_projects">المشاريع النشطة</string>
+    <string name="queue_close">إغلاق</string>
+    <string name="queue_empty">لا مسودات في القائمة</string>
+    <string name="queue_empty_help">أنشئ كلمات جديدة في الاستوديو للبدء.</string>
+    <string name="queue_create_lyrics">إنشاء كلمات</string>
+    <string name="queue_draft_meta">%1$s // %2$s // %3$s</string>
+    <string name="queue_load_in_studio">تحميل في الاستوديو</string>
+
+    <!-- Studio sub-sections -->
+    <string name="studio_subgenres_header">مصفوفة الأنواع الفرعية // الحديث والكل</string>
+    <string name="studio_browse_more">استعراض المزيد &gt;</string>
+    <string name="studio_quick_suggestions">اقتراحات سريعة // انقر للإضافة</string>
+    <string name="studio_keyword_hash">#%1$s</string>
+    <string name="studio_vocal_style">أسلوب الغناء</string>
+    <string name="studio_tempo_bpm">الإيقاع / BPM</string>
+    <string name="studio_reverb_space">الصدى / الفضاء الصوتي</string>
+    <string name="studio_analyze_sentiment">تحليل المشاعر</string>
+    <string name="studio_analyzing">جارٍ التحليل…</string>
+    <string name="studio_sentiment_dominant">المسيطر: %1$s</string>
+    <string name="studio_sentiment_joy">الفرح: %1$s%%</string>
+    <string name="studio_sentiment_energy">الطاقة: %1$s%%</string>
+    <string name="studio_sentiment_melancholy">الحزن: %1$s%%</string>
+    <string name="studio_sentiment_nostalgia">الحنين: %1$s%%</string>
+    <string name="studio_app_name">Melodia</string>
+    <string name="studio_app_tagline">استوديو كلمات نصي أولًا</string>
+    <string name="studio_import_audio">استيراد صوت</string>
+    <string name="studio_queue">القائمة</string>
+    <string name="studio_drafts_count">المسودات (%1$s)</string>
+    <string name="studio_save_config_template">حفظ قالب الإعداد</string>
+    <string name="studio_save_as_preset">حفظ كإعداد مسبق</string>
+    <string name="studio_no_presets">لا إعدادات مسبقة محفوظة بعد</string>
+    <string name="studio_preset_meta">%1$s // %2$s</string>
+    <string name="studio_revert_history">العودة إلى إعدادات الموجّه السابقة</string>
+    <string name="studio_version_label">v%1$s // %2$s</string>
+
+    <!-- Drafts dialog (DraftsDialog) -->
+    <string name="drafts_db_kicker">قاعدة بيانات محلية // حفظ تلقائي</string>
+    <string name="drafts_saved_count">المسودات المحفوظة (%1$s)</string>
+    <string name="drafts_autosave_help">تُحفظ تعديلات الكلمات وتوليدها هنا تلقائيًا كلما توقفت عن الكتابة.</string>
+    <string name="drafts_empty">لا مسودات بعد</string>
+    <string name="drafts_empty_help">ابدأ بتحرير الكلمات أو الموضوع في الاستوديو لإنشاء مسودات محفوظة تلقائيًا.</string>
+    <string name="drafts_active_badge">نشطة</string>
+    <string name="drafts_meta_line">%1$s / %2$s</string>
+    <string name="drafts_meta_slash">/</string>
+    <string name="drafts_topic_label">الموضوع: %1$s</string>
+    <string name="drafts_snippet_quote">«%1$s»</string>
+    <string name="drafts_restore">استعادة إلى الاستوديو</string>
+    <string name="drafts_clear_all">مسح الكل</string>
+    <string name="drafts_close">إغلاق</string>
+
+    <!-- Genre selection component (GenreSelection) -->
+    <string name="genre_recent_header">المشاهدة حديثًا // آخر ٣</string>
+    <string name="genre_room_db_badge">قاعدة ROOM</string>
+    <string name="genre_no_recent">لا أنواع فرعية تمت مشاهدتها حديثًا</string>
+    <string name="genre_recent_help">اختر أي نوع فرعي أدناه لتتبع آخر ٣ اختياراتك وحفظها في Room.</string>
+    <string name="genre_catalogue_header">الفهرس الرئيسي للأنواع الفرعية</string>
+    <string name="genre_rec_badge">تسجيل // 0%1$s</string>
+
+    <!-- Lyrics editor (LyricsScreen) -->
+    <string name="lyrics_line_word_count">%1$s سطور // %2$s كلمات</string>
+    <string name="lyrics_duration_sections">~%1$s // %2$s أقسام</string>
+    <string name="lyrics_dictate">إملاء</string>
+    <string name="lyrics_rhyme">قافية</string>
+    <string name="lyrics_editor_placeholder">اكتب أو الصق كلماتك هنا…\nاستخدم وسوم [Verse 1] و[Chorus] و[Bridge] لهيكلة الأغنية.</string>
+
+    <!-- Rhyme dialog (RhymeDialog) -->
+    <string name="rhyme_header">الكلمات // محرك القوافي</string>
+    <string name="rhymes_for">قوافي «%1$s»</string>
+    <string name="rhyme_analyzing">جارٍ تحليل الأنماط الصوتية…</string>
+    <string name="rhyme_unavailable">محرك القوافي غير متاح. تحقق من اتصالك.</string>
+    <string name="rhyme_done">تم</string>
+
+    <!-- Save preset dialog (SavePresetDialog) -->
+    <string name="save_preset_header">الاستوديو // حفظ الإعداد المسبق</string>
+    <string name="save_preset_name_label">سمِّ القالب</string>
+    <string name="save_preset_cancel">إلغاء</string>
+    <string name="save_preset_save">حفظ الإعداد المسبق</string>
+
+    <!-- Waveform viewer (NothingWaveformView) -->
+    <string name="waveform_timings_header">الموجة الصوتية والتوقيتات المتزامنة</string>
+    <string name="waveform_markers_header">علامات التوقيت المتزامنة</string>
+    <string name="waveform_active_badge">نشطة</string>
+    <string name="waveform_close_viewer">إغلاق العارض</string>
+
+    <!-- Shared Nothing components (NothingComponents) -->
+    <string name="nothing_rec_on">تسجيل // يعمل</string>
+    <string name="nothing_brand_badge">MELODIA // 01</string>
+    <string name="nothing_timing_header">توقيت الكلمات // محاذاة الأقسام</string>
+    <string name="nothing_section_tag">[%1$s]</string>
+
+    <!-- Local audio player (LocalAudioPlayer) -->
+    <string name="audio_preview_header">معاينة الصوت // محلي</string>
+    <string name="audio_local_file_badge">ملف محلي</string>
+    <string name="audio_source_label">المصدر: %1$s</string>
+    <string name="audio_save_to_library">حفظ الصوت في المكتبة المحلية</string>
+
+    <!-- More screen (MoreScreen) -->
+    <string name="more_header_kicker">المزيد // مساحة العمل</string>
+    <string name="more_title">الأدوات والإعدادات</string>
+    <string name="more_subtitle">أدوات إبداعية وتفضيلات التطبيق</string>
+
+    <!-- Voice dictation dialog (VoiceDictationDialog) -->
+    <string name="dictation_header">صوت إلى نص // ميكروفون الاستوديو</string>
+    <string name="dictation_preview_header">معاينة الكلمات المُملاة</string>
+    <string name="dictation_insert">إدراج الكلمات المُملاة</string>
+
+    <!-- Genre selection dialog (GenreSelectionDialog) -->
+    <string name="genre_dialog_kicker">الهيكل الرئيسي // الدليل</string>
+    <string name="genre_dialog_header">اختيار النوع والنوع الفرعي</string>
+    <string name="genre_dialog_close">إغلاق الدليل</string>
+
+    <!-- Studio screen + Visuals screen -->
+    <string name="studio_copy_prompt_lyrics">نسخ الموجّه والكلمات</string>
+    <string name="studio_music_prompt_label">الموجّه الموسيقي: %1$s</string>
+    <string name="studio_drafting_lyrics">جارٍ صياغة الكلمات…</string>
+    <string name="studio_polishing">جارٍ الصقل…</string>
+    <string name="studio_generate_prompt">توليد الموجّه</string>
+    <string name="studio_header_audio_on">الصوت يعمل</string>
+    <string name="studio_header_text_only">نص فقط</string>
+    <string name="studio_autosave_saving">جارٍ حفظ المسودة…</string>
+    <string name="studio_autosave_saved_at">حُفظت في %1$s</string>
+    <string name="studio_autosave_on">الحفظ التلقائي يعمل</string>
+    <string name="visuals_preview_header">معاينة مرئية</string>
+    <!-- Conditional/derived strings (i18n slice 6) -->
+    <string name="lyrics_writing">جارٍ الكتابة…</string>
+    <string name="lyrics_generate">توليد</string>
+    <string name="player_play">تشغيل</string>
+    <string name="wave_sync_active">قيد التشغيل // المزامنة نشطة</string>
+    <string name="wave_paused">الصوت متوقف مؤقتًا</string>
+    <string name="wave_play_audio">تشغيل الصوت</string>
+    <string name="rhyme_exact">قوافي تامة</string>
+    <string name="rhyme_slant">قوافي متقاربة</string>
+    <string name="rhyme_synonyms">مرادفات شعرية</string>
+    <string name="rhyme_inserted">أُدرج: %1$s</string>
+    <string name="rhyme_tap_to_insert">انقر كلمة لإدراجها في المسودة</string>
+    <string name="settings_gemini_configured_note">مُهيأ؛ قد تخضع الطلبات السحابية لحصص أو فوترة</string>
+    <string name="settings_gemini_not_configured_note">غير مُهيأ — لا حاجة له مع Nano المحلي</string>
+    <string name="settings_cloud_transcription_on">قد يُرسل الصوت المستورد عبر الإنترنت (حتى 14 ميغابايت).</string>
+    <string name="settings_cloud_transcription_off">متوقف افتراضيًا. يبقى الصوت المحلي على هذا الجهاز؛ دمج نموذج Whisper قيد الانتظار.</string>
+    <string name="settings_island_enabled">مفعّل. تظهر الجزيرة أثناء تشغيل مقطع.</string>
+    <string name="settings_island_off_default">متوقف افتراضيًا. يمكنك تفعيله في أي وقت.</string>
+    <string name="settings_island_off_permission">متوقف افتراضيًا. يطلب أندرويد إذن العرض فوق التطبيقات فقط عند التفعيل.</string>
+    <!-- ViewModel status/feedback messages (i18n slice 7) -->
+    <string name="status_checking_provider">جارٍ التحقق من مزوّد توليد النصوص…</string>
+    <string name="status_provider_init_failed">فشل تهيئة مزوّد النصوص: %1$s</string>
+    <string name="status_provider_init_help">تعذّر بدء مزوّد النصوص. تحقق من الإعدادات وحاول مجددًا.</string>
+    <string name="status_provider_check_failed">فشل التحقق من توفر مزوّد النصوص: %1$s</string>
+    <string name="status_provider_check_help">تعذّر التحقق من هذا المزوّد. جرّب اختيار مزوّد آخر في الإعدادات.</string>
+    <string name="status_provider_not_ready">اختر أو هيّئ مزوّد نصوص متاحًا في الإعدادات.</string>
+    <string name="status_drafting_with">جارٍ صياغة كلمات منظمة عبر %1$s…</string>
+    <string name="status_creating_with">جارٍ إنشاء الكلمات عبر %1$s…</string>
+    <string name="status_generate_draft_failed">فشل توليد المسودة</string>
+    <string name="status_lyrics_drafted">صيغت الكلمات // %1$s</string>
+    <string name="status_lyrics_ready">الكلمات جاهزة: %1$s</string>
+    <string name="status_lyrics_failed">فشل صياغة الكلمات: %1$s</string>
+    <string name="status_lyrics_error">تعذّر إنشاء الكلمات: %1$s</string>
+    <string name="status_please_retry">يرجى المحاولة مجددًا.</string>
+    <string name="status_need_draft">أنشئ أو استعد مسودة أولًا.</string>
+    <string name="status_creating_prompt_full">جارٍ إنشاء موجّه الإنتاج النصي…</string>
+    <string name="status_creating_prompt">جارٍ إنشاء الموجّه النصي…</string>
+    <string name="status_prompt_basic">وُلّد موجّه موسيقي أساسي محليًا</string>
+    <string name="status_prompt_text_only">وُلّد موجّه موسيقي (نص فقط)</string>
+    <string name="status_prompt_fallback">أُنشئ موجّه أساسي محليًا. %1$s</string>
+    <string name="status_polish_unavailable">لم يكن الصقل بالذكاء الاصطناعي متاحًا.</string>
+    <string name="status_prompt_polished">الموجّه المُصقول بالذكاء الاصطناعي جاهز ومحفوظ في هذه المسودة.</string>
+    <string name="status_prompt_failed">فشل توليد الموجّه: %1$s</string>
+    <string name="status_prompt_error">تعذّر إنشاء الموجّه: %1$s</string>
+    <string name="status_need_draft_studio">أنشئ أو استعد مسودة في الاستوديو أولًا.</string>
+    <string name="status_creating_cover">جارٍ إنشاء غلاف أحادي اللون…</string>
+    <string name="status_generating_cover">جارٍ توليد الغلاف…</string>
+    <string name="status_cover_generated">وُلّد الغلاف // أحادي اللون بنمط Nothing</string>
+    <string name="status_cover_ready">الغلاف جاهز.</string>
+    <string name="status_cover_failed">فشل توليد الغلاف: %1$s</string>
+    <string name="status_cover_error">تعذّر توليد الغلاف: %1$s</string>
+    <string name="status_reading_audio">جارٍ قراءة الملف الصوتي المحلي…</string>
+    <string name="status_audio_too_large">استُورد الصوت // الملف يتجاوز حد 14 ميغابايت للنسخ السحابي</string>
+    <string name="status_audio_local_only">استُورد الصوت محليًا // النسخ السحابي متوقف؛ لم يُرفع أي صوت</string>
+    <string name="status_audio_transcribing">استُورد الصوت // جارٍ النسخ عبر Gemini السحابي…</string>
+    <string name="status_transcribed_ok">استُورد المسار المحلي // نُسخت الكلمات عبر Gemini السحابي</string>
+    <string name="status_transcribe_skipped_size">استُورد المسار المحلي // تخطي النسخ السحابي (الملف يتجاوز 14 ميغابايت)</string>
+    <string name="status_transcribe_skipped_off">استُورد المسار المحلي // بقي على الجهاز؛ النسخ السحابي متوقف</string>
+    <string name="status_transcribe_unavailable">استُورد المسار المحلي // النسخ السحابي غير متاح — أعد المحاولة من المزامنة</string>
+    <string name="status_import_failed">فشل الاستيراد: %1$s</string>
+    <string name="status_unknown_error">خطأ غير معروف</string>
+    <string name="status_need_audio_transcribe">استورد ملف صوتي محلي قبل النسخ</string>
+    <string name="status_transcribe_off">النسخ السحابي متوقف. هذا الإصدار لا يتضمن بعد نموذج Whisper محليًا؛ لم يُرفع أي صوت.</string>
+    <string name="status_transcribe_limit">يدعم النسخ بالذكاء الاصطناعي ملفات صوتية حتى 14 ميغابايت. يُحفظ الصوت المستورد محليًا.</string>
+    <string name="status_lyrics_exist">الكلمات موجودة بالفعل. أكّد الاستبدال قبل نسخ هذا المسار.</string>
+    <string name="status_transcribing_vocals">جارٍ نسخ الغناء المستورد بالذكاء الاصطناعي…</string>
+    <string name="status_no_transcription">لم تُرجع أي عملية نسخ. تحقق من مفتاح Gemini والاتصال بالشبكة.</string>
+    <string name="status_transcribed_timing">نُسخت الكلمات // جارٍ إنشاء التوقيت التلقائي للكلمات…</string>
+    <string name="status_transcription_failed">فشل النسخ: %1$s</string>
+    <string name="status_need_lyrics_align">أضف كلمات قبل محاذاة الصوت</string>
+    <string name="status_need_audio_align">استورد ملف صوتي محلي أولًا</string>
+    <string name="status_creating_timing">جارٍ إنشاء توقيت تلقائي للكلمات من مدة الصوت المحلي…</string>
+    <string name="status_timing_created">أُنشئت توقيتات تقديرية للكلمات // %1$d كلمة — راجعها وعدّلها</string>
+    <string name="status_alignment_note">ملاحظة المحاذاة: %1$s</string>
+    <string name="status_starting_export">جارٍ بدء ترميز الفيديو بعتاد الجهاز…</string>
+    <string name="status_export_complete">اكتمل التصدير!</string>
+    <string name="status_video_exported">صُدِّر فيديو الكلمات // %1$s</string>
+    <string name="status_export_failed_short">فشل التصدير</string>
+    <string name="status_video_export_failed">فشل تصدير الفيديو</string>
+    <string name="status_no_audio">لا صوت مرفق بـ %1$s</string>
+    <string name="status_loaded_studio">حُمّل في الاستوديو // %1$s</string>
+    <string name="status_tags_updated">حُدّثت وسوم %1$d مسار/مسارات</string>
+    <string name="status_regenerating_cover">جارٍ توليد غلاف جديد لـ %1$s…</string>
+    <string name="status_cover_saved">حُفظ غلاف جديد // %1$s</string>
+    <string name="status_cover_note">ملاحظة توليد الغلاف</string>
+    <string name="status_has_intro">الأغنية تحتوي [Intro] بالفعل</string>
+    <string name="status_tag_inserted">أُدرج وسم القسم %1$s</string>
+    <string name="status_draft_restored">استُعيدت المسودة // %1$s</string>
+    <string name="status_analyzing_sentiment">جارٍ تحليل المشاعر…</string>
+    <string name="status_sentiment_result">المشاعر: %1$s</string>
+    <string name="status_preset_saved">حُفظ الإعداد المسبق // %1$s</string>
+    <string name="status_preset_loaded">حُمّل الإعداد المسبق // %1$s</string>
+</resources>
