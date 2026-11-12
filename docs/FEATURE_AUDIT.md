@@ -123,3 +123,16 @@ Gemini Nano remains unverified until a physical device is available (checklist a
 **Residual finding (P3, not fixed here):** `GeminiNanoLlmProvider.isAvailable()` is only a static SDK-level check (`Build.VERSION.SDK_INT >= MIN_SDK_FOR_AICORE`), so on emulators and non-AICore Android 14+ devices it reports available and the failure surfaces at `generate()` time (caught by the ViewModel, which shows an actionable message — verified). A proper fix would use the real ML Kit/AICore availability check so the Settings tile and the pre-generation gate reflect reality; deferred until the physical-device verification (needs the real API surface on hardware).
 
 **Process lesson:** the on-device check initially ran a stale APK because only `compileDebugKotlin` had been run after the edit — `assembleDebug` must run before every install-and-verify cycle. (Also: a long "dead button" detour was a false alarm — CREATE LYRICS with the default Nano provider fails in <100 ms, faster than the 10 s UI-poll interval; grep patterns must match the actual failure feedback strings.)
+
+## Physical-device verification — Redmi Note 13 Pro 5G (2026-11-12)
+
+Device: `23090RA98G` (zircon, Dimensity 7200 Ultra, arm64-v8a), Android 16, 11.6 GB RAM, unmetered Wi-Fi. Debug build installed via adb.
+
+1. **Gemini Nano checklist step 1 (honest state):** Settings → Nano Local tile reports **NOT CONFIGURED** on this non-AICore device — no misleading READY. (Steps 2–4 remain blocked: no AICore on this chipset.)
+2. **Gemma 3 model download:** 584,417,280 bytes in ~80 s over Wi-Fi; `.part` → final-file rename observed (pause/resume cleanup logic works on hardware).
+3. **Lyric generation E2E:** CREATE LYRICS → draft "Crimson Echoes" in ~60–70 s (cold engine), ~55–60 s on the second run (engine cache effective; model load skipped).
+4. **SentimentAnalyzer:** logs the single `W` line (no stack trace) on hardware too.
+5. **MP4 export:** hardware encoder produced `Melodia_1794487990161.mp4` (7.48 MB) in under a minute; `EXPORT COMPLETE` banner + output file name rendered.
+6. **SHARE VIDEO:** opened the system chooser (`com.android.intentresolver.ChooserActivity`).
+
+The Gemma 3 + export pipeline is verified on real ARM hardware. Remaining unverified: Gemini Nano generation (needs an AICore-capable device: Pixel 8/9-class, Tensor G3+, or Snapdragon 8 Gen 3-class).
