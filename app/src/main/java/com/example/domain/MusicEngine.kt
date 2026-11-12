@@ -34,7 +34,7 @@ object MusicEngine {
         appContext: Context? = null
     ): GeneratedSongDraft? = withContext(Dispatchers.IO) {
         val provider = com.example.network.llm.LlmProviderFactory.create(providerId, appContext)
-        if (!provider.isAvailable()) {
+        if (!provider.checkReady()) {
             Log.w(TAG, "LLM provider '$providerId' not available")
             return@withContext null
         }
@@ -74,7 +74,7 @@ object MusicEngine {
         var fallbackReason = "No available text provider was found."
         try {
             val provider = com.example.network.llm.LlmProviderFactory.create(providerId, appContext)
-            if (provider.isAvailable()) {
+            if (provider.checkReady()) {
                 val polished = provider.generate(userText, systemPrompt, temperature = 0.7f, maxTokens = 800)
                     .text.trim()
                 if (polished.isNotBlank()) {
@@ -104,7 +104,7 @@ object MusicEngine {
                 "Return only comma-separated lowercase tags, without sentences or markdown."
         try {
             val provider = com.example.network.llm.LlmProviderFactory.create(providerId, appContext)
-            if (provider.isAvailable()) {
+            if (provider.checkReady()) {
                 val tags = provider.generate("Prompt: '$polishedPrompt'", systemPrompt, 0.5f, 250)
                     .text.split(",").map { it.trim().lowercase() }.filter { it.isNotBlank() }
                 if (tags.isNotEmpty()) return@withContext tags
@@ -174,7 +174,7 @@ object MusicEngine {
                 "Return only the single line, without quotes, markdown, or section tags."
         try {
             val provider = com.example.network.llm.LlmProviderFactory.create(providerId, appContext)
-            if (provider.isAvailable()) {
+            if (provider.checkReady()) {
                 val line = provider.generate(promptText, temperature = 0.7f, maxTokens = 100)
                     .text.trim().lineSequence().firstOrNull { it.isNotBlank() }
                 if (!line.isNullOrBlank()) return@withContext line

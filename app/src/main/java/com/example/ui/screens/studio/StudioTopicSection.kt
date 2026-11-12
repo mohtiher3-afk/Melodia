@@ -93,6 +93,12 @@ fun StudioTopicSection(
                     message = state.promptFeedback?.message ?: "Creating the text prompt...",
                     isLoading = true
                 )
+                // Errors must outrank the empty-draft placeholder: otherwise a failed
+                // provider check with no selected draft leaves CREATE LYRICS looking dead.
+                state.lyricsFeedback?.isError == true -> GenerationActionFeedback(
+                    message = state.lyricsFeedback.message,
+                    isError = true
+                )
                 state.currentDraft == null -> GenerationActionFeedback(
                     message = "Create or restore a draft first to generate a prompt."
                 )

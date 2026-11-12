@@ -21,17 +21,31 @@ import kotlinx.coroutines.withContext
  * (com.google.mlkit:genai-prompt). The model itself is provisioned by Android AICore.
  *
  * [isAvailable] reports only the static prerequisite (Android 12+ / AICore-capable).
- * The authoritative readiness check is [probeStatus] / the check inside [generate],
- * which maps every AICore state to an actionable user message instead of failing
- * silently or faking success.
+ * The authoritative readiness check is [checkReady] / [probeStatus] / the check inside
+ * [generate], which maps every AICore state to an actionable user message instead of
+ * failing silently or faking success.
  */
 class GeminiNanoLlmProvider : LlmProvider {
 
     override val id: String = LlmProviderFactory.PROVIDER_GEMINI_NANO
     override val displayName: String = "Gemini Nano (on-device)"
 
-    /** Static prerequisite only. Real device support is checked in generate()/probeStatus(). */
+    /** Static prerequisite only. Real device support is checked in checkReady()/generate(). */
     override fun isAvailable(): Boolean = Build.VERSION.SDK_INT >= MIN_SDK_FOR_AICORE
+
+    /**
+     * Real AICore feature check for the coroutine gates — unlike [isAvailable],
+     * this reports the actual on-device model state, so unsupported devices
+     * fail the gate before generate() is attempted. Devices where AICore is
+     * missing entirely make checkStatus() throw; that is treated as not ready
+     * (generate() would surface the detailed error if it were ever reached).
+     */
+    override suspend fun checkReady(): Boolean = try {
+        probeStatus() == FeatureStatus.AVAILABLE
+    } catch (e: Exception) {
+        Log.w(TAG, "AICore status check failed; treating Nano as not ready: ${e.message}")
+        false
+    }
 
     /**
      * Authoritative AICore feature status for this device.

@@ -321,7 +321,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 return@launch
             }
             val providerAvailable = try {
-                provider.isAvailable()
+                provider.checkReady()
             } catch (e: Exception) {
                 _studioState.update {
                     it.copy(

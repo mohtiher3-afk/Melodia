@@ -25,7 +25,7 @@ object SentimentAnalyzer {
             val provider = com.example.network.llm.LlmProviderFactory.create(
                 com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO
             )
-            if (provider.isAvailable()) {
+            if (provider.checkReady()) {
                 try {
                     val prompt = """
                         Analyze the emotional tone and sentiment of these song lyrics. 
