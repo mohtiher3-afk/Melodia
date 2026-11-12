@@ -52,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -59,11 +60,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.R
 import com.example.domain.AudioPlayerManager
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
 import com.example.ui.theme.NothingDarkGrey
+import com.example.ui.theme.NothingDarkSurface
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingOffWhite
 import com.example.ui.theme.NothingRed
@@ -102,13 +105,13 @@ fun FloatingPlayerBar(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp)
-                    .clip(RoundedCornerShape(32.dp))
-                    .border(1.dp, NothingRed.copy(alpha = 0.8f), RoundedCornerShape(32.dp))
+                    .height(72.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .border(1.dp, NothingBorder, RoundedCornerShape(24.dp))
                     .pressable(pressedScale = 0.97f, haptic = TapHaptic) {
                         showExpandedPlayer = true
                     },
-                color = NothingCardSurface
+                color = NothingDarkSurface
             ) {
                 Row(
                     modifier = Modifier
@@ -172,7 +175,7 @@ fun FloatingPlayerBar(
                         IconButton(
                             onClick = { audioPlayerManager.restartTrack() },
                             modifier = Modifier
-                                .size(32.dp)
+                                .size(44.dp)
                                 .clip(CircleShape)
                                 .background(NothingBlack)
                                 .testTag("floating_restart_button")
@@ -188,7 +191,7 @@ fun FloatingPlayerBar(
                         IconButton(
                             onClick = { audioPlayerManager.pauseAudio() },
                             modifier = Modifier
-                                .size(38.dp)
+                                .size(48.dp)
                                 .clip(CircleShape)
                                 .background(NothingRed)
                                 .testTag("floating_play_pause_button")
@@ -204,7 +207,7 @@ fun FloatingPlayerBar(
                         IconButton(
                             onClick = { audioPlayerManager.stopAudio() },
                             modifier = Modifier
-                                .size(32.dp)
+                                .size(44.dp)
                                 .clip(CircleShape)
                                 .background(NothingBlack)
                                 .testTag("floating_close_button")
@@ -318,7 +321,7 @@ fun ExpandedPlayerSheet(
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "NOW PLAYING // NOTHING PLAYER",
+                            text = stringResource(R.string.player_now_playing),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 10.sp,
                             color = NothingRed,
@@ -326,7 +329,7 @@ fun ExpandedPlayerSheet(
                             letterSpacing = 1.sp
                         )
                         Text(
-                            text = "MELODIA v3 AUDIO SYNTHESIS",
+                            text = stringResource(R.string.player_app_badge),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 11.sp,
                             color = NothingGrey
@@ -505,7 +508,7 @@ fun ExpandedPlayerSheet(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "LIVE SYNCHRONIZED LYRICS",
+                            text = stringResource(R.string.player_live_lyrics),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -520,7 +523,7 @@ fun ExpandedPlayerSheet(
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = "REALTIME SYNC",
+                                text = stringResource(R.string.player_realtime_sync),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 8.sp,
                                 color = NothingRed,
@@ -575,7 +578,7 @@ fun ExpandedPlayerSheet(
                                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                                         ) {
                                             Text(
-                                                text = "ACTIVE",
+                                                text = stringResource(R.string.player_state_active),
                                                 fontFamily = SpaceMonoFontFamily,
                                                 fontSize = 8.sp,
                                                 color = NothingWhite,

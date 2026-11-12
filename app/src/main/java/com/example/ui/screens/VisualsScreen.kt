@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.components.GlyphCard
+import com.example.ui.components.GenerationActionFeedback
 import com.example.ui.components.NothingCoverArt
 import com.example.ui.components.NothingPillButton
 import com.example.ui.components.StatusBadge
@@ -56,6 +57,7 @@ fun VisualsScreen(
                         status = when {
                             state.isGeneratingCover -> "PROCESSING"
                             draft?.coverImagePath != null -> "READY"
+                            draft == null -> "NEEDS DRAFT"
                             else -> "IDLE"
                         }
                     )
@@ -75,10 +77,33 @@ fun VisualsScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     NothingPillButton(
-                        text = if (state.isGeneratingCover) "GENERATING..." else "GENERATE COVER ART",
+                        text = when {
+                            state.isGeneratingCover -> "GENERATING..."
+                            state.isGenerating -> "WAITING FOR LYRICS..."
+                            else -> "GENERATE COVER ART"
+                        },
                         onClick = { viewModel.generateCoverArtOnly() },
                         isPrimary = true,
+                        enabled = draft != null && !state.isGeneratingCover && !state.isGenerating,
                         modifier = Modifier.weight(1f)
+                    )
+                }
+
+                val coverFeedback = state.coverFeedback
+                when {
+                    state.isGeneratingCover -> GenerationActionFeedback(
+                        message = state.coverFeedback?.message ?: "Generating cover art...",
+                        isLoading = true
+                    )
+                    state.isGenerating -> GenerationActionFeedback(
+                        message = "Wait for the current lyrics draft to finish before generating cover art."
+                    )
+                    coverFeedback != null -> GenerationActionFeedback(
+                        message = coverFeedback.message,
+                        isError = coverFeedback.isError
+                    )
+                    draft == null -> GenerationActionFeedback(
+                        message = "Create or restore a song draft in Studio to generate its cover."
                     )
                 }
             }

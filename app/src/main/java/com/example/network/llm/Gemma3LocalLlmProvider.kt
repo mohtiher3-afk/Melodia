@@ -17,7 +17,7 @@ class Gemma3LocalLlmProvider(
     private val context: Context
 ) : LlmProvider {
 
-    private val modelManager: LocalModelManager by lazy { LocalModelManager(context) }
+    private val modelManager: LocalModelManager by lazy { LocalModelManager.getInstance(context) }
 
     override val id: String = LlmProviderFactory.PROVIDER_GEMMA3_LOCAL
     override val displayName: String = "Gemma 3 1B (Local)"

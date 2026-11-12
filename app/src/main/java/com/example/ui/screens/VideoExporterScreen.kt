@@ -34,10 +34,13 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.util.Log
 import com.example.domain.VideoAspectRatio
 import com.example.domain.VideoResolution
 import com.example.ui.components.GlyphCard
+import java.io.File
 import com.example.ui.components.NothingPillButton
 import com.example.ui.components.StatusBadge
 import com.example.ui.theme.NothingBlack
@@ -155,6 +158,40 @@ fun VideoExporterScreen(
                         }
                     }
                 }
+
+                // Bitrate selector (F-6: was hardcoded at 12 Mbps with no UI)
+                Text(
+                    text = "BITRATE",
+                    fontFamily = SpaceMonoFontFamily,
+                    fontSize = 10.sp,
+                    color = NothingGrey
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf(8, 12, 20, 35).forEach { mbps ->
+                        val isSel = bitrateMbps == mbps
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(36.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isSel) NothingRed else NothingCardSurface)
+                                .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
+                                .clickable { bitrateMbps = mbps },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "$mbps Mbps",
+                                fontFamily = SpaceMonoFontFamily,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSel) NothingBlack else NothingWhite
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -213,7 +250,8 @@ fun VideoExporterScreen(
             }
         }
 
-        // Export Action Button
+        // Export Action Button (guarded: one encode at a time — double MediaCodec
+        // encodes would race on the muxer and corrupt output)
         NothingPillButton(
             text = if (exportProgress.isExporting) "ENCODING VIDEO..." else "EXPORT MP4 LYRIC VIDEO",
             onClick = {
@@ -225,8 +263,38 @@ fun VideoExporterScreen(
                 )
             },
             isPrimary = true,
+            enabled = !exportProgress.isExporting,
             modifier = Modifier.fillMaxWidth()
         )
+
+        // Share the finished export (F-6: result was previously unreachable outside app cache)
+        val outputFilePath = exportProgress.outputFilePath
+        if (!exportProgress.isExporting && outputFilePath != null && File(outputFilePath).exists()) {
+            NothingPillButton(
+                text = "SHARE VIDEO",
+                onClick = {
+                    try {
+                        val videoUri = FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            File(outputFilePath)
+                        )
+                        val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                            type = "video/mp4"
+                            putExtra(android.content.Intent.EXTRA_STREAM, videoUri)
+                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(
+                            android.content.Intent.createChooser(shareIntent, "Share lyric video")
+                        )
+                    } catch (e: Exception) {
+                        Log.e("VideoExporterScreen", "Failed to share video", e)
+                    }
+                },
+                isPrimary = false,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 

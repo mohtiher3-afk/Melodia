@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Album
@@ -103,7 +104,10 @@ class MainActivity : ComponentActivity() {
                                     ) {
                         AnimatedContent(
                             targetState = currentTab,
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .widthIn(max = 840.dp)
+                                .align(Alignment.TopCenter),
                             transitionSpec = {
                                 val forward = targetState.ordinal > initialState.ordinal
                                 val enterOffset = if (forward) 1 else -1
@@ -127,6 +131,11 @@ class MainActivity : ComponentActivity() {
                                     MelodiaTab.LIBRARY -> LibraryScreen(
                                         viewModel = viewModel,
                                         onNavigateToStudio = { currentTab = MelodiaTab.STUDIO }
+                                    )
+                                    MelodiaTab.MORE -> MoreScreen(
+                                        onOpenVisuals = { currentTab = MelodiaTab.VISUALS },
+                                        onOpenExport = { currentTab = MelodiaTab.EXPORT },
+                                        onOpenSettings = { currentTab = MelodiaTab.SETTINGS }
                                     )
                                     MelodiaTab.VISUALS -> VisualsScreen(viewModel = viewModel)
                                     MelodiaTab.SYNC -> SyncScreen(viewModel = viewModel)

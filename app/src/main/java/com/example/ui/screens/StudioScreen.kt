@@ -120,7 +120,15 @@ fun StudioScreen(
 
         // Dashboard Content
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            // Configuration Controls
+            // Lead with the primary task; keep the creative controls immediately visible.
+            StudioTopicSection(
+                state = state,
+                onSetUserTopic = { viewModel.setUserTopic(it) },
+                onGenerateLyrics = { viewModel.generateLyricsOnly() },
+                onGeneratePrompt = { viewModel.generateMusicPromptOnly() }
+            )
+
+            // Secondary configuration follows the primary writing action.
             StudioConfigSection(
                 state = state,
                 onSetGenre = { viewModel.setGenre(it) },
@@ -130,14 +138,6 @@ fun StudioScreen(
                 onSetSelectedBpm = { viewModel.setSelectedBpm(it) },
                 onSetVocalReverb = { viewModel.setVocalReverb(it) },
                 onOpenGenreDirectory = { showGenreDirectoryDialog = true }
-            )
-
-            // Topic & Actions
-            StudioTopicSection(
-                state = state,
-                onSetUserTopic = { viewModel.setUserTopic(it) },
-                onGenerateLyrics = { viewModel.generateLyricsOnly() },
-                onGeneratePrompt = { viewModel.generateMusicPromptOnly() }
             )
 
             // Active Draft Overview Card

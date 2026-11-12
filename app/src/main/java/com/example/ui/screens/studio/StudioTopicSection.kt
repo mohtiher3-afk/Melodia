@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.GlyphCard
+import com.example.ui.components.GenerationActionFeedback
 import com.example.ui.components.NothingPillButton
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingGrey
@@ -71,13 +72,37 @@ fun StudioTopicSection(
                     text = if (state.isGenerating) "DRAFTING LYRICS..." else "CREATE LYRICS",
                     onClick = onGenerateLyrics,
                     isPrimary = true,
+                    enabled = !state.isGenerating && !state.isPolishingPrompt,
                     modifier = Modifier.weight(1f)
                 )
 
                 NothingPillButton(
                     text = if (state.isPolishingPrompt) "POLISHING..." else "GENERATE PROMPT",
                     onClick = onGeneratePrompt,
+                    enabled = state.currentDraft != null && !state.isGenerating && !state.isPolishingPrompt,
                     modifier = Modifier.weight(1f)
+                )
+            }
+
+            when {
+                state.isGenerating -> GenerationActionFeedback(
+                    message = state.lyricsFeedback?.message ?: "Creating lyrics...",
+                    isLoading = true
+                )
+                state.isPolishingPrompt -> GenerationActionFeedback(
+                    message = state.promptFeedback?.message ?: "Creating the text prompt...",
+                    isLoading = true
+                )
+                state.currentDraft == null -> GenerationActionFeedback(
+                    message = "Create or restore a draft first to generate a prompt."
+                )
+                state.lyricsFeedback != null -> GenerationActionFeedback(
+                    message = state.lyricsFeedback.message,
+                    isError = state.lyricsFeedback.isError
+                )
+                state.promptFeedback != null -> GenerationActionFeedback(
+                    message = state.promptFeedback.message,
+                    isError = state.promptFeedback.isError
                 )
             }
         }

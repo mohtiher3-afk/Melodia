@@ -25,7 +25,7 @@ val SilkscreenFontFamily = FontFamily(
 
 val NothingTypography = Typography(
     displayLarge = TextStyle(
-        fontFamily = NothingDotMatrixFontFamily,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 32.sp,
         lineHeight = 38.sp,
@@ -33,7 +33,7 @@ val NothingTypography = Typography(
         color = HighContrastWhite
     ),
     displayMedium = TextStyle(
-        fontFamily = NothingDotMatrixFontFamily,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 26.sp,
         lineHeight = 32.sp,
@@ -41,7 +41,7 @@ val NothingTypography = Typography(
         color = HighContrastWhite
     ),
     displaySmall = TextStyle(
-        fontFamily = NothingDotMatrixFontFamily,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 22.sp,
         lineHeight = 28.sp,
@@ -49,7 +49,7 @@ val NothingTypography = Typography(
         color = HighContrastWhite
     ),
     headlineLarge = TextStyle(
-        fontFamily = NothingDotMatrixFontFamily,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 24.sp,
         lineHeight = 30.sp,
@@ -57,7 +57,7 @@ val NothingTypography = Typography(
         color = HighContrastWhite
     ),
     headlineMedium = TextStyle(
-        fontFamily = NothingDotMatrixFontFamily,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 20.sp,
         lineHeight = 26.sp,
@@ -65,7 +65,7 @@ val NothingTypography = Typography(
         color = HighContrastWhite
     ),
     headlineSmall = TextStyle(
-        fontFamily = NothingDotMatrixFontFamily,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 17.sp,
         lineHeight = 23.sp,
@@ -73,7 +73,7 @@ val NothingTypography = Typography(
         color = HighContrastWhite
     ),
     titleLarge = TextStyle(
-        fontFamily = NothingDotMatrixFontFamily,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 18.sp,
         lineHeight = 24.sp,
@@ -81,7 +81,7 @@ val NothingTypography = Typography(
         color = HighContrastWhite
     ),
     titleMedium = TextStyle(
-        fontFamily = SpaceMonoFontFamily,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 15.sp,
         lineHeight = 21.sp,
@@ -89,7 +89,7 @@ val NothingTypography = Typography(
         color = HighContrastWhite
     ),
     titleSmall = TextStyle(
-        fontFamily = SpaceMonoFontFamily,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 13.sp,
         lineHeight = 18.sp,
@@ -97,7 +97,7 @@ val NothingTypography = Typography(
         color = HighContrastOffWhite
     ),
     bodyLarge = TextStyle(
-        fontFamily = SpaceMonoFontFamily,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
         lineHeight = 21.sp,
@@ -105,7 +105,7 @@ val NothingTypography = Typography(
         color = HighContrastOffWhite
     ),
     bodyMedium = TextStyle(
-        fontFamily = SpaceMonoFontFamily,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 13.sp,
         lineHeight = 19.sp,
@@ -113,7 +113,7 @@ val NothingTypography = Typography(
         color = HighContrastGrey
     ),
     bodySmall = TextStyle(
-        fontFamily = SpaceMonoFontFamily,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 11.sp,
         lineHeight = 16.sp,
@@ -121,7 +121,7 @@ val NothingTypography = Typography(
         color = HighContrastMuted
     ),
     labelLarge = TextStyle(
-        fontFamily = NothingDotMatrixFontFamily,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 13.sp,
         lineHeight = 17.sp,
@@ -129,7 +129,7 @@ val NothingTypography = Typography(
         color = HighContrastWhite
     ),
     labelMedium = TextStyle(
-        fontFamily = SpaceMonoFontFamily,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 11.sp,
         lineHeight = 15.sp,
@@ -137,7 +137,7 @@ val NothingTypography = Typography(
         color = HighContrastOffWhite
     ),
     labelSmall = TextStyle(
-        fontFamily = SpaceMonoFontFamily,
+        fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 9.sp,
         lineHeight = 13.sp,

@@ -18,3 +18,6 @@ local.properties
 debug.keystore
 .aistudio/
 my-upload-key.jks
+
+# Agent working artifacts
+.work/

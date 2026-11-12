@@ -41,13 +41,17 @@ Java_com_example_domain_WhisperNativeBridge_nativeInit(JNIEnv *env, jobject thiz
 
 JNIEXPORT jstring JNICALL
 Java_com_example_domain_WhisperNativeBridge_nativeTranscribe(JNIEnv *env, jobject thiz, jstring audioPath) {
+    // Whisper inference is not implemented in this bridge. It must fail loudly
+    // instead of returning a fake success string that callers could mistake
+    // for a real transcript.
     if (g_whisper_ctx == nullptr) {
-        return env->NewStringUTF("Model not initialized - call init first");
+        env->ThrowNew(env->FindClass("java/lang/IllegalStateException"),
+                      "Whisper model not initialized - call init first");
+        return nullptr;
     }
-    const char *path = env->GetStringUTFChars(audioPath, nullptr);
-    LOGI("Transcribing: %s", path);
-    env->ReleaseStringUTFChars(audioPath, path);
-    return env->NewStringUTF("Transcription API ready");
+    env->ThrowNew(env->FindClass("java/lang/UnsupportedOperationException"),
+                  "Whisper transcription is not implemented in this build");
+    return nullptr;
 }
 
 JNIEXPORT void JNICALL

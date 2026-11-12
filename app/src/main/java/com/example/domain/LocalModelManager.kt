@@ -6,8 +6,8 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
@@ -24,6 +24,19 @@ class LocalModelManager(private val context: Context) {
     companion object {
         private const val TAG = "LocalModelManager"
 
+        @Volatile
+        private var instance: LocalModelManager? = null
+
+        /**
+         * Process-wide singleton. Download progress must be observable from every
+         * screen, so multiple instances are forbidden (they would each keep their
+         * own LiveData map and the UI would watch the wrong one).
+         */
+        fun getInstance(context: Context): LocalModelManager =
+            instance ?: synchronized(this) {
+                instance ?: LocalModelManager(context.applicationContext).also { instance = it }
+            }
+
         // Model definitions with download URLs (HuggingFace / GitHub releases)
         data class ModelInfo(
             val id: String,
@@ -35,7 +48,10 @@ class LocalModelManager(private val context: Context) {
             val version: String = "1.0"
         )
 
-        // Free, open-source models available for download
+        // Free, open-source models available for download.
+        // Only models that shipped features actually consume are listed here.
+        // (stable_diffusion_v15 was removed: nothing in the app consumes it,
+        // so offering a 2.1 GB download was dishonest.)
         val AVAILABLE_MODELS = listOf(
             ModelInfo(
                 id = "gemma3_1b",
@@ -60,14 +76,6 @@ class LocalModelManager(private val context: Context) {
                 downloadUrl = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin",
                 expectedSizeBytes = 142_000_000L,
                 localPath = "models/whisper/ggml-base.bin"
-            ),
-            ModelInfo(
-                id = "stable_diffusion_v15",
-                name = "Stable Diffusion v1.5",
-                description = "Image generation model for cover art (~2GB). Runs via MediaPipe. Requires conversion to MediaPipe format.",
-                downloadUrl = "https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5/resolve/main/v1-5-pruned.ckpt",
-                expectedSizeBytes = 2_100_000_000L, // ~2.1 GB
-                localPath = "models/stable_diffusion/v1-5-pruned.ckpt"
             )
         )
 
@@ -110,42 +118,99 @@ class LocalModelManager(private val context: Context) {
         return file.exists() && file.length() >= model.expectedSizeBytes * 9 / 10 // allow 10% tolerance
     }
 
+    /** Absolute path of the in-progress partial download for a model. */
+    internal fun partFile(model: ModelInfo): File = File(context.filesDir, model.localPath + ".part")
+
+    /** Bytes already stored in the partial file (0 when absent). Visible for resume logic/tests. */
+    fun partialBytes(model: ModelInfo): Long = partFile(model).takeIf { it.exists() }?.length() ?: 0L
+
     /** Get absolute path to downloaded model file */
     fun getModelPath(model: ModelInfo): String? {
         val file = File(context.filesDir, model.localPath)
         return if (file.exists()) file.absolutePath else null
     }
 
-    /** Download a model with progress updates */
+    /** Per-model cancellation flags; checked inside the transfer loop. */
+    private val cancelFlags = java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.atomic.AtomicBoolean>()
+
+    private fun cancelFlag(modelId: String) =
+        cancelFlags.getOrPut(modelId) { java.util.concurrent.atomic.AtomicBoolean(false) }
+
+    /**
+     * Download a model with progress updates, real cancellation and resume.
+     *
+     * The transfer writes to `<localPath>.part` and only renames to the final
+     * path after the size check passes, so a partial download can never be
+     * reported as READY. When a `.part` file exists, an HTTP Range request
+     * continues from the stored bytes (falling back to a full restart when the
+     * server ignores the range).
+     */
     suspend fun downloadModel(model: ModelInfo, onProgress: ((Float, Long, Long) -> Unit)? = null): Result<String> = withContext(Dispatchers.IO) {
         val state = _downloadStates[model.id] ?: MediatorLiveData<DownloadState>(DownloadState.Idle(false)).also { _downloadStates[model.id] = it }
-        val file = File(context.filesDir, model.localPath)
-        file.parentFile?.mkdirs()
+        val finalFile = File(context.filesDir, model.localPath)
+        finalFile.parentFile?.mkdirs()
 
         // Check if already downloaded
         if (isModelDownloaded(model)) {
-            state.postValue(DownloadState.Completed(file.absolutePath))
-            return@withContext Result.success(file.absolutePath)
+            state.postValue(DownloadState.Completed(finalFile.absolutePath))
+            return@withContext Result.success(finalFile.absolutePath)
         }
 
-        state.postValue(DownloadState.Downloading(0f, 0L, model.expectedSizeBytes))
+        val flag = cancelFlag(model.id)
+        flag.set(false)
 
+        val partFile = partFile(model)
+        var startOffset = partialBytes(model)
+        val fileIsPartial = startOffset > 0 && !isModelDownloaded(model)
+
+        state.postValue(DownloadState.Downloading(0f, startOffset, model.expectedSizeBytes))
+
+        var connection: HttpURLConnection? = null
+        var inputStream: InputStream? = null
+        var outputStream: FileOutputStream? = null
         try {
             val url = URL(model.downloadUrl)
-            val connection = url.openConnection() as HttpURLConnection
-            connection.requestMethod = "GET"
-            connection.connectTimeout = 30_000
-            connection.readTimeout = 300_000
+            connection = (url.openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = 30_000
+                readTimeout = 300_000
+                if (fileIsPartial) {
+                    // Ask the server to continue from the bytes we already have.
+                    setRequestProperty("Range", "bytes=$startOffset-")
+                }
+            }
 
-            val totalSize = connection.contentLengthLong
-            val inputStream = connection.inputStream
-            val outputStream = FileOutputStream(file)
+            val statusCode = connection.responseCode
+            val resumed = fileIsPartial && statusCode == 206
+            if (fileIsPartial && !resumed) {
+                // Server ignored the Range header; discard the partial data.
+                startOffset = 0
+                partFile.delete()
+            }
+
+            inputStream = connection.inputStream
+            outputStream = FileOutputStream(partFile, /* append = */ resumed)
+
+            val totalSize = when {
+                resumed -> startOffset + connection.contentLengthLong
+                connection.contentLengthLong > 0 -> connection.contentLengthLong
+                else -> model.expectedSizeBytes
+            }
 
             val buffer = ByteArray(8192)
-            var downloaded = 0L
+            var downloaded = startOffset
             var lastUpdate = 0L
 
             while (true) {
+                if (flag.get()) {
+                    // Real pause: keep the partial file so the next attempt resumes.
+                    state.postValue(DownloadState.Paused(downloaded, totalSize))
+                    return@withContext Result.failure(
+                        kotlinx.coroutines.CancellationException("Download paused by user")
+                    )
+                }
+                ensureActive()
+
                 val read = inputStream.read(buffer)
                 if (read == -1) break
                 outputStream.write(buffer, 0, read)
@@ -162,41 +227,54 @@ class LocalModelManager(private val context: Context) {
             }
 
             outputStream.flush()
-            outputStream.close()
-            inputStream.close()
 
-            // Verify download
-            if (file.exists() && file.length() >= model.expectedSizeBytes * 9 / 10) {
-                state.postValue(DownloadState.Completed(file.absolutePath))
-                Log.i(TAG, "Model ${model.id} downloaded successfully to ${file.absolutePath}")
-                Result.success(file.absolutePath)
+            // Verify download before promoting the partial file to the final path
+            if (partFile.exists() && partFile.length() >= model.expectedSizeBytes * 9 / 10) {
+                if (finalFile.exists()) finalFile.delete()
+                if (!partFile.renameTo(finalFile)) {
+                    val error = "Could not finalize downloaded file"
+                    state.postValue(DownloadState.Failed(error))
+                    return@withContext Result.failure(IllegalStateException(error))
+                }
+                state.postValue(DownloadState.Completed(finalFile.absolutePath))
+                Log.i(TAG, "Model ${model.id} downloaded successfully to ${finalFile.absolutePath}")
+                Result.success(finalFile.absolutePath)
             } else {
-                file.delete()
+                partFile.delete()
                 val error = "Downloaded file size mismatch"
                 state.postValue(DownloadState.Failed(error))
                 Result.failure(IllegalStateException(error))
             }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            // Coroutine scope cancelled: keep partial data for a later resume.
+            state.postValue(DownloadState.Paused(startOffset + 0L, model.expectedSizeBytes))
+            throw e
         } catch (e: Exception) {
-            file.delete()
             val error = "Download failed: ${e.message}"
             Log.e(TAG, error, e)
             state.postValue(DownloadState.Failed(error))
             Result.failure(e)
+        } finally {
+            runCatching { inputStream?.close() }
+            runCatching { outputStream?.close() }
+            connection?.disconnect()
         }
     }
 
-    /** Cancel an ongoing download */
+    /**
+     * Request cancellation of an ongoing download. The transfer loop observes
+     * this flag on every read, so the network stops within milliseconds and
+     * the partial bytes are preserved for resume.
+     */
     fun cancelDownload(model: ModelInfo) {
-        val state = _downloadStates[model.id]
-        val current = state?.value
-        if (current is DownloadState.Downloading) {
-            state?.postValue(DownloadState.Paused(current.downloadedBytes, current.totalBytes))
-        }
+        cancelFlag(model.id).set(true)
     }
 
-    /** Delete a downloaded model */
+    /** Delete a downloaded model (and any partial download data) */
     fun deleteModel(model: ModelInfo): Boolean {
         val file = File(context.filesDir, model.localPath)
+        partFile(model).delete()
+        cancelFlag(model.id).set(true)
         val deleted = file.delete()
         if (deleted) {
             _downloadStates[model.id]?.postValue(DownloadState.Idle(false))

@@ -74,7 +74,16 @@ android {
   testOptions {
     unitTests { isIncludeAndroidResources = true }
     animationsDisabled = true
-}
+  }
+  // Room schema history for migration tests (see app/schemas/).
+  sourceSets {
+    // Exported Room schemas must be readable as assets by Robolectric migration
+    // tests. AGP 9 no longer packages unit-test assets, so attach them to the
+    // debug variant only (release APKs stay clean).
+    getByName("debug") {
+      assets.srcDir(files("$projectDir/schemas"))
+    }
+  }
   dependenciesInfo {
     includeInApk = false
     includeInBundle = true
@@ -93,6 +102,11 @@ kotlin {
   compilerOptions {
     freeCompilerArgs.add("-Xannotation-default-target=param-property")
   }
+}
+
+ksp {
+  // Export Room schema JSON per version so migrations can be written and tested.
+  arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
@@ -158,6 +172,7 @@ dependencies {
   testImplementation(libs.junit)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.robolectric)
+  testImplementation(libs.androidx.room.testing)
   androidTestImplementation(platform(libs.androidx.compose.bom))
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   androidTestImplementation(libs.androidx.espresso.core)

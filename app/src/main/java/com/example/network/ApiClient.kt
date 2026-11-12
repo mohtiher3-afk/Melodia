@@ -70,10 +70,6 @@ object ApiClient {
         })
         .build()
 
-    val trebloService: TrebloApiService by lazy {
-        TrebloApiService.instance
-    }
-
     val geminiService: GeminiApiService by lazy {
         Retrofit.Builder()
             .baseUrl("https://generativelanguage.googleapis.com/")

@@ -1,4 +1,20 @@
 <resources>
     <string name="app_name">Melodia</string>
-</resources>
 
+    <!-- Bottom navigation (NothingBottomBar) -->
+    <string name="tab_studio">Studio</string>
+    <string name="tab_lyrics">Lyrics</string>
+    <string name="tab_library">Library</string>
+    <string name="tab_sync">Sync</string>
+    <string name="tab_more">More</string>
+    <string name="tab_visuals">Visuals</string>
+    <string name="tab_export">Export</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- Floating player bar (FloatingPlayerBar) -->
+    <string name="player_now_playing">NOW PLAYING // NOTHING PLAYER</string>
+    <string name="player_app_badge">MELODIA v3 PLAYBACK</string>
+    <string name="player_live_lyrics">LIVE SYNCHRONIZED LYRICS</string>
+    <string name="player_realtime_sync">REALTIME SYNC</string>
+    <string name="player_state_active">ACTIVE</string>
+</resources>

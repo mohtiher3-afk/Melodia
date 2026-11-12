@@ -50,8 +50,8 @@ class OpenRouterLlmProvider(
     }
 
     override fun isAvailable(): Boolean =
-        baseUrl.isNotBlank() &&
-            (baseUrl.startsWith("http://", ignoreCase = true) || baseUrl.startsWith("https://", ignoreCase = true))
+        // HTTPS only: the API key travels in a header, so plain HTTP would leak it.
+        baseUrl.isNotBlank() && baseUrl.startsWith("https://", ignoreCase = true)
 
     override suspend fun generate(
         prompt: String,

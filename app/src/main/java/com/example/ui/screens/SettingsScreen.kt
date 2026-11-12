@@ -1,5 +1,8 @@
 package com.example.ui.screens
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,9 +30,11 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +45,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.BuildConfig
 import com.example.domain.LocalModelManager
 import com.example.ui.components.GlyphCard
@@ -63,6 +71,26 @@ fun SettingsScreen(
     val defaultExportFormat by viewModel.defaultExportFormat.collectAsStateWithLifecycle()
     val llmProviderId by viewModel.llmProviderId.collectAsStateWithLifecycle()
     val allowCloudTranscription by viewModel.allowCloudTranscription.collectAsStateWithLifecycle()
+    val systemIslandEnabled by viewModel.systemIslandEnabled.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var hasOverlayPermission by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
+    var enableIslandAfterPermission by remember { mutableStateOf(false) }
+    DisposableEffect(lifecycleOwner, context) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                hasOverlayPermission = Settings.canDrawOverlays(context)
+                if (enableIslandAfterPermission) {
+                    enableIslandAfterPermission = false
+                    if (hasOverlayPermission) viewModel.setSystemIslandEnabled(true)
+                } else if (!hasOverlayPermission && systemIslandEnabled) {
+                    viewModel.setSystemIslandEnabled(false)
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     val isGeminiConfigured = BuildConfig.GEMINI_API_KEY.isNotBlank() && BuildConfig.GEMINI_API_KEY != "MY_GEMINI_API_KEY"
     val isFreeLlmConfigured = BuildConfig.FREELLM_BASE_URL.isNotBlank()
 
@@ -139,60 +167,64 @@ fun SettingsScreen(
         GlyphCard(headerTitle = "LLM PROVIDER") {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "Nano runs on-device on supported phones; Android AICore may download its model once. Cloud options may have quotas or charges:",
+                    text = "Nano runs on-device on supported phones (AICore may download its model once). Gemma 3 runs fully offline after a Settings download. Cloud options may have quotas or charges:",
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 12.sp,
                     color = NothingGrey
                 )
+                val nanoStatus by viewModel.nanoStatus.collectAsStateWithLifecycle()
+                val gemmaDownloaded = remember {
+                    val info = LocalModelManager.getModel("gemma3_1b")
+                    info != null && LocalModelManager.getInstance(context).isModelDownloaded(info)
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    listOf<Pair<String, String>>(
-                        com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO to "Nano Local",
-                        com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI to "Gemini API",
-                        com.example.network.llm.LlmProviderFactory.PROVIDER_OPENROUTER to "Other Cloud"
-                    ).forEach { (id, label) ->
-                        val isSel = llmProviderId == id
-                        val configured = when (id) {
-                            com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO -> true
-                            com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI -> isGeminiConfigured
-                            else -> isFreeLlmConfigured
-                        }
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(44.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSel) NothingRed else NothingCardSurface)
-                                .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                                .pressable(
-                                    pressedScale = 0.95f,
-                                    haptic = com.example.ui.components.TapHaptic
-                                ) { viewModel.updateLlmProvider(id) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = label,
-                                    fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isSel) NothingBlack else NothingWhite
-                                )
-                                Text(
-                                    text = when {
-                                        id == com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO -> "DEVICE CHECK"
-                                        configured -> "CONFIGURED"
-                                        else -> "NOT CONFIGURED"
-                                    },
-                                    fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 9.sp,
-                                    color = if (isSel) NothingBlack else NothingGrey
-                                )
-                            }
-                        }
-                    }
+                    ProviderTile(
+                        id = com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO,
+                        label = "Nano Local",
+                        badge = when {
+                            !com.example.network.llm.GeminiNanoLlmProvider().isAvailable() -> "NOT SUPPORTED"
+                            nanoStatus == null -> "CHECKING"
+                            nanoStatus == com.google.mlkit.genai.common.FeatureStatus.AVAILABLE -> "READY"
+                            nanoStatus == com.google.mlkit.genai.common.FeatureStatus.DOWNLOADING -> "DOWNLOADING"
+                            nanoStatus == com.google.mlkit.genai.common.FeatureStatus.DOWNLOADABLE -> "NEEDS DOWNLOAD"
+                            else -> "NOT SUPPORTED"
+                        },
+                        isSel = llmProviderId == com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO,
+                        onClick = { viewModel.updateLlmProvider(com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    ProviderTile(
+                        id = com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI,
+                        label = "Gemini API",
+                        badge = if (isGeminiConfigured) "CONFIGURED" else "NOT CONFIGURED",
+                        isSel = llmProviderId == com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI,
+                        onClick = { viewModel.updateLlmProvider(com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ProviderTile(
+                        id = com.example.network.llm.LlmProviderFactory.PROVIDER_GEMMA3_LOCAL,
+                        label = "Gemma 3",
+                        badge = if (gemmaDownloaded) "READY" else "NOT DOWNLOADED",
+                        isSel = llmProviderId == com.example.network.llm.LlmProviderFactory.PROVIDER_GEMMA3_LOCAL,
+                        onClick = { viewModel.updateLlmProvider(com.example.network.llm.LlmProviderFactory.PROVIDER_GEMMA3_LOCAL) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    ProviderTile(
+                        id = com.example.network.llm.LlmProviderFactory.PROVIDER_OPENROUTER,
+                        label = "Other Cloud",
+                        badge = if (isFreeLlmConfigured) "CONFIGURED" else "NOT CONFIGURED",
+                        isSel = llmProviderId == com.example.network.llm.LlmProviderFactory.PROVIDER_OPENROUTER,
+                        onClick = { viewModel.updateLlmProvider(com.example.network.llm.LlmProviderFactory.PROVIDER_OPENROUTER) },
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
@@ -235,6 +267,52 @@ fun SettingsScreen(
                 Switch(
                     checked = allowCloudTranscription,
                     onCheckedChange = viewModel::setAllowCloudTranscription
+                )
+            }
+        }
+
+        GlyphCard(headerTitle = "SYSTEM PLAYBACK ISLAND") {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                    Text(
+                        text = "Floating playback controls",
+                        fontFamily = SpaceMonoFontFamily,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = NothingWhite
+                    )
+                    Text(
+                        text = when {
+                            systemIslandEnabled -> "Enabled. The Island appears while a track is active."
+                            hasOverlayPermission -> "Off by default. You can turn it on at any time."
+                            else -> "Off by default. Android asks for display-over-apps access only if enabled."
+                        },
+                        fontFamily = SpaceMonoFontFamily,
+                        fontSize = 10.sp,
+                        color = NothingGrey
+                    )
+                }
+                Switch(
+                    checked = systemIslandEnabled,
+                    onCheckedChange = { enabled ->
+                        if (!enabled) {
+                            viewModel.setSystemIslandEnabled(false)
+                        } else if (hasOverlayPermission) {
+                            viewModel.setSystemIslandEnabled(true)
+                        } else {
+                            enableIslandAfterPermission = true
+                            context.startActivity(
+                                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
+                                    data = Uri.parse("package:${context.packageName}")
+                                }
+                            )
+                        }
+                    },
+                    modifier = Modifier.testTag("system_island_switch")
                 )
             }
         }
@@ -308,7 +386,10 @@ fun LocalModelDownloadSection(
     modifier: Modifier = Modifier
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    val modelManager = remember { com.example.domain.LocalModelManager(context) }
+    // Shared singleton: the same instance the ViewModel downloads with, so the
+    // progress observed here is the actual transfer (previously this created its
+    // own manager and progress/pause acted on a different one).
+    val modelManager = viewModel.localModelManager
 
     Column(
             modifier = modifier.fillMaxWidth(),
@@ -565,6 +646,45 @@ fun LocalModelDownloadSection(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ProviderTile(
+    id: String,
+    label: String,
+    badge: String,
+    isSel: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .height(44.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (isSel) NothingRed else NothingCardSurface)
+            .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
+            .pressable(
+                pressedScale = 0.95f,
+                haptic = com.example.ui.components.TapHaptic
+            ) { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = label,
+                fontFamily = SpaceMonoFontFamily,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isSel) NothingBlack else NothingWhite
+            )
+            Text(
+                text = badge,
+                fontFamily = SpaceMonoFontFamily,
+                fontSize = 9.sp,
+                color = if (isSel) NothingBlack else NothingGrey
+            )
         }
     }
 }
