@@ -1,5 +1,7 @@
 package com.example.ui.screens.studio
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -70,7 +72,7 @@ fun StudioHeader(
         ) {
             Column(modifier = Modifier.weight(1f, fill = false)) {
                 Text(
-                    text = "Melodia",
+                    text = stringResource(R.string.studio_app_name),
                     fontFamily = NothingDotMatrixFontFamily,
                     fontSize = 36.sp,
                     lineHeight = 40.sp,
@@ -78,7 +80,7 @@ fun StudioHeader(
                     maxLines = 1
                 )
                 Text(
-                    text = "Text-first lyric studio",
+                    text = stringResource(R.string.studio_app_tagline),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 12.sp,
                     color = NothingGrey
@@ -101,21 +103,21 @@ fun StudioHeader(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             MelodiaActionButton(
-                text = "Import audio",
+                text = stringResource(R.string.studio_import_audio),
                 onClick = onImportAudio,
                 icon = Icons.Default.Upload,
                 style = MelodiaButtonStyle.Primary,
                 modifier = Modifier.weight(1.35f)
             )
             MelodiaActionButton(
-                text = "Queue",
+                text = stringResource(R.string.studio_queue),
                 onClick = onOpenQueue,
                 modifier = Modifier
                     .weight(1f)
                     .testTag("studio_open_queue")
             )
             MelodiaActionButton(
-                text = "Drafts ($draftsCount)",
+                text = stringResource(R.string.studio_drafts_count, draftsCount),
                 onClick = onOpenDrafts,
                 modifier = Modifier.weight(1.1f)
             )

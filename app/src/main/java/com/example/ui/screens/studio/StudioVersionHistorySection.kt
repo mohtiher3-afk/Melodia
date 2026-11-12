@@ -1,6 +1,8 @@
 package com.example.ui.screens.studio
 
 import android.widget.Toast
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -53,7 +55,7 @@ fun StudioVersionHistorySection(
             modifier = modifier.fillMaxWidth()
         ) {
             Text(
-                text = "REVERT TO PREVIOUS PROMPT CONFIGURATIONS",
+                text = stringResource(R.string.studio_revert_history),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 9.sp,
                 color = NothingGrey,
@@ -92,7 +94,7 @@ fun StudioVersionHistorySection(
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
                                     Text(
-                                        text = "v${state.versionHistory.size - index} // ${version.timestamp}",
+                                        text = stringResource(R.string.studio_version_label, state.versionHistory.size - index, version.timestamp),
                                         fontFamily = SpaceMonoFontFamily,
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold,

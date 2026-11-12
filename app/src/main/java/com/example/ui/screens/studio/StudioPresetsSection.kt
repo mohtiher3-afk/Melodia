@@ -1,5 +1,7 @@
 package com.example.ui.screens.studio
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -55,7 +57,7 @@ fun StudioPresetsSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "SAVE CONFIG TEMPLATE",
+                    text = stringResource(R.string.studio_save_config_template),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 10.sp,
                     color = NothingGrey,
@@ -72,7 +74,7 @@ fun StudioPresetsSection(
                         .testTag("save_as_preset_button")
                 ) {
                     Text(
-                        text = "SAVE AS PRESET",
+                        text = stringResource(R.string.studio_save_as_preset),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -91,7 +93,7 @@ fun StudioPresetsSection(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "NO PRESETS SAVED YET",
+                        text = stringResource(R.string.studio_no_presets),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 11.sp,
                         color = NothingGrey
@@ -122,7 +124,7 @@ fun StudioPresetsSection(
                                     color = NothingWhite
                                 )
                                 Text(
-                                    text = "${preset.genre} // ${preset.mood}",
+                                    text = stringResource(R.string.studio_preset_meta, preset.genre, preset.mood),
                                     fontFamily = SpaceMonoFontFamily,
                                     fontSize = 10.sp,
                                     color = NothingGrey

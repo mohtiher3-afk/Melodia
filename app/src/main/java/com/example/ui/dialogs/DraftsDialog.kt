@@ -1,5 +1,7 @@
 package com.example.ui.dialogs
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -92,7 +94,7 @@ fun DraftsDialog(
                                     .background(NothingRed)
                             )
                             Text(
-                                text = "LOCAL DATABASE // AUTO-SAVE",
+                                text = stringResource(R.string.drafts_db_kicker),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 10.sp,
                                 color = NothingRed,
@@ -102,7 +104,7 @@ fun DraftsDialog(
                         }
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "SAVED DRAFTS (${drafts.size})",
+                            text = stringResource(R.string.drafts_saved_count, drafts.size),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 18.sp,
                             color = NothingWhite,
@@ -128,7 +130,7 @@ fun DraftsDialog(
                 }
 
                 Text(
-                    text = "Lyric edits and generations auto-save here whenever you pause typing.",
+                    text = stringResource(R.string.drafts_autosave_help),
                     fontSize = 11.sp,
                     color = NothingGrey,
                     modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
@@ -151,7 +153,7 @@ fun DraftsDialog(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "NO DRAFTS YET",
+                                text = stringResource(R.string.drafts_empty),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
@@ -159,7 +161,7 @@ fun DraftsDialog(
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "Start editing lyrics or topic in the Studio to create auto-saved drafts.",
+                                text = stringResource(R.string.drafts_empty_help),
                                 fontSize = 11.sp,
                                 color = NothingGrey,
                                 lineHeight = 16.sp
@@ -214,7 +216,7 @@ fun DraftsDialog(
                                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                                             ) {
                                                 Text(
-                                                    text = "ACTIVE",
+                                                    text = stringResource(R.string.drafts_active_badge),
                                                     fontFamily = SpaceMonoFontFamily,
                                                     fontSize = 8.sp,
                                                     color = NothingWhite,
@@ -256,13 +258,13 @@ fun DraftsDialog(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "${draft.genre.uppercase()} / ${draft.mood.uppercase()}",
+                                        text = stringResource(R.string.drafts_meta_line, draft.genre.uppercase(), draft.mood.uppercase()),
                                         fontFamily = SpaceMonoFontFamily,
                                         fontSize = 10.sp,
                                         color = NothingRed
                                     )
                                     Text(
-                                        text = "/",
+                                        text = stringResource(R.string.drafts_meta_slash),
                                         color = NothingGrey,
                                         fontSize = 10.sp
                                     )
@@ -277,7 +279,7 @@ fun DraftsDialog(
                                 if (draft.userTopic.isNotBlank()) {
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = "Topic: ${draft.userTopic}",
+                                        text = stringResource(R.string.drafts_topic_label, draft.userTopic),
                                         fontSize = 11.sp,
                                         color = NothingOffWhite,
                                         maxLines = 1,
@@ -289,7 +291,7 @@ fun DraftsDialog(
                                     Spacer(modifier = Modifier.height(6.dp))
                                     val lyricSnippet = draft.lyrics.lines().filter { it.isNotBlank() }.take(2).joinToString(" / ")
                                     Text(
-                                        text = "\"$lyricSnippet\"",
+                                        text = stringResource(R.string.drafts_snippet_quote, lyricSnippet),
                                         fontSize = 11.sp,
                                         color = NothingGrey,
                                         maxLines = 2,
@@ -329,7 +331,7 @@ fun DraftsDialog(
                                                 modifier = Modifier.size(12.dp)
                                             )
                                             Text(
-                                                text = "RESTORE TO STUDIO",
+                                                text = stringResource(R.string.drafts_restore),
                                                 fontFamily = SpaceMonoFontFamily,
                                                 fontSize = 9.sp,
                                                 fontWeight = FontWeight.Bold,
@@ -352,7 +354,7 @@ fun DraftsDialog(
                 ) {
                     if (drafts.isNotEmpty()) {
                         NothingPillButton(
-                            text = "CLEAR ALL",
+                            text = stringResource(R.string.drafts_clear_all),
                             onClick = onClearAllDrafts,
                             modifier = Modifier.weight(1f),
                             isPrimary = false,
@@ -361,7 +363,7 @@ fun DraftsDialog(
                     }
 
                     NothingPillButton(
-                        text = "CLOSE",
+                        text = stringResource(R.string.drafts_close),
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
                         isPrimary = drafts.isEmpty(),

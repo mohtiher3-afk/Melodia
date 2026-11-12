@@ -1,5 +1,7 @@
 package com.example.ui.screens.studio
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -243,7 +245,7 @@ fun StudioConfigSection(
                             .background(NothingRed)
                     )
                     Text(
-                        text = "SUBGENRES MATRIX // RECENT & ALL",
+                        text = stringResource(R.string.studio_subgenres_header),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 10.sp,
                         color = NothingWhite,
@@ -252,7 +254,7 @@ fun StudioConfigSection(
                 }
 
                 Text(
-                    text = "BROWSE >",
+                    text = stringResource(R.string.studio_browse_more),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 10.sp,
                     color = NothingRed,
@@ -299,7 +301,7 @@ fun StudioConfigSection(
 
             // Quick select mood keywords chips
             Text(
-                text = "QUICK SUGGESTIONS // TAP TO ADD",
+                text = stringResource(R.string.studio_quick_suggestions),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 9.sp,
                 color = NothingGrey,
@@ -334,7 +336,7 @@ fun StudioConfigSection(
                             .testTag("mood_chip_$keyword")
                     ) {
                         Text(
-                            text = "#$keyword",
+                            text = stringResource(R.string.studio_keyword_hash, keyword),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 10.sp,
                             fontWeight = if (isPresent) FontWeight.Bold else FontWeight.Normal,
@@ -349,7 +351,7 @@ fun StudioConfigSection(
         GlyphCard(headerTitle = "VOCAL & TEMPO PARAMETERS // PROMPT CONTROL") {
             // Vocal Style Chips
             Text(
-                text = "VOCAL STYLE",
+                text = stringResource(R.string.studio_vocal_style),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
@@ -391,7 +393,7 @@ fun StudioConfigSection(
 
             // BPM Selector Chips
             Text(
-                text = "TEMPO / BPM",
+                text = stringResource(R.string.studio_tempo_bpm),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
@@ -433,7 +435,7 @@ fun StudioConfigSection(
 
             // Reverb Space Chips
             Text(
-                text = "REVERB / ACOUSTIC SPACE",
+                text = stringResource(R.string.studio_reverb_space),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
@@ -497,7 +499,7 @@ fun StudioConfigSection(
                 Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                     if (state.sentimentResult == null && !analyzePressed) {
                         Text(
-                            text = "ANALYZE SENTIMENT",
+                            text = stringResource(R.string.studio_analyze_sentiment),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -505,7 +507,7 @@ fun StudioConfigSection(
                         )
                     } else if (analyzePressed) {
                         Text(
-                            text = "ANALYZING...",
+                            text = stringResource(R.string.studio_analyzing),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -522,7 +524,7 @@ fun StudioConfigSection(
                         )
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                text = "DOMINANT: $dominant",
+                                text = stringResource(R.string.studio_sentiment_dominant, dominant),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
@@ -530,13 +532,13 @@ fun StudioConfigSection(
                             )
                             Row(horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text(
-                                    text = "Joy: ${r.joyScore}%",
+                                    text = stringResource(R.string.studio_sentiment_joy, r.joyScore),
                                     fontFamily = SpaceMonoFontFamily,
                                     fontSize = 9.sp,
                                     color = NothingWhite
                                 )
                                 Text(
-                                    text = "Energy: ${r.energyScore}%",
+                                    text = stringResource(R.string.studio_sentiment_energy, r.energyScore),
                                     fontFamily = SpaceMonoFontFamily,
                                     fontSize = 9.sp,
                                     color = NothingWhite
@@ -544,13 +546,13 @@ fun StudioConfigSection(
                             }
                             Row(horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text(
-                                    text = "Melancholy: ${r.melancholyScore}%",
+                                    text = stringResource(R.string.studio_sentiment_melancholy, r.melancholyScore),
                                     fontFamily = SpaceMonoFontFamily,
                                     fontSize = 9.sp,
                                     color = NothingWhite
                                 )
                                 Text(
-                                    text = "Nostalgia: ${r.nostalgiaScore}%",
+                                    text = stringResource(R.string.studio_sentiment_nostalgia, r.nostalgiaScore),
                                     fontFamily = SpaceMonoFontFamily,
                                     fontSize = 9.sp,
                                     color = NothingWhite

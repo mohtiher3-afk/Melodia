@@ -90,4 +90,46 @@
     <string name="queue_create_lyrics">CREATE LYRICS</string>
     <string name="queue_draft_meta">%1$s // %2$s // %3$s</string>
     <string name="queue_load_in_studio">LOAD IN STUDIO</string>
+
+    <!-- Studio sub-sections -->
+    <string name="studio_subgenres_header">SUBGENRES MATRIX // RECENT &amp; ALL</string>
+    <string name="studio_browse_more">BROWSE &gt;</string>
+    <string name="studio_quick_suggestions">QUICK SUGGESTIONS // TAP TO ADD</string>
+    <string name="studio_keyword_hash">#%1$s</string>
+    <string name="studio_vocal_style">VOCAL STYLE</string>
+    <string name="studio_tempo_bpm">TEMPO / BPM</string>
+    <string name="studio_reverb_space">REVERB / ACOUSTIC SPACE</string>
+    <string name="studio_analyze_sentiment">ANALYZE SENTIMENT</string>
+    <string name="studio_analyzing">ANALYZING...</string>
+    <string name="studio_sentiment_dominant">DOMINANT: %1$s</string>
+    <string name="studio_sentiment_joy">Joy: %1$s%%</string>
+    <string name="studio_sentiment_energy">Energy: %1$s%%</string>
+    <string name="studio_sentiment_melancholy">Melancholy: %1$s%%</string>
+    <string name="studio_sentiment_nostalgia">Nostalgia: %1$s%%</string>
+    <string name="studio_app_name">Melodia</string>
+    <string name="studio_app_tagline">Text-first lyric studio</string>
+    <string name="studio_import_audio">Import audio</string>
+    <string name="studio_queue">Queue</string>
+    <string name="studio_drafts_count">Drafts (%1$s)</string>
+    <string name="studio_save_config_template">SAVE CONFIG TEMPLATE</string>
+    <string name="studio_save_as_preset">SAVE AS PRESET</string>
+    <string name="studio_no_presets">NO PRESETS SAVED YET</string>
+    <string name="studio_preset_meta">%1$s // %2$s</string>
+    <string name="studio_revert_history">REVERT TO PREVIOUS PROMPT CONFIGURATIONS</string>
+    <string name="studio_version_label">v%1$s // %2$s</string>
+
+    <!-- Drafts dialog (DraftsDialog) -->
+    <string name="drafts_db_kicker">LOCAL DATABASE // AUTO-SAVE</string>
+    <string name="drafts_saved_count">SAVED DRAFTS (%1$s)</string>
+    <string name="drafts_autosave_help">Lyric edits and generations auto-save here whenever you pause typing.</string>
+    <string name="drafts_empty">NO DRAFTS YET</string>
+    <string name="drafts_empty_help">Start editing lyrics or topic in the Studio to create auto-saved drafts.</string>
+    <string name="drafts_active_badge">ACTIVE</string>
+    <string name="drafts_meta_line">%1$s / %2$s</string>
+    <string name="drafts_meta_slash">/</string>
+    <string name="drafts_topic_label">Topic: %1$s</string>
+    <string name="drafts_snippet_quote">"%1$s"</string>
+    <string name="drafts_restore">RESTORE TO STUDIO</string>
+    <string name="drafts_clear_all">CLEAR ALL</string>
+    <string name="drafts_close">CLOSE</string>
 </resources>
