@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.R
 import com.example.data.db.AppDatabase
 import com.example.data.model.LyricDraft
 import com.example.data.model.Preset
@@ -107,6 +108,11 @@ data class StudioUiState(
 )
 
 class MelodiaViewModel(application: Application) : AndroidViewModel(application) {
+
+    /** Localized user-visible message lookup (ViewModels cannot use Compose stringResource). */
+    private fun s(id: Int, vararg args: Any?): String =
+        getApplication<Application>().getString(id, *args)
+
     private val repository: SongRepository
     private val draftsRepository: DraftsRepository
     private val presetRepository: PresetRepository
@@ -301,7 +307,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             _studioState.update {
                 it.copy(
                     isGenerating = true,
-                    lyricsFeedback = GenerationFeedback("Checking the text-generation provider..."),
+                    lyricsFeedback = GenerationFeedback(s(R.string.status_checking_provider)),
                     promptFeedback = null
                 )
             }
@@ -311,9 +317,9 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 _studioState.update {
                     it.copy(
                         isGenerating = false,
-                        statusMessage = "Text provider initialization failed: ${e.localizedMessage}",
+                        statusMessage = s(R.string.status_provider_init_failed, e.localizedMessage),
                         lyricsFeedback = GenerationFeedback(
-                            "Couldn't start the text provider. Check Settings and try again.",
+                            s(R.string.status_provider_init_help),
                             isError = true
                         )
                     )
@@ -326,9 +332,9 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 _studioState.update {
                     it.copy(
                         isGenerating = false,
-                        statusMessage = "Text provider availability check failed: ${e.localizedMessage}",
+                        statusMessage = s(R.string.status_provider_check_failed, e.localizedMessage),
                         lyricsFeedback = GenerationFeedback(
-                            "Couldn't check this provider. Try selecting another one in Settings.",
+                            s(R.string.status_provider_check_help),
                             isError = true
                         )
                     )
@@ -341,7 +347,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                         isGenerating = false,
                         statusMessage = "${provider.displayName} is not configured. Open Settings to select a provider.",
                         lyricsFeedback = GenerationFeedback(
-                            "Choose or configure an available text provider in Settings.",
+                            s(R.string.status_provider_not_ready),
                             isError = true
                         )
                     )
@@ -351,8 +357,8 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             _studioState.update {
                 it.copy(
                     isGenerating = true,
-                    statusMessage = "Drafting structured lyrics with ${provider.displayName}...",
-                    lyricsFeedback = GenerationFeedback("Creating lyrics with ${provider.displayName}...")
+                    statusMessage = s(R.string.status_drafting_with, provider.displayName),
+                    lyricsFeedback = GenerationFeedback(s(R.string.status_creating_with, provider.displayName))
                 )
             }
             try {
@@ -364,7 +370,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                     moodKeywords = state.moodKeywords,
                     providerId = _llmProviderId.value,
                     appContext = getApplication()
-                ) ?: throw Exception("Failed to generate draft")
+                ) ?: throw Exception(s(R.string.status_generate_draft_failed))
 
                 val coverPath = CoverArtGenerator.generateCoverArt(
                     context = getApplication(),
@@ -380,8 +386,8 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                     it.copy(
                         isGenerating = false,
                         currentDraft = completedDraft,
-                        statusMessage = "Lyrics Drafted // ${completedDraft.title}",
-                        lyricsFeedback = GenerationFeedback("Lyrics ready: ${completedDraft.title}")
+                        statusMessage = s(R.string.status_lyrics_drafted, completedDraft.title),
+                        lyricsFeedback = GenerationFeedback(s(R.string.status_lyrics_ready, completedDraft.title))
                     )
                 }
                 recordVersionHistory(completedDraft)
@@ -391,9 +397,9 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 _studioState.update {
                     it.copy(
                         isGenerating = false,
-                        statusMessage = "Lyrics drafting failed: ${e.localizedMessage}",
+                        statusMessage = s(R.string.status_lyrics_failed, e.localizedMessage),
                         lyricsFeedback = GenerationFeedback(
-                            "Couldn't create lyrics: ${e.localizedMessage?.takeIf { message -> message.isNotBlank() } ?: "Please try again."}",
+                            s(R.string.status_lyrics_error, e.localizedMessage?.takeIf { message -> message.isNotBlank() } ?: s(R.string.status_please_retry)),
                             isError = true
                         )
                     )
@@ -406,7 +412,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
         val draft = _studioState.value.currentDraft
         if (draft == null) {
             _studioState.update {
-                it.copy(promptFeedback = GenerationFeedback("Create or restore a draft first.", isError = true))
+                it.copy(promptFeedback = GenerationFeedback(s(R.string.status_need_draft), isError = true))
             }
             return
         }
@@ -414,8 +420,8 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             _studioState.update {
                 it.copy(
                     isPolishingPrompt = true,
-                    statusMessage = "Creating text production prompt...",
-                    promptFeedback = GenerationFeedback("Creating the text prompt..."),
+                    statusMessage = s(R.string.status_creating_prompt_full),
+                    promptFeedback = GenerationFeedback(s(R.string.status_creating_prompt)),
                     lyricsFeedback = null
                 )
             }
@@ -435,15 +441,15 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                         isPolishingPrompt = false,
                         currentDraft = updatedDraft,
                         statusMessage = if (polishResult.usedFallback) {
-                            "Basic Music Prompt Generated Locally"
+                            s(R.string.status_prompt_basic)
                         } else {
-                            "Music Prompt Generated (Text Only)"
+                            s(R.string.status_prompt_text_only)
                         },
                         promptFeedback = GenerationFeedback(
                             if (polishResult.usedFallback) {
-                                "Basic prompt created locally. ${polishResult.fallbackReason ?: "AI polishing was unavailable."}"
+                                s(R.string.status_prompt_fallback, polishResult.fallbackReason ?: s(R.string.status_polish_unavailable))
                             } else {
-                                "AI-polished prompt ready and saved to this draft."
+                                s(R.string.status_prompt_polished)
                             }
                         )
                     )
@@ -453,9 +459,9 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 _studioState.update {
                     it.copy(
                         isPolishingPrompt = false,
-                        statusMessage = "Prompt generation failed: ${e.localizedMessage}",
+                        statusMessage = s(R.string.status_prompt_failed, e.localizedMessage),
                         promptFeedback = GenerationFeedback(
-                            "Couldn't create the prompt: ${e.localizedMessage?.takeIf { message -> message.isNotBlank() } ?: "Please try again."}",
+                            s(R.string.status_prompt_error, e.localizedMessage?.takeIf { message -> message.isNotBlank() } ?: s(R.string.status_please_retry)),
                             isError = true
                         )
                     )
@@ -468,7 +474,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
         val draft = _studioState.value.currentDraft
         if (draft == null) {
             _studioState.update {
-                it.copy(coverFeedback = GenerationFeedback("Create or restore a draft in Studio first.", isError = true))
+                it.copy(coverFeedback = GenerationFeedback(s(R.string.status_need_draft_studio), isError = true))
             }
             return
         }
@@ -476,8 +482,8 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             _studioState.update {
                 it.copy(
                     isGeneratingCover = true,
-                    statusMessage = "Creating monochromatic cover art...",
-                    coverFeedback = GenerationFeedback("Generating cover art...")
+                    statusMessage = s(R.string.status_creating_cover),
+                    coverFeedback = GenerationFeedback(s(R.string.status_generating_cover))
                 )
             }
             try {
@@ -492,8 +498,8 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                     it.copy(
                         isGeneratingCover = false,
                         currentDraft = draft.copy(coverImagePath = coverPath),
-                        statusMessage = "Cover Art Generated // Nothing Monochrome",
-                        coverFeedback = GenerationFeedback("Cover art ready.")
+                        statusMessage = s(R.string.status_cover_generated),
+                        coverFeedback = GenerationFeedback(s(R.string.status_cover_ready))
                     )
                 }
                 triggerDebouncedAutoSave()
@@ -501,9 +507,9 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 _studioState.update {
                     it.copy(
                         isGeneratingCover = false,
-                        statusMessage = "Cover art generation failed: ${e.localizedMessage}",
+                        statusMessage = s(R.string.status_cover_failed, e.localizedMessage),
                         coverFeedback = GenerationFeedback(
-                            "Couldn't generate cover art: ${e.localizedMessage?.takeIf { message -> message.isNotBlank() } ?: "Please try again."}",
+                            s(R.string.status_cover_error, e.localizedMessage?.takeIf { message -> message.isNotBlank() } ?: s(R.string.status_please_retry)),
                             isError = true
                         )
                     )
@@ -518,7 +524,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             _studioState.update {
                 it.copy(
                     isImportingAudio = true,
-                    statusMessage = "Reading local audio file..."
+                    statusMessage = s(R.string.status_reading_audio)
                 )
             }
             val result = LocalAudioImporter.importAudio(context, uri)
@@ -529,9 +535,9 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                     it.copy(
                         isTranscribingAudio = canTranscribe,
                         statusMessage = when {
-                            !withinCloudLimit -> "Audio imported // File is over the 14 MB cloud transcription limit"
-                            !_allowCloudTranscription.value -> "Audio imported locally // cloud transcription is off; no audio uploaded"
-                            else -> "Audio imported // Transcribing with Gemini cloud AI..."
+                            !withinCloudLimit -> s(R.string.status_audio_too_large)
+                            !_allowCloudTranscription.value -> s(R.string.status_audio_local_only)
+                            else -> s(R.string.status_audio_transcribing)
                         }
                     )
                 }
@@ -557,10 +563,10 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 repository.insertSong(songEntity)
 
                 val status = when {
-                    transcribed != null -> "Local track imported // Lyrics transcribed via Gemini cloud"
-                    !withinCloudLimit -> "Local track imported // Cloud transcription skipped (file over 14 MB)"
-                    !_allowCloudTranscription.value -> "Local track imported // Kept on device; cloud transcription is off"
-                    else -> "Local track imported // Cloud AI transcription unavailable — retry from SYNC"
+                    transcribed != null -> s(R.string.status_transcribed_ok)
+                    !withinCloudLimit -> s(R.string.status_transcribe_skipped_size)
+                    !_allowCloudTranscription.value -> s(R.string.status_transcribe_skipped_off)
+                    else -> s(R.string.status_transcribe_unavailable)
                 }
                 _studioState.update {
                     it.copy(
@@ -580,7 +586,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 _studioState.update {
                     it.copy(
                         isImportingAudio = false,
-                        statusMessage = "Import failed: ${err.localizedMessage ?: "Unknown error"}"
+                        statusMessage = s(R.string.status_import_failed, err.localizedMessage ?: s(R.string.status_unknown_error))
                     )
                 }
             }
@@ -604,24 +610,24 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
         val state = _studioState.value
         val metadata = state.localAudioMetadata
         if (metadata == null || !metadata.localFile.exists()) {
-            _studioState.update { it.copy(statusMessage = "Import a local audio file before transcription") }
+            _studioState.update { it.copy(statusMessage = s(R.string.status_need_audio_transcribe)) }
             return
         }
         if (!_allowCloudTranscription.value) {
             _studioState.update {
-                it.copy(statusMessage = "Cloud transcription is off. This build does not yet include a local Whisper model; no audio was uploaded.")
+                it.copy(statusMessage = s(R.string.status_transcribe_off))
             }
             return
         }
         if (!LocalAudioImporter.isWithinTranscriptionLimit(metadata.localFile)) {
             _studioState.update {
-                it.copy(statusMessage = "AI transcription supports audio files up to 14 MB. The imported audio is kept locally.")
+                it.copy(statusMessage = s(R.string.status_transcribe_limit))
             }
             return
         }
         if (!replaceExistingLyrics && !state.currentDraft?.lyrics.isNullOrBlank()) {
             _studioState.update {
-                it.copy(statusMessage = "Lyrics already exist. Confirm replacement before transcribing this track.")
+                it.copy(statusMessage = s(R.string.status_lyrics_exist))
             }
             return
         }
@@ -629,17 +635,17 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
 
         viewModelScope.launch {
             _studioState.update {
-                it.copy(isTranscribingAudio = true, statusMessage = "Transcribing imported vocals with AI...")
+                it.copy(isTranscribingAudio = true, statusMessage = s(R.string.status_transcribing_vocals))
             }
             try {
                 val transcribed = MusicEngine.transcribeLyricsFromAudio(metadata, allowCloudUpload = true)
-                    ?: throw IllegalStateException("No transcription was returned. Check the Gemini API key and network connection.")
+                    ?: throw IllegalStateException(s(R.string.status_no_transcription))
                 val updatedDraft = transcribed.copy(coverImagePath = state.currentDraft?.coverImagePath)
                 _studioState.update {
                     it.copy(
                         isTranscribingAudio = false,
                         currentDraft = updatedDraft,
-                        statusMessage = "Lyrics transcribed // Creating automatic word timing..."
+                        statusMessage = s(R.string.status_transcribed_timing)
                     )
                 }
                 recordVersionHistory(updatedDraft)
@@ -649,7 +655,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 _studioState.update {
                     it.copy(
                         isTranscribingAudio = false,
-                        statusMessage = "Transcription failed: ${e.localizedMessage ?: "Unknown error"}"
+                        statusMessage = s(R.string.status_transcription_failed, e.localizedMessage ?: s(R.string.status_unknown_error))
                     )
                 }
             }
@@ -661,11 +667,11 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
         val lyrics = _studioState.value.currentDraft?.lyrics
 
         if (lyrics.isNullOrBlank()) {
-            _studioState.update { it.copy(statusMessage = "Add lyrics before aligning audio") }
+            _studioState.update { it.copy(statusMessage = s(R.string.status_need_lyrics_align)) }
             return
         }
         if (metadata == null || !metadata.localFile.exists()) {
-            _studioState.update { it.copy(statusMessage = "Import a local audio file first") }
+            _studioState.update { it.copy(statusMessage = s(R.string.status_need_audio_align)) }
             return
         }
 
@@ -675,7 +681,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             _studioState.update {
                 it.copy(
                     isAligningAudio = true,
-                    statusMessage = "Creating automatic word timing from local audio duration..."
+                    statusMessage = s(R.string.status_creating_timing)
                 )
             }
             val result = LocalWhisperEngine.alignLyricsWithAudio(context, audioUri, lyrics)
@@ -684,14 +690,14 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                     it.copy(
                         isAligningAudio = false,
                         karaokeLyrics = karaoke,
-                        statusMessage = "Estimated word timings created // ${karaoke.wordTimings.size} words — review and adjust"
+                        statusMessage = s(R.string.status_timing_created, karaoke.wordTimings.size)
                     )
                 }
             }.onFailure { err ->
                 _studioState.update {
                     it.copy(
                         isAligningAudio = false,
-                        statusMessage = "Alignment note: ${err.localizedMessage}"
+                        statusMessage = s(R.string.status_alignment_note, err.localizedMessage)
                     )
                 }
             }
@@ -718,7 +724,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                     exportProgress = ExportProgressState(
                         isExporting = true,
                         progress = 0.05f,
-                        statusText = "Starting hardware video encoding..."
+                        statusText = s(R.string.status_starting_export)
                     )
                 )
             }
@@ -752,10 +758,10 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                         exportProgress = ExportProgressState(
                             isExporting = false,
                             progress = 1.0f,
-                            statusText = "Export Complete!",
+                            statusText = s(R.string.status_export_complete),
                             outputFilePath = file.absolutePath
                         ),
-                        statusMessage = "Lyric Video Exported // ${file.name}"
+                        statusMessage = s(R.string.status_video_exported, file.name)
                     )
                 }
             }.onFailure { err ->
@@ -764,9 +770,9 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                         exportProgress = ExportProgressState(
                             isExporting = false,
                             progress = 0f,
-                            error = err.localizedMessage ?: "Export failed"
+                            error = err.localizedMessage ?: s(R.string.status_export_failed_short)
                         ),
-                        statusMessage = "Video export failed"
+                        statusMessage = s(R.string.status_video_export_failed)
                     )
                 }
             }
@@ -776,7 +782,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
     fun playSong(song: Song) {
         val url = song.audioUrl
         if (url.isNullOrBlank()) {
-            _studioState.update { it.copy(statusMessage = "No audio attached to ${song.title}") }
+            _studioState.update { it.copy(statusMessage = s(R.string.status_no_audio, song.title)) }
             return
         }
         audioPlayerManager.playTrack(
@@ -809,7 +815,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 selectedMood = song.mood,
                 selectedLanguage = song.language,
                 currentDraft = draft,
-                statusMessage = "Loaded into Studio // ${song.title}"
+                statusMessage = s(R.string.status_loaded_studio, song.title)
             )
         }
     }
@@ -842,14 +848,14 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 repository.updateSong(song.copy(tags = tags))
             }
             _studioState.update {
-                it.copy(statusMessage = "Tags updated for ${songsToUpdate.size} track(s)")
+                it.copy(statusMessage = s(R.string.status_tags_updated, songsToUpdate.size))
             }
         }
     }
 
     fun regenerateCoverArt(song: Song) {
         viewModelScope.launch {
-            _studioState.update { it.copy(statusMessage = "Generating new cover art for ${song.title}...") }
+            _studioState.update { it.copy(statusMessage = s(R.string.status_regenerating_cover, song.title)) }
             try {
                 val newCover = CoverArtGenerator.generateCoverArt(
                     context = getApplication(),
@@ -860,9 +866,9 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 )
                 val updated = song.copy(coverImagePath = newCover)
                 repository.updateSong(updated)
-                _studioState.update { it.copy(statusMessage = "New cover art saved // ${song.title}") }
+                _studioState.update { it.copy(statusMessage = s(R.string.status_cover_saved, song.title)) }
             } catch (e: Exception) {
-                _studioState.update { it.copy(statusMessage = "Cover art generation note") }
+                _studioState.update { it.copy(statusMessage = s(R.string.status_cover_note)) }
             }
         }
     }
@@ -875,7 +881,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
 
         val updatedLyrics = if (tagToInsert.equals("[Intro]", ignoreCase = true)) {
             if (currentLyrics.contains("[Intro", ignoreCase = true)) {
-                _studioState.update { it.copy(statusMessage = "Song already contains [Intro]") }
+                _studioState.update { it.copy(statusMessage = s(R.string.status_has_intro)) }
                 return
             }
             "$tagToInsert\n(تقاسيم نغمية تمهد للأغنية)\n\n$currentLyrics"
@@ -889,7 +895,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             sections = MusicEngine.parseLyricsIntoSections(updatedLyrics)
         )
         updateCurrentDraft(updatedDraft)
-        _studioState.update { it.copy(statusMessage = "Inserted $tagToInsert section tag") }
+        _studioState.update { it.copy(statusMessage = s(R.string.status_tag_inserted, tagToInsert)) }
     }
 
     fun recordVersionHistory(draft: GeneratedSongDraft) {
@@ -1009,7 +1015,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 currentDraft = songDraft,
                 activeDraftId = draft.id,
                 lastAutoSavedTime = formattedTime,
-                statusMessage = "Restored draft // ${draft.title}"
+                statusMessage = s(R.string.status_draft_restored, draft.title)
             )
         }
         analyzeSentiment()
@@ -1034,13 +1040,13 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
     fun analyzeSentiment() {
         val draft = _studioState.value.currentDraft ?: return
         viewModelScope.launch {
-            _studioState.update { it.copy(isAnalyzingSentiment = true, statusMessage = "Analyzing emotional sentiment...") }
+            _studioState.update { it.copy(isAnalyzingSentiment = true, statusMessage = s(R.string.status_analyzing_sentiment)) }
             val result = SentimentAnalyzer.analyzeLyrics(draft.lyrics)
             _studioState.update {
                 it.copy(
                     sentimentResult = result,
                     isAnalyzingSentiment = false,
-                    statusMessage = "Sentiment: ${result.dominantTone}"
+                    statusMessage = s(R.string.status_sentiment_result, result.dominantTone)
                 )
             }
         }
@@ -1063,7 +1069,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             _studioState.update {
                 it.copy(
                     isSavingPreset = false,
-                    statusMessage = "Preset saved // $name"
+                    statusMessage = s(R.string.status_preset_saved, name)
                 )
             }
         }
@@ -1078,7 +1084,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 vocalStyle = preset.vocalStyle,
                 selectedBpm = preset.bpm,
                 vocalReverb = preset.reverb,
-                statusMessage = "Loaded preset // ${preset.name}"
+                statusMessage = s(R.string.status_preset_loaded, preset.name)
             )
         }
         triggerDebouncedAutoSave()
