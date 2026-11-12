@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -97,7 +96,7 @@ fun GlyphCard(
                 .background(Brush.verticalGradient(listOf(NothingElevatedSurface.copy(alpha = 0.32f), backgroundColor)))
                 .padding(18.dp)
         ) {
-            if (headerTitle != null || hasRedDot) {
+            if ((headerTitle != null) || hasRedDot) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -545,7 +544,7 @@ fun LyricTimelineEditor(
                     color = NothingWhite,
                     modifier = Modifier.width(80.dp)
                 )
-                
+
                 // Simple Text input for start time in seconds
                 androidx.compose.material3.OutlinedTextField(
                     value = (section.startTimeMs / 1000).toString(),

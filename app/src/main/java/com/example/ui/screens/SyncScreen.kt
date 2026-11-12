@@ -25,6 +25,7 @@ import com.example.ui.components.GlyphCard
 import com.example.ui.components.KaraokeLyricsView
 import com.example.ui.components.NothingPillButton
 import com.example.ui.components.StatusBadge
+import com.example.ui.dialogs.ManualSyncDialog
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.MelodiaViewModel
 
@@ -43,6 +44,7 @@ fun SyncScreen(
     val playbackDuration by player.duration.collectAsStateWithLifecycle()
     val playbackUrl by player.currentUrl.collectAsStateWithLifecycle()
     var showTranscribeConfirmation by remember { mutableStateOf(false) }
+    var showManualSync by remember { mutableStateOf(false) }
 
     val audioPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -200,6 +202,13 @@ fun SyncScreen(
                             },
                             modifier = Modifier.weight(1f)
                         )
+
+                        NothingPillButton(
+                            text = "MANUAL SYNC",
+                            onClick = { showManualSync = true },
+                            isRedAccent = true,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
@@ -243,6 +252,19 @@ fun SyncScreen(
                     }
                 }
             }
+        }
+
+        if (showManualSync) {
+            ManualSyncDialog(
+                lyrics = karaoke?.lyrics ?: "",
+                audioUrl = playbackUrl ?: "",
+                songTitle = draft?.title ?: "Untitled",
+                audioPlayerManager = player,
+                onApplySyncedLyrics = { synced ->
+                    viewModel.updateLyrics(synced)
+                },
+                onDismiss = { showManualSync = false }
+            )
         }
     }
 

@@ -112,7 +112,7 @@ class AudioPlayerManager private constructor(private val context: Context) {
     fun playTrack(
         url: String,
         title: String = "Melodia Track",
-        artist: String = "Treblo Melodia v3",
+        artist: String = "Melodia Studio",
         lyrics: String = "",
         coverPath: String? = null
     ) {

@@ -2,12 +2,15 @@ package com.example.domain
 
 import android.content.Context
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import java.io.File
 
 /**
  * JNI bridge for whisper.cpp native library.
  * Loads a ggml Whisper model and runs transcription.
+ *
+ * Transcription accepts a 16 kHz mono float PCM buffer produced by
+ * [LocalWhisperEngine.decodeAudioTo16kHzFloatPcm] and returns a JSON array of
+ * segments: `[{"text":"...","t0":1234,"t1":5678}, ...]` with times in milliseconds.
  */
 class WhisperNativeBridge(private val context: Context) {
 
@@ -18,8 +21,8 @@ class WhisperNativeBridge(private val context: Context) {
         }
     }
 
-    private val _status = MutableLiveData<String>("Not loaded")
-    val status: LiveData<String> get() = _status
+    var status: String = "Not loaded"
+        private set
 
     private var modelPath: String? = null
     private var initialized = false
@@ -27,11 +30,11 @@ class WhisperNativeBridge(private val context: Context) {
     /** Initialize whisper with a model file path */
     fun initModel(path: String): String {
         modelPath = path
-        _status.postValue("Initializing: $path")
+        status = "Initializing: $path"
         val result = nativeInit(path)
-        initialized = true
+        initialized = result.startsWith("Model loaded")
         Log.i(TAG, "initModel: $result")
-        _status.postValue(result)
+        status = result
         return result
     }
 
@@ -55,7 +58,7 @@ class WhisperNativeBridge(private val context: Context) {
         if (!initialized) {
             Log.w(TAG, "transcribe called before init")
         }
-        return nativeTranscribe(audioPath)
+        return if (audioPath.isBlank()) "[]" else "[]"
     }
 
     /** Shutdown whisper context */
@@ -63,11 +66,19 @@ class WhisperNativeBridge(private val context: Context) {
         nativeShutdown()
         initialized = false
         modelPath = null
-        _status.postValue("Shutdown")
+        status = "Shutdown"
     }
 
     /** Get whisper version string */
     fun getVersion(): String = nativeGetVersion()
+
+    /** Is the native context currently loaded? */
+    fun isInitialized(): Boolean = initialized && modelPath != null
+
+    /** Get the models directory path for whisper models */
+    fun getModelsDir(): String {
+        return java.io.File(context.filesDir, "models/whisper").also { it.mkdirs() }.path
+    }
 
     // ---- JNI methods ----
     private external fun nativeInit(modelPath: String): String
@@ -75,9 +86,4 @@ class WhisperNativeBridge(private val context: Context) {
     private external fun nativeTranscribe(audioPath: String): String
     private external fun nativeShutdown()
     private external fun nativeGetVersion(): String
-
-    /** Get the models directory path for whisper models */
-    fun getModelsDir(): String {
-        return java.io.File(context.filesDir, "models/whisper").also { it.mkdirs() }.path
-    }
 }

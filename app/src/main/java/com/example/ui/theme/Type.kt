@@ -5,6 +5,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.example.R
 
@@ -23,12 +24,21 @@ val SilkscreenFontFamily = FontFamily(
     Font(R.font.silkscreen, FontWeight.Normal)
 )
 
+// Large 52sp Dot-matrix number style for progress displays
+val DotMatrixProgressNumberStyle = TextStyle(
+    fontFamily = NothingDotMatrixFontFamily,
+    fontWeight = FontWeight.Normal,
+    fontSize = 52.sp,
+    lineHeight = 58.sp,
+    color = HighContrastWhite
+)
+
 val NothingTypography = Typography(
     displayLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
-        fontSize = 32.sp,
-        lineHeight = 38.sp,
+        fontSize = 34.sp,
+        lineHeight = 40.sp,
         letterSpacing = 1.0.sp,
         color = HighContrastWhite
     ),
@@ -133,7 +143,7 @@ val NothingTypography = Typography(
         fontWeight = FontWeight.Bold,
         fontSize = 11.sp,
         lineHeight = 15.sp,
-        letterSpacing = 0.8.sp,
+        letterSpacing = 0.08.em,
         color = HighContrastOffWhite
     ),
     labelSmall = TextStyle(
@@ -141,7 +151,7 @@ val NothingTypography = Typography(
         fontWeight = FontWeight.Normal,
         fontSize = 9.sp,
         lineHeight = 13.sp,
-        letterSpacing = 1.2.sp,
+        letterSpacing = 0.08.em,
         color = HighContrastGrey
     )
 )

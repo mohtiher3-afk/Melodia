@@ -4,7 +4,6 @@ import androidx.compose.ui.res.stringResource
 import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import com.example.ui.components.pressable
 import androidx.compose.foundation.layout.Box
@@ -31,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,7 +50,6 @@ import com.example.ui.theme.NothingWhite
 import com.example.ui.theme.SpaceMonoFontFamily
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 @Composable
 fun DraftsDialog(
@@ -61,7 +60,8 @@ fun DraftsDialog(
     onClearAllDrafts: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val dateFormat = SimpleDateFormat("MMM dd / HH:mm:ss", Locale.getDefault())
+    val locale = LocalLocale.current.platformLocale
+    val dateFormat = SimpleDateFormat("MMM dd / HH:mm:ss", locale)
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(

@@ -121,7 +121,7 @@ object CoverArtGenerator {
             // --- Derive seed from title + genre for variety ---
             val seed = (title + genre).hashCode()
             val rng = Random(abs(seed.toLong()) and 0x7FFFFFFFL)
-                        var useRedAccent = rng.nextBoolean() || mood.contains("energetic", ignoreCase = true) || mood.contains("bright", ignoreCase = true)
+            val useRedAccent = rng.nextBoolean() || mood.contains("energetic", ignoreCase = true) || mood.contains("bright", ignoreCase = true)
 
             // --- Dynamic margin based on seed ---
             val margin = 40f + (rng.nextFloat() * 20f).coerceIn(40f, 60f)
@@ -137,8 +137,8 @@ object CoverArtGenerator {
             val tickCount = 4 + (rng.nextInt(3))  // 4-6 ticks
             for (i in 0 until tickCount) {
                 val angle = (i * 90f / tickCount).coerceIn(0f, 90f)
-                val cosA = kotlin.math.cos(kotlin.math.PI * angle / 180f)
-                val sinA = kotlin.math.sin(kotlin.math.PI * angle / 180f)
+                val cosA = cos(Math.PI * angle / 180f)
+                val sinA = sin(Math.PI * angle / 180f)
                 val x1 = (margin + tickBase * cosA).toFloat()
                 val y1 = (margin + tickBase * sinA).toFloat()
                 val x2 = (size - margin - tickBase * cosA).toFloat()
@@ -157,7 +157,6 @@ object CoverArtGenerator {
                 var radiusVariance = rng.nextFloat() * 30f
                 val radius = (baseRadius + radiusVariance).coerceAtMost(300f)
                 val ringPaint = Paint().apply {
-                    val rColor = if (r == ringCount) redAccent else lineColor
                     color = if (r == 1) lineColor else lineColor
                     strokeWidth = if (r == ringCount) 4f else if (r == 2) 3f else 2f
                     style = Paint.Style.STROKE
@@ -240,6 +239,7 @@ object CoverArtGenerator {
                             isFakeBoldText = false
                             setAlpha(200)
                         }
+            val genreFormatted = genre.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
             canvas.drawText(
                 "NOTHING // MELODIA • ${genre.replaceFirstChar { it.uppercase(Locale.ROOT) }}",
                 size - margin - 280f, margin + 36f,

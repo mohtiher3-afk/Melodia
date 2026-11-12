@@ -106,4 +106,42 @@ class DomainLogicTest {
             big.delete()
         }
     }
+
+    // --- framePresentationTimeNs (lyric video exporter) ---------------------
+
+    @Test
+    fun framePresentationTimeNs_frame0_isZero() {
+        assertEquals(0L, framePresentationTimeNs(0, 30))
+        assertEquals(0L, framePresentationTimeNs(0, 24))
+    }
+
+    @Test
+    fun framePresentationTimeNs_exactSecondBoundaries() {
+        assertEquals(1_000_000_000L, framePresentationTimeNs(30, 30))
+        assertEquals(2_000_000_000L, framePresentationTimeNs(60, 30))
+        assertEquals(1_000_000_000L, framePresentationTimeNs(24, 24))
+    }
+
+    @Test
+    fun framePresentationTimeNs_isStrictlyIncreasing() {
+        val times = (0 until 120).map { framePresentationTimeNs(it, 30) }
+        for (i in 1 until times.size) {
+            assertTrue("frame $i must be after frame ${i - 1}", times[i] > times[i - 1])
+        }
+    }
+
+    @Test
+    fun framePresentationTimeNs_keepsSubMicrosecondPrecision() {
+        assertEquals(41_666_666L, framePresentationTimeNs(1, 24))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun framePresentationTimeNs_rejectsNonPositiveFps() {
+        framePresentationTimeNs(0, 0)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun framePresentationTimeNs_rejectsNegativeFrameIndex() {
+        framePresentationTimeNs(-1, 30)
+    }
 }

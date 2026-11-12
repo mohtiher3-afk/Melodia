@@ -14,13 +14,14 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.MessageDigest
 import java.util.Locale
 
 /**
  * Manages download, storage, and status of local AI models.
  * Each model can be downloaded with a single button press from the UI.
  */
-class LocalModelManager(private val context: Context) {
+class LocalModelManager(private val appContext: Context) {
 
     companion object {
         private const val TAG = "LocalModelManager"
@@ -91,12 +92,10 @@ class LocalModelManager(private val context: Context) {
                 else -> "$bytes B"
             }
         }
-    }
 
-    // State for UI observation
-    private val _downloadStates = mutableMapOf<String, MediatorLiveData<DownloadState>>()
-    val downloadStates: Map<String, LiveData<DownloadState>>
-        get() = _downloadStates
+        /** Alias for formatBytes for backward compatibility */
+        fun formatSize(bytes: Long): String = formatBytes(bytes)
+    }
 
     sealed interface DownloadState {
         data class Idle(val isModelPresent: Boolean) : DownloadState
@@ -105,6 +104,11 @@ class LocalModelManager(private val context: Context) {
         data class Failed(val error: String) : DownloadState
         data class Paused(val downloadedBytes: Long, val totalBytes: Long) : DownloadState
     }
+
+    // State for UI observation
+    private val _downloadStates = mutableMapOf<String, MediatorLiveData<DownloadState>>()
+    val downloadStates: Map<String, LiveData<DownloadState>>
+        get() = _downloadStates
 
     init {
         // Initialize states for all models
@@ -115,19 +119,19 @@ class LocalModelManager(private val context: Context) {
 
     /** Check if model file exists and has expected size */
     fun isModelDownloaded(model: ModelInfo): Boolean {
-        val file = File(context.filesDir, model.localPath)
+        val file = File(appContext.filesDir, model.localPath)
         return file.exists() && file.length() >= model.expectedSizeBytes * 9 / 10 // allow 10% tolerance
     }
 
     /** Absolute path of the in-progress partial download for a model. */
-    internal fun partFile(model: ModelInfo): File = File(context.filesDir, model.localPath + ".part")
+    internal fun partFile(model: ModelInfo): File = File(appContext.filesDir, model.localPath + ".part")
 
     /** Bytes already stored in the partial file (0 when absent). Visible for resume logic/tests. */
     fun partialBytes(model: ModelInfo): Long = partFile(model).takeIf { it.exists() }?.length() ?: 0L
 
     /** Get absolute path to downloaded model file */
     fun getModelPath(model: ModelInfo): String? {
-        val file = File(context.filesDir, model.localPath)
+        val file = File(appContext.filesDir, model.localPath)
         return if (file.exists()) file.absolutePath else null
     }
 
@@ -148,7 +152,7 @@ class LocalModelManager(private val context: Context) {
      */
     suspend fun downloadModel(model: ModelInfo, onProgress: ((Float, Long, Long) -> Unit)? = null): Result<String> = withContext(Dispatchers.IO) {
         val state = _downloadStates[model.id] ?: MediatorLiveData<DownloadState>(DownloadState.Idle(false)).also { _downloadStates[model.id] = it }
-        val finalFile = File(context.filesDir, model.localPath)
+        val finalFile = File(appContext.filesDir, model.localPath)
         finalFile.parentFile?.mkdirs()
 
         // Check if already downloaded
@@ -273,7 +277,7 @@ class LocalModelManager(private val context: Context) {
 
     /** Delete a downloaded model (and any partial download data) */
     fun deleteModel(model: ModelInfo): Boolean {
-        val file = File(context.filesDir, model.localPath)
+        val file = File(appContext.filesDir, model.localPath)
         partFile(model).delete()
         cancelFlag(model.id).set(true)
         val deleted = file.delete()
@@ -286,8 +290,29 @@ class LocalModelManager(private val context: Context) {
     /** Get total storage used by downloaded models */
     fun getTotalStorageUsed(): Long {
         return AVAILABLE_MODELS.sumOf { model ->
-            val file = File(context.filesDir, model.localPath)
+            val file = File(appContext.filesDir, model.localPath)
             if (file.exists()) file.length() else 0L
+        }
+    }
+
+    /** Verify a downloaded model against an optional SHA-256 checksum */
+    fun verifyModel(model: ModelInfo, expectedSha256: String? = null): Boolean {
+        val file = File(appContext.filesDir, model.localPath)
+        if (!file.exists()) return false
+        if (expectedSha256 == null) return isModelDownloaded(model)
+        return try {
+            val digest = MessageDigest.getInstance("SHA-256")
+            file.inputStream().use { input ->
+                val buf = ByteArray(8192)
+                var n: Int
+                while (input.read(buf).also { n = it } > 0) {
+                    digest.update(buf, 0, n)
+                }
+            }
+            digest.digest().joinToString("") { "%02x".format(it) } == expectedSha256
+        } catch (e: Exception) {
+            Log.w(TAG, "Checksum verification failed for ${model.id}", e)
+            false
         }
     }
 }

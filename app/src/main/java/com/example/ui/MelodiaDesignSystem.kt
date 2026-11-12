@@ -1,14 +1,24 @@
 package com.example.ui
 
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -32,6 +42,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,67 +50,79 @@ import com.example.ui.components.CommitHaptic
 import com.example.ui.components.TapHaptic
 import com.example.ui.components.pressable
 import com.example.ui.components.rememberPressScale
-import com.example.ui.theme.*
+import com.example.ui.theme.MelodiaTheme
+import com.example.ui.theme.NothingBlack
+import com.example.ui.theme.NothingBorder
+import com.example.ui.theme.NothingCardSurface
+import com.example.ui.theme.NothingDarkGrey
+import com.example.ui.theme.NothingDarkSurface
+import com.example.ui.theme.NothingDotMatrixFontFamily
+import com.example.ui.theme.NothingGrey
+import com.example.ui.theme.NothingMutedGrey
+import com.example.ui.theme.NothingOutline
+import com.example.ui.theme.NothingRed
+import com.example.ui.theme.NothingTrack
+import com.example.ui.theme.NothingWhite
+import com.example.ui.theme.SpaceMonoFontFamily
 
 object MelodiaTheme {
     val Background = NothingBlack
-    val Surface = NothingCardSurface
+    val Surface = NothingDarkSurface
     val Border = NothingBorder
+    val Track = NothingTrack
     val Accent = NothingRed
     val TextMain = NothingWhite
     val TextSecondary = NothingGrey
 }
 
-/** Shared spacing scale. Screens should pick from these instead of ad-hoc dp values. */
+/** Shared spacing scale (4/8/12/16/24 + 20dp screen padding). */
 object MelodiaSpacing {
     val xs = 4.dp
     val sm = 8.dp
     val md = 12.dp
     val lg = 16.dp
     val xl = 24.dp
+    val screenPadding = 20.dp
 }
 
-/** Corner radii by role, so controls, cards and chips read as a consistent family. */
+/** Corner radii by role (card 22dp, chips and controls pill-shaped, thumbnails 12dp). */
 object MelodiaRadius {
-    val chip = 10.dp
-    val control = 14.dp
-    val card = 18.dp
+    val chip = 50.dp
+    val control = 50.dp
+    val card = 22.dp
+    val thumbnail = 12.dp
 }
 
 /**
- * Nothing-style dot-matrix backdrop. Dots are densest at the top of the screen and fade out
- * towards the bottom, so the working area stays calm. Positions are computed once per size.
+ * Nothing-style dot-matrix backdrop (20dp spacing, 1dp dots, white at 10% alpha over black).
  */
 fun Modifier.dotGrid(
-    spacing: Dp = 22.dp,
-    dotRadius: Dp = 0.9.dp,
-    color: Color = NothingWhite
+    spacing: Dp = 20.dp,
+    dotRadius: Dp = 0.5.dp,
+    color: Color = NothingWhite.copy(alpha = 0.10f)
 ): Modifier = drawWithCache {
     val step = spacing.toPx()
-    val bandAlphas = floatArrayOf(0.10f, 0.055f, 0.025f)
-    val bands = Array(bandAlphas.size) { ArrayList<Offset>() }
+    val radiusPx = dotRadius.toPx()
+    val points = ArrayList<Offset>()
     if (size.width > 0f && size.height > 0f && step > 0f) {
         val cols = (size.width / step).toInt() + 1
         val rows = (size.height / step).toInt() + 1
         for (r in 0 until rows) {
             val y = r * step + step / 2f
-            val band = ((y / size.height) * bandAlphas.size).toInt().coerceIn(0, bandAlphas.size - 1)
             for (c in 0 until cols) {
-                bands[band].add(Offset(c * step + step / 2f, y))
+                points.add(Offset(c * step + step / 2f, y))
             }
         }
     }
-    val strokeWidth = dotRadius.toPx() * 2f
+    val strokeWidth = radiusPx * 2f
     onDrawBehind {
-        for (i in bands.indices) {
-            drawPoints(
-                points = bands[i],
-                pointMode = PointMode.Points,
-                color = color.copy(alpha = bandAlphas[i]),
-                strokeWidth = strokeWidth,
-                cap = StrokeCap.Round
-            )
-        }
+        drawPoints(
+            points = points,
+            pointMode = PointMode.Points,
+            color = color,
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
     }
 }
 
@@ -116,8 +139,7 @@ fun Modifier.ambientGlow(): Modifier = drawWithCache {
 enum class MelodiaButtonStyle { Primary, Secondary, Quiet }
 
 /**
- * Standard action button: 48 dp minimum touch target, whole-button press feedback, rounded
- * ripple, optional leading icon. Use [MelodiaButtonStyle.Primary] once per screen area.
+ * Standard action button: pill-shaped, 48dp minimum touch target, whole-button press feedback.
  */
 @Composable
 fun MelodiaActionButton(
@@ -128,7 +150,7 @@ fun MelodiaActionButton(
     style: MelodiaButtonStyle = MelodiaButtonStyle.Secondary,
     enabled: Boolean = true
 ) {
-    val shape = RoundedCornerShape(MelodiaRadius.control)
+    val shape = CircleShape
     val container = when {
         !enabled -> NothingDarkGrey
         style == MelodiaButtonStyle.Primary -> NothingRed
@@ -164,7 +186,7 @@ fun MelodiaActionButton(
                     onClick()
                 }
             )
-            .padding(horizontal = 10.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -182,9 +204,57 @@ fun MelodiaActionButton(
             fontFamily = SpaceMonoFontFamily,
             fontWeight = FontWeight.Bold,
             fontSize = 11.sp,
+            letterSpacing = 0.08.sp,
             color = contentColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+/**
+ * Standard Nothing-style Chip: fully rounded (pill), normal and selected (white fill, black text).
+ */
+@Composable
+fun MelodiaChip(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    val shape = CircleShape
+    val containerColor = if (selected) NothingWhite else NothingCardSurface
+    val contentColor = if (selected) NothingBlack else NothingWhite
+    val borderColor = if (selected) NothingWhite else NothingBorder
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressScale = rememberPressScale(interactionSource, enabled = enabled, pressedScale = 0.95f)
+
+    Box(
+        modifier = modifier
+            .scale(pressScale)
+            .heightIn(min = 36.dp)
+            .clip(shape)
+            .background(containerColor)
+            .border(1.dp, borderColor, shape)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = LocalIndication.current,
+                enabled = enabled,
+                role = Role.Button,
+                onClick = onClick
+            )
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text.uppercase(),
+            fontFamily = SpaceMonoFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 11.sp,
+            letterSpacing = 0.08.sp,
+            color = contentColor
         )
     }
 }
@@ -230,7 +300,7 @@ fun MelodiaPrimaryButton(
         modifier = modifier
             .fillMaxWidth()
             .height(48.dp)
-            .clip(RoundedCornerShape(24.dp))
+            .clip(CircleShape)
             .background(if (enabled) MelodiaTheme.Accent else NothingDarkGrey)
             .pressable(
                 enabled = enabled,
@@ -261,7 +331,7 @@ fun StatusBadge(
         "FAILED", "ERROR" -> NothingRed
         else -> MelodiaTheme.TextSecondary
     }
-    
+
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(4.dp))
@@ -283,5 +353,60 @@ fun StatusBadge(
             color = color,
             fontWeight = FontWeight.Bold
         )
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Previews for Task U1 Design Tokens and Components
+// ---------------------------------------------------------------------------
+
+@Preview(name = "Button Styles - Dark", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true, backgroundColor = 0xFF000000)
+@Preview(name = "Button Styles - Arabic RTL", locale = "ar", showBackground = true, backgroundColor = 0xFF000000)
+@Composable
+fun MelodiaButtonPreview() {
+    Column(
+        modifier = Modifier
+            .background(NothingBlack)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        MelodiaActionButton(text = "PRIMARY ACTION", onClick = {}, style = MelodiaButtonStyle.Primary)
+        MelodiaActionButton(text = "SECONDARY ACTION", onClick = {}, style = MelodiaButtonStyle.Secondary)
+        MelodiaActionButton(text = "QUIET ACTION", onClick = {}, style = MelodiaButtonStyle.Quiet)
+        MelodiaActionButton(text = "إجراء رئيسي", onClick = {}, style = MelodiaButtonStyle.Primary)
+    }
+}
+
+@Preview(name = "Card - Dark & Arabic", locale = "ar", fontScale = 1.5f, showBackground = true, backgroundColor = 0xFF000000)
+@Composable
+fun MelodiaCardPreview() {
+    Box(
+        modifier = Modifier
+            .background(NothingBlack)
+            .padding(16.dp)
+    ) {
+        MelodiaCard(headerTitle = "بطاقة العينات / SAMPLE CARD") {
+            Text(
+                text = "محتوى البطاقة بالتصميم النقطي والمعايير المحددة",
+                fontFamily = SpaceMonoFontFamily,
+                color = NothingWhite,
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
+@Preview(name = "Chips Normal & Selected", showBackground = true, backgroundColor = 0xFF000000)
+@Composable
+fun MelodiaChipPreview() {
+    Row(
+        modifier = Modifier
+            .background(NothingBlack)
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        MelodiaChip(text = "NORMAL CHIP", selected = false, onClick = {})
+        MelodiaChip(text = "SELECTED CHIP", selected = true, onClick = {})
+        MelodiaChip(text = "محدد", selected = true, onClick = {})
     }
 }

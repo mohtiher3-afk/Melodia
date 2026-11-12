@@ -138,7 +138,7 @@ fun VideoExporterScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    VideoResolution.values().forEach { res ->
+                    VideoResolution.entries.forEach { res ->
                         val isSel = selectedResolution == res
                         Box(
                             modifier = Modifier
@@ -200,7 +200,7 @@ fun VideoExporterScreen(
         // Aspect Ratio Selector
         GlyphCard(headerTitle = "ASPECT RATIO") {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                VideoAspectRatio.values().forEach { ratio ->
+                VideoAspectRatio.entries.forEach { ratio ->
                     val isSel = selectedAspectRatio == ratio
                     Row(
                         modifier = Modifier

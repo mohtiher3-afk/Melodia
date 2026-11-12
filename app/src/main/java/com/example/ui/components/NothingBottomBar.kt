@@ -12,13 +12,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.selection.selectable
@@ -32,7 +30,6 @@ import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Upload
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -55,40 +52,29 @@ import androidx.compose.ui.unit.sp
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
 import com.example.ui.theme.NothingElevatedSurface
-import com.example.ui.theme.NothingOutline
-import com.example.ui.theme.SpaceMonoFontFamily
 import com.example.ui.theme.NothingMutedGrey
-import com.example.R
+import com.example.ui.theme.NothingOutline
 import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingWhite
+import com.example.ui.theme.SpaceMonoFontFamily
 
-enum class MelodiaTab(val titleRes: Int, val icon: ImageVector, val tag: String) {
-    STUDIO(R.string.tab_studio, Icons.Default.GraphicEq, "tab_studio"),
-    LYRICS(R.string.tab_lyrics, Icons.Default.EditNote, "tab_lyrics"),
-    LIBRARY(R.string.tab_library, Icons.Default.LibraryMusic, "tab_library"),
-    SYNC(R.string.tab_sync, Icons.Default.Sync, "tab_sync"),
-    MORE(R.string.tab_more, Icons.Default.MoreHoriz, "tab_more"),
-    VISUALS(R.string.tab_visuals, Icons.Default.Image, "tab_visuals"),
-    EXPORT(R.string.tab_export, Icons.Default.Upload, "tab_export"),
-    SETTINGS(R.string.tab_settings, Icons.Default.Settings, "tab_settings")
+enum class MelodiaTab(
+    val title: String,
+    val dotIcon: DotIcon,
+    val icon: ImageVector,
+    val tag: String
+) {
+    STUDIO("Studio", DotIcon.STUDIO, Icons.Default.GraphicEq, "tab_studio"),
+    LYRICS("Lyrics", DotIcon.LYRICS, Icons.Default.EditNote, "tab_lyrics"),
+    LIBRARY("Library", DotIcon.LIBRARY, Icons.Default.LibraryMusic, "tab_library"),
+    VISUALS("Visuals", DotIcon.VISUALS, Icons.Default.Image, "tab_visuals"),
+    SYNC("Sync", DotIcon.SYNC, Icons.Default.Sync, "tab_sync"),
+    EXPORT("Export", DotIcon.EXPORT, Icons.Default.Upload, "tab_export"),
+    SETTINGS("Settings", DotIcon.SETTINGS, Icons.Default.Settings, "tab_settings")
 }
 
-private val primaryTabs = listOf(
-    MelodiaTab.STUDIO,
-    MelodiaTab.LYRICS,
-    MelodiaTab.LIBRARY,
-    MelodiaTab.SYNC,
-    MelodiaTab.MORE
-)
-
-private val secondaryTabs = setOf(MelodiaTab.VISUALS, MelodiaTab.EXPORT, MelodiaTab.SETTINGS)
-
 /**
- * Equal-width tab bar for five primary destinations. Secondary destinations live under More.
- * Only the selected tab shows its name, which lets
- * the icons be larger and the label readable (10 sp instead of 8 sp). Every item reserves the
- * same label slot, so nothing shifts when the selection changes. Unselected labels stay in the
- * semantics tree (alpha 0), so screen readers and UI tests still find every tab by name.
+ * Equal-width tab bar for seven destinations using Nothing DotMatrixIcons.
  */
 @Composable
 fun NothingBottomBar(
@@ -117,10 +103,10 @@ fun NothingBottomBar(
             horizontalArrangement = Arrangement.spacedBy(0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            primaryTabs.forEach { tab ->
+            MelodiaTab.entries.forEach { tab ->
                 BottomBarItem(
                     tab = tab,
-                    selected = currentTab == tab || (tab == MelodiaTab.MORE && currentTab in secondaryTabs),
+                    selected = currentTab == tab,
                     onClick = { onTabSelected(tab) },
                     modifier = Modifier.weight(1f)
                 )
@@ -151,7 +137,6 @@ private fun BottomBarItem(
         animationSpec = tween(durationMillis = 160),
         label = "bottom_bar_label_alpha"
     )
-    // Fixed-height slot, only its width animates: the red marker grows under the selected tab.
     val indicatorWidth by animateDpAsState(
         targetValue = if (selected) 18.dp else 0.dp,
         animationSpec = tween(durationMillis = 220),
@@ -194,17 +179,18 @@ private fun BottomBarItem(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        Icon(
-            imageVector = tab.icon,
+        DotMatrixIcon(
+            icon = tab.dotIcon,
             contentDescription = null,
+            size = 24.dp,
             tint = contentColor,
-            modifier = Modifier.size(24.dp)
+            animated = selected
         )
 
         Spacer(modifier = Modifier.height(2.dp))
 
         Text(
-            text = stringResource(tab.titleRes),
+            text = tab.title,
             fontFamily = SpaceMonoFontFamily,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,

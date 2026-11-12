@@ -29,6 +29,17 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.ByteBuffer
 
+/**
+ * Presentation timestamp (ns) of a video frame at a constant frame rate: frame 0 is 0 and frame N is
+ * N / fps seconds. Used as the explicit timestamp of every frame handed to the encoder, so the MP4
+ * lasts exactly as long as the song instead of following wall-clock rendering time.
+ */
+fun framePresentationTimeNs(frameIndex: Int, fps: Int): Long {
+    require(fps > 0) { "fps must be positive, was $fps" }
+    require(frameIndex >= 0) { "frameIndex must be non-negative, was $frameIndex" }
+    return (frameIndex.toLong() * 1_000_000_000L) / fps.toLong()
+}
+
 enum class VideoAspectRatio(val widthRatio: Int, val heightRatio: Int, val label: String) {
     PORTRAIT_9_16(9, 16, "9:16 (Story / Reel)"),
     LANDSCAPE_16_9(16, 9, "16:9 (YouTube)"),
@@ -94,6 +105,8 @@ object LyricVideoExporter {
         var videoCodec: MediaCodec? = null
         var muxer: MediaMuxer? = null
         var audioExtractor: MediaExtractor? = null
+        var frameRenderer: EncoderInputSurface? = null
+        var frameBitmap: Bitmap? = null
         var muxerStarted = false
         try {
             var selectedRes = resolution
@@ -126,6 +139,14 @@ object LyricVideoExporter {
             videoCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
             val inputSurface = videoCodec.createInputSurface()
             videoCodec.start()
+
+            // Frames are drawn on a plain Bitmap canvas, then presented through EGL with an explicit
+            // timestamp (frameIndex / fps) so video length and lyric timing match the audio exactly.
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            frameBitmap = bitmap
+            val frameCanvas = Canvas(bitmap)
+            val renderer = EncoderInputSurface(inputSurface, width, height)
+            frameRenderer = renderer
 
             muxer = MediaMuxer(outputFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
             var audioTrackIndex = -1
@@ -172,23 +193,19 @@ object LyricVideoExporter {
 
             // Render frames
             for (frameIndex in 0 until totalFrames) {
-                val currentTimeMs = ((frameIndex.toDouble() / fps.toDouble()) * 1000.0).toLong()
+                val currentTimeMs = framePresentationTimeNs(frameIndex, fps) / 1_000_000L
 
-                val canvas = inputSurface.lockCanvas(null)
-                try {
-                    drawVideoFrame(
-                        canvas = canvas,
-                        width = width,
-                        height = height,
-                        songTitle = songTitle,
-                        lines = lines,
-                        wordTimings = wordTimings,
-                        currentTimeMs = currentTimeMs,
-                        coverBitmap = coverBitmap
-                    )
-                } finally {
-                    inputSurface.unlockCanvasAndPost(canvas)
-                }
+                drawVideoFrame(
+                    canvas = frameCanvas,
+                    width = width,
+                    height = height,
+                    songTitle = songTitle,
+                    lines = lines,
+                    wordTimings = wordTimings,
+                    currentTimeMs = currentTimeMs,
+                    coverBitmap = coverBitmap
+                )
+                renderer.drawFrame(bitmap, framePresentationTimeNs(frameIndex, fps))
 
                 // Poll encoder output
                 var encoderStatus = videoCodec.dequeueOutputBuffer(bufferInfo, 0L)
@@ -227,11 +244,14 @@ object LyricVideoExporter {
 
             // Drain remaining frames
             var isDone = false
+            var idlePolls = 0
             while (!isDone) {
                 val encoderStatus = videoCodec.dequeueOutputBuffer(bufferInfo, 10_000L)
                 if (encoderStatus == MediaCodec.INFO_TRY_AGAIN_LATER) {
-                    isDone = true
+                    // Keep waiting for END_OF_STREAM (up to ~5 s without output) so the last frames are not cut off.
+                    if (++idlePolls >= 500) isDone = true
                 } else if (encoderStatus >= 0) {
+                    idlePolls = 0
                     val encodedData = videoCodec.getOutputBuffer(encoderStatus)
                     if (encodedData != null && bufferInfo.size > 0) {
                         if (muxerStarted) {
@@ -277,6 +297,12 @@ object LyricVideoExporter {
                 audioExtractor?.release()
             } catch (e: Exception) {
                 Log.e(TAG, "Error releasing audio extractor", e)
+            }
+            try {
+                frameRenderer?.release()
+                frameBitmap?.recycle()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error releasing frame renderer", e)
             }
             try {
                 videoCodec?.stop()

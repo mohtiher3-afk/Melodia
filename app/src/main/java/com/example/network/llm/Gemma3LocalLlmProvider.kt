@@ -9,15 +9,20 @@ import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.LogSeverity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.Closeable
 import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Local LLM provider using Gemma 3 1B via LiteRT-LM.
  * Requires the model to be downloaded via LocalModelManager first.
+ *
+ * The LiteRT-LM engine is created once and reused across [generate] calls; loading a 600 MB
+ * model from disk on every single inference would dominate latency and thrash memory, so the
+ * engine lives for the lifetime of this provider and is released via [close].
  */
 class Gemma3LocalLlmProvider(
     private val context: Context
-) : LlmProvider {
+) : LlmProvider, Closeable {
 
     private val modelManager: LocalModelManager by lazy { LocalModelManager.getInstance(context) }
 
@@ -133,5 +138,9 @@ class Gemma3LocalLlmProvider(
             invalidateEngine()
             throw e
         }
+    }
+
+    override fun close() {
+        invalidateEngine()
     }
 }

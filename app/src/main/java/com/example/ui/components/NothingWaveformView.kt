@@ -68,9 +68,13 @@ import kotlinx.coroutines.delay
 @Composable
 fun NothingDotMatrixWaveform(
     isPlaying: Boolean,
+    currentPosition: Int = 0,
+    duration: Int = 0,
+    onSeek: ((Int) -> Unit)? = null,
     modifier: Modifier = Modifier,
     barCount: Int = 32
 ) {
+    val progress = if (duration > 0) (currentPosition.toFloat() / duration).coerceIn(0f, 1f) else 0f
     val infiniteTransition = rememberInfiniteTransition(label = "waveform")
     val phase by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -90,45 +94,67 @@ fun NothingDotMatrixWaveform(
         }
     }
 
-    Canvas(
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .height(80.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(NothingBlack)
             .border(1.dp, NothingBorder, RoundedCornerShape(14.dp))
+            .pointerInput(duration) {
+                if (onSeek != null && duration > 0) {
+                    detectTapGestures { offset ->
+                        val tappedRatio = (offset.x / size.width).coerceIn(0f, 1f)
+                        val targetMs = (tappedRatio * duration).toInt()
+                        onSeek(targetMs)
+                    }
+                }
+            }
             .padding(8.dp)
             .testTag("nothing_dot_matrix_waveform")
     ) {
-        val width = size.width
-        val height = size.height
-        val barWidth = width / barCount
-        val dotRadius = (barWidth * 0.35f).coerceAtMost(3.5f)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val width = size.width
+            val height = size.height
+            val barWidth = width / barCount
+            val dotRadius = (barWidth * 0.35f).coerceAtMost(3.5f)
+            val progressX = width * progress
 
-        for (i in 0 until barCount) {
-            val base = baseHeights[i]
-            val dynamicFactor = if (isPlaying) {
-                kotlin.math.sin(phase + i * 0.3f) * 0.4f + 0.8f
-            } else {
-                0.4f
+            for (i in 0 until barCount) {
+                val base = baseHeights[i]
+                val dynamicFactor = if (isPlaying) {
+                    kotlin.math.sin(phase + i * 0.3f) * 0.4f + 0.8f
+                } else {
+                    0.4f
+                }
+                val activeHeight = (height * base * dynamicFactor).coerceIn(10f, height - 4f)
+                val x = i * barWidth + barWidth / 2f
+
+                // Draw dot matrix column (multiple stacked dots)
+                val dotSpacing = 6f
+                val numDots = (activeHeight / dotSpacing).toInt().coerceAtLeast(2)
+                val startY = height - 4f
+
+                for (d in 0 until numDots) {
+                    val y = startY - (d * dotSpacing)
+                    val isHighlighted = isPlaying && (i in 10..18)
+                    val dotColor = if (isHighlighted) NothingRed else if (d < numDots * 0.7f) NothingWhite else NothingGrey
+
+                    drawCircle(
+                        color = dotColor,
+                        radius = dotRadius,
+                        center = Offset(x, y)
+                    )
+                }
             }
-            val activeHeight = (height * base * dynamicFactor).coerceIn(10f, height - 4f)
-            val x = i * barWidth + barWidth / 2f
 
-            // Draw dot matrix column (multiple stacked dots)
-            val dotSpacing = 6f
-            val numDots = (activeHeight / dotSpacing).toInt().coerceAtLeast(2)
-            val startY = height - 4f
-
-            for (d in 0 until numDots) {
-                val y = startY - (d * dotSpacing)
-                val isHighlighted = isPlaying && (i in 10..18)
-                val dotColor = if (isHighlighted) NothingRed else if (d < numDots * 0.7f) NothingWhite else NothingGrey
-
-                drawCircle(
-                    color = dotColor,
-                    radius = dotRadius,
-                    center = Offset(x, y)
+            // Draw Playhead progress line
+            if (duration > 0) {
+                drawLine(
+                    color = NothingRed,
+                    start = Offset(progressX, 0f),
+                    end = Offset(progressX, height),
+                    strokeWidth = 2.5f
                 )
             }
         }

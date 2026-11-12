@@ -1,6 +1,5 @@
 package com.example.ui.screens
 
-import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -101,13 +100,12 @@ fun VaultScreen(
 ) {
     val songs by viewModel.savedSongs.collectAsStateWithLifecycle()
     val drafts by viewModel.savedDrafts.collectAsStateWithLifecycle()
-    val defaultFormat by viewModel.defaultExportFormat.collectAsStateWithLifecycle()
     val context = LocalContext.current
         var searchQuery by remember { mutableStateOf("") }
         var selectedCategory by remember { mutableStateOf(CategoryFilterType.ALL) }
         var selectedSubTag by remember { mutableStateOf<String?>(null) }
         var isBulkEditing by remember { mutableStateOf(false) }
-        var selectedIds by remember { mutableStateOf(mutableSetOf<Long>()) }
+        var selectedIds by remember { mutableStateOf(setOf<Long>()) }
         var showBulkTagsDialog by remember { mutableStateOf(false) }
 
         var selectedSongForLyrics by remember { mutableStateOf<Song?>(null) }
@@ -368,7 +366,7 @@ fun VaultScreen(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            CategoryFilterType.values().forEach { cat ->
+            CategoryFilterType.entries.forEach { cat ->
                 val isSelected = selectedCategory == cat
                 CategoryFilterChip(
                     label = cat.label,

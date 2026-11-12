@@ -47,3 +47,9 @@ target_compile_definitions(melodia_whisper PRIVATE
 
 find_library(log-lib log)
 target_link_libraries(melodia_whisper ${log-lib})
+
+# 16 KB page size support (required for Android 15+ / Google Play 2027)
+target_link_options(melodia_whisper PRIVATE
+    "-Wl,-z,max-page-size=16384"
+    "-Wl,-z,common-page-size=16384"
+)

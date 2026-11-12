@@ -164,6 +164,10 @@ object LocalWhisperEngine {
                 }
             }
 
+            // Flush the resampler's tail: the last sample of each chunk is held back as the
+            // interpolation anchor for the next chunk, so without this the final sample of the
+            // stream is silently dropped and the returned PCM is one sample short.
+            resampler.flush(pcm)
             pcm.toFloatArray()
         } catch (e: CancellationException) {
             throw e
@@ -716,6 +720,13 @@ internal class StreamingResampler(srcRate: Int, dstRate: Int) {
         val last = total - 1
         previous = input[count - 1]
         position -= last
+    }
+
+    /** Emits the final sample held back as the interpolation anchor for the next chunk. */
+    fun flush(out: GrowableFloatArray) {
+        if (!passthrough && hasPrevious) {
+            out.add(previous)
+        }
     }
 }
 

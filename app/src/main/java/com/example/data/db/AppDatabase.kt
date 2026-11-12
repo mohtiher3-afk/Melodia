@@ -8,9 +8,9 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.data.model.GeneratedLyrics
 import com.example.data.model.LyricDraft
-import com.example.data.model.Song
 import com.example.data.model.Preset
 import com.example.data.model.RecentSubGenre
+import com.example.data.model.Song
 
 @Database(entities = [Song::class, LyricDraft::class, Preset::class, GeneratedLyrics::class, RecentSubGenre::class], version = 8, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
@@ -44,6 +44,9 @@ abstract class AppDatabase : RoomDatabase() {
                     "melodia_database"
                 )
                     .addMigrations(MIGRATION_7_8)
+                    // Only schemas from before the migration policy may be wiped. From version 7 on,
+                    // every schema change needs an explicit Migration so saved lyrics are never lost.
+                    .fallbackToDestructiveMigrationFrom(true, 1, 2, 3, 4, 5, 6)
                     .build()
                 INSTANCE = instance
                 instance

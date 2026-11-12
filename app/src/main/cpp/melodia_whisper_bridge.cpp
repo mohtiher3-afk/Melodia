@@ -37,7 +37,7 @@ static std::string jsonEscape(const std::string& input) {
     return oss.str();
 }
 
-// Helper: build JSON result from whisper context
+// Helper: build JSON result from whisper context with segments and word-level timestamps
 static std::string buildJsonResult(struct whisper_context *ctx) {
     std::ostringstream json;
     json << "{";
@@ -123,9 +123,8 @@ Java_com_example_domain_WhisperNativeBridge_nativeInit(JNIEnv *env, jobject thiz
     int n_vocab = whisper_n_vocab(g_whisper_ctx);
     int n_audio = whisper_n_audio_ctx(g_whisper_ctx);
     int n_text = whisper_n_text_ctx(g_whisper_ctx);
-    int n_ctx = whisper_n_text_ctx(g_whisper_ctx);
-    LOGI("Model info: len=%d vocab=%d audio=%d text=%d ctx=%d",
-         n_len, n_vocab, n_audio, n_text, n_ctx);
+    LOGI("Model info: len=%d vocab=%d audio=%d text=%d",
+         n_len, n_vocab, n_audio, n_text);
     env->ReleaseStringUTFChars(modelPath, g_model_path.c_str());
     return env->NewStringUTF("Model loaded successfully");
 }
