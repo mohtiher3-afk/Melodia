@@ -51,4 +51,43 @@
     <string name="exporter_share_video">SHARE VIDEO</string>
     <string name="exporter_complete_title">EXPORT COMPLETE</string>
     <string name="exporter_complete_default">Lyric video exported</string>
+
+    <!-- Vault / library screen (VaultScreen) -->
+    <string name="vault_header_kicker">LIBRARY // CATEGORIES &amp; TAGS</string>
+    <string name="vault_action_import">IMPORT</string>
+    <string name="vault_action_import_audio">+ IMPORT AUDIO</string>
+    <string name="vault_all_tag">ALL %1$s</string>
+    <string name="vault_tag_hash">#%1$s</string>
+    <string name="vault_drafts_count">%1$s AUTO-SAVED DRAFTS IN DATABASE</string>
+    <string name="vault_tracks_matching">%1$s TRACKS MATCHING TAGS</string>
+    <string name="vault_selected_count">%1$s SELECTED</string>
+    <string name="vault_empty_drafts">NO AUTO-SAVED DRAFTS</string>
+    <string name="vault_empty_drafts_help">Lyrics and prompt edits in the Studio are automatically saved to your local drafts database.</string>
+    <string name="vault_empty_tracks">NO TRACKS MATCHING TAGS</string>
+    <string name="vault_empty_tracks_help">Try clearing the search query or selecting a different genre, mood, or status filter.</string>
+    <string name="vault_reset_filters">RESET FILTERS</string>
+    <string name="vault_edit_tags">EDIT TAGS</string>
+    <string name="vault_track_local_badge">LOCAL</string>
+    <string name="vault_matched_snippet">Matched: %1$s</string>
+
+    <!-- Sync screen (SyncScreen) -->
+    <string name="sync_alignment_status">ALIGNMENT STATUS</string>
+    <string name="sync_imported_audio">IMPORTED AUDIO: %1$s</string>
+    <string name="sync_no_audio">NO LOCAL AUDIO TRACK IMPORTED</string>
+    <string name="sync_import_audio">IMPORT LOCAL AUDIO FILE</string>
+    <string name="sync_timing_help">Timing follows active audio regions and lyric sections. This is a heuristic, not speech recognition; review before export.</string>
+    <string name="sync_word_timestamps">WORD TIMESTAMPS GENERATED (%1$s WORDS)</string>
+    <string name="sync_share_lrc">SHARE LRC</string>
+    <string name="sync_share_json">SHARE JSON</string>
+    <string name="sync_position_clock">%1$s / %2$s</string>
+
+    <!-- Queue screen (QueueScreen) -->
+    <string name="queue_header_kicker">STUDIO QUEUE // DRAFTS MONITOR</string>
+    <string name="queue_active_projects">Active Projects</string>
+    <string name="queue_close">CLOSE</string>
+    <string name="queue_empty">NO DRAFTS IN QUEUE</string>
+    <string name="queue_empty_help">Create new lyrics in Studio to begin.</string>
+    <string name="queue_create_lyrics">CREATE LYRICS</string>
+    <string name="queue_draft_meta">%1$s // %2$s // %3$s</string>
+    <string name="queue_load_in_studio">LOAD IN STUDIO</string>
 </resources>

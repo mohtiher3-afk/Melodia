@@ -53,6 +53,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -230,7 +232,7 @@ fun VaultScreen(
                 .padding(horizontal = 6.dp, vertical = 2.dp)
         ) {
             Text(
-                text = "#${selectedSubTag?.uppercase() ?: ""}",
+                text = stringResource(R.string.vault_tag_hash, selectedSubTag?.uppercase() ?: ""),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 9.sp,
                 color = NothingWhite
@@ -254,7 +256,7 @@ fun VaultScreen(
         ) {
             Column {
                 Text(
-                    text = "LIBRARY // CATEGORIES & TAGS",
+                    text = stringResource(R.string.vault_header_kicker),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 11.sp,
                     color = NothingRed,
@@ -298,7 +300,7 @@ fun VaultScreen(
                             modifier = Modifier.size(12.dp)
                         )
                         Text(
-                            text = "IMPORT",
+                            text = stringResource(R.string.vault_action_import),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
@@ -412,7 +414,7 @@ fun VaultScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "ALL ${selectedCategory.label}",
+                        text = stringResource(R.string.vault_all_tag, selectedCategory.label),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 9.sp,
                         fontWeight = if (isAllSub) FontWeight.Bold else FontWeight.Normal,
@@ -439,7 +441,7 @@ fun VaultScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${filteredDrafts.size} AUTO-SAVED DRAFTS IN DATABASE",
+                    text = stringResource(R.string.vault_drafts_count, filteredDrafts.size),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 10.sp,
                     color = NothingRed,
@@ -453,7 +455,7 @@ fun VaultScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${filteredSongs.size} TRACKS MATCHING TAGS",
+                    text = stringResource(R.string.vault_tracks_matching, filteredSongs.size),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 10.sp,
                     color = NothingRed,
@@ -476,7 +478,7 @@ fun VaultScreen(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "#${selectedSubTag?.uppercase()}",
+                            text = stringResource(R.string.vault_tag_hash, selectedSubTag?.uppercase() ?: ""),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 9.sp,
                             color = NothingWhite
@@ -507,7 +509,7 @@ fun VaultScreen(
                         modifier = Modifier.padding(24.dp)
                     ) {
                         Text(
-                            text = "NO AUTO-SAVED DRAFTS",
+                            text = stringResource(R.string.vault_empty_drafts),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 14.sp,
                             color = NothingWhite,
@@ -515,7 +517,7 @@ fun VaultScreen(
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                         Text(
-                            text = "Lyrics and prompt edits in the Studio are automatically saved to your local drafts database.",
+                            text = stringResource(R.string.vault_empty_drafts_help),
                             fontSize = 12.sp,
                             color = NothingGrey,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -524,7 +526,7 @@ fun VaultScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             NothingPillButton(
-                                text = "RESET FILTERS",
+                                text = stringResource(R.string.vault_reset_filters),
                                 onClick = {
                                     searchQuery = ""
                                     selectedCategory = CategoryFilterType.ALL
@@ -534,7 +536,7 @@ fun VaultScreen(
                                 testTag = "reset_tags_filter_button"
                             )
                             NothingPillButton(
-                                text = "+ IMPORT AUDIO",
+                                text = stringResource(R.string.vault_action_import_audio),
                                 onClick = { audioPickerLauncher.launch(arrayOf("audio/*")) },
                                 isPrimary = true,
                                 testTag = "empty_vault_import_audio_button"
@@ -578,7 +580,7 @@ fun VaultScreen(
                     modifier = Modifier.padding(24.dp)
                 ) {
                     Text(
-                        text = "NO TRACKS MATCHING TAGS",
+                        text = stringResource(R.string.vault_empty_tracks),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 14.sp,
                         color = NothingGrey,
@@ -586,7 +588,7 @@ fun VaultScreen(
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                     Text(
-                        text = "Try clearing the search query or selecting a different genre, mood, or status filter.",
+                        text = stringResource(R.string.vault_empty_tracks_help),
                         fontSize = 12.sp,
                         color = NothingGrey,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -595,7 +597,7 @@ fun VaultScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         NothingPillButton(
-                            text = "RESET FILTERS",
+                            text = stringResource(R.string.vault_reset_filters),
                             onClick = {
                                 searchQuery = ""
                                 selectedCategory = CategoryFilterType.ALL
@@ -605,7 +607,7 @@ fun VaultScreen(
                             testTag = "reset_tags_filter_button"
                         )
                         NothingPillButton(
-                            text = "+ IMPORT AUDIO",
+                            text = stringResource(R.string.vault_action_import_audio),
                             onClick = { audioPickerLauncher.launch(arrayOf("audio/*")) },
                             isPrimary = true,
                             testTag = "empty_vault_import_audio_button"
@@ -667,7 +669,7 @@ fun VaultScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${selectedIds.size} SELECTED",
+                    text = stringResource(R.string.vault_selected_count, selectedIds.size),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 12.sp,
                     color = NothingWhite,
@@ -675,7 +677,7 @@ fun VaultScreen(
                 )
 
                 NothingPillButton(
-                    text = "EDIT TAGS",
+                    text = stringResource(R.string.vault_edit_tags),
                     onClick = { showBulkTagsDialog = true },
                     isPrimary = true,
                     testTag = "bulk_edit_tags_button"
@@ -796,7 +798,7 @@ fun SavedSongItem(
                                             .padding(horizontal = 5.dp, vertical = 2.dp)
                                     ) {
                                         Text(
-                                            text = "LOCAL",
+                                            text = stringResource(R.string.vault_track_local_badge),
                                             fontFamily = SpaceMonoFontFamily,
                                             fontSize = 8.sp,
                                             color = NothingWhite,
@@ -918,7 +920,7 @@ fun SavedSongItem(
                 if (matchedLyricSnippet != null) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Matched: ${matchedLyricSnippet.take(120)}${if (matchedLyricSnippet.length > 120) "..." else ""}",
+                        text = stringResource(R.string.vault_matched_snippet, matchedLyricSnippet.take(120) + if (matchedLyricSnippet.length > 120) "..." else ""),
                         fontSize = 12.sp,
                         color = NothingGrey,
                         maxLines = 2

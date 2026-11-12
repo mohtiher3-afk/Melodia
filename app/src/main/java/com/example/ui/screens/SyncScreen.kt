@@ -14,6 +14,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,7 +71,7 @@ fun SyncScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "ALIGNMENT STATUS",
+                        text = stringResource(R.string.sync_alignment_status),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         color = NothingGrey
@@ -86,7 +88,7 @@ fun SyncScreen(
 
                 if (state.isLocalAudioActive && state.localAudioMetadata != null) {
                     Text(
-                        text = "IMPORTED AUDIO: ${state.localAudioMetadata!!.title}",
+                        text = stringResource(R.string.sync_imported_audio, state.localAudioMetadata!!.title),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         color = NothingWhite,
@@ -117,13 +119,13 @@ fun SyncScreen(
                     )
                 } else {
                     Text(
-                        text = "NO LOCAL AUDIO TRACK IMPORTED",
+                        text = stringResource(R.string.sync_no_audio),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         color = NothingGrey
                     )
                     NothingPillButton(
-                        text = "IMPORT LOCAL AUDIO FILE",
+                        text = stringResource(R.string.sync_import_audio),
                         onClick = { audioPickerLauncher.launch(arrayOf("audio/*")) }
                     )
                 }
@@ -138,7 +140,7 @@ fun SyncScreen(
                 )
 
                 Text(
-                    text = "Timing follows active audio regions and lyric sections. This is a heuristic, not speech recognition; review before export.",
+                    text = stringResource(R.string.sync_timing_help),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 10.sp,
                     color = NothingGrey
@@ -146,7 +148,7 @@ fun SyncScreen(
 
                 if (karaoke != null) {
                     Text(
-                        text = "WORD TIMESTAMPS GENERATED (${karaoke.wordTimings.size} WORDS)",
+                        text = stringResource(R.string.sync_word_timestamps, karaoke.wordTimings.size),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 11.sp,
                         color = NothingRed,
@@ -158,7 +160,7 @@ fun SyncScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         NothingPillButton(
-                            text = "SHARE LRC",
+                            text = stringResource(R.string.sync_share_lrc),
                             onClick = {
                                 if (draft != null) {
                                     val song = com.example.data.model.Song(
@@ -179,7 +181,7 @@ fun SyncScreen(
                         )
 
                         NothingPillButton(
-                            text = "SHARE JSON",
+                            text = stringResource(R.string.sync_share_json),
                             onClick = {
                                 if (draft != null) {
                                     val song = com.example.data.model.Song(
@@ -232,7 +234,7 @@ fun SyncScreen(
                         )
 
                         Text(
-                            text = "${formatClock(playbackPosition)} / ${formatClock(playbackDuration)}",
+                            text = stringResource(R.string.sync_position_clock, formatClock(playbackPosition), formatClock(playbackDuration)),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 11.sp,
                             color = NothingGrey,

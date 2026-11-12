@@ -25,6 +25,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -78,7 +80,7 @@ fun QueueScreen(
                             .background(NothingRed)
                     )
                     Text(
-                        text = "STUDIO QUEUE // DRAFTS MONITOR",
+                        text = stringResource(R.string.queue_header_kicker),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 10.sp,
                         color = NothingRed,
@@ -88,7 +90,7 @@ fun QueueScreen(
                 }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Active Projects",
+                    text = stringResource(R.string.queue_active_projects),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 22.sp,
                     color = NothingWhite,
@@ -110,7 +112,7 @@ fun QueueScreen(
                         .testTag("queue_close")
                 ) {
                     Text(
-                        text = "CLOSE",
+                        text = stringResource(R.string.queue_close),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -141,21 +143,21 @@ fun QueueScreen(
                         modifier = Modifier.size(40.dp)
                     )
                     Text(
-                        text = "NO DRAFTS IN QUEUE",
+                        text = stringResource(R.string.queue_empty),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 14.sp,
                         color = NothingWhite,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Create new lyrics in Studio to begin.",
+                        text = stringResource(R.string.queue_empty_help),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         color = NothingDarkGrey
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     NothingPillButton(
-                        text = "CREATE LYRICS",
+                        text = stringResource(R.string.queue_create_lyrics),
                         onClick = onNavigateToStudio
                     )
                 }
@@ -197,13 +199,13 @@ fun QueueScreen(
                                 )
                             }
                             Text(
-                                text = "${draft.genre} // ${draft.mood} // ${draft.language}",
+                                text = stringResource(R.string.queue_draft_meta, draft.genre, draft.mood, draft.language),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 11.sp,
                                 color = NothingGrey
                             )
                             NothingPillButton(
-                                text = "LOAD IN STUDIO",
+                                text = stringResource(R.string.queue_load_in_studio),
                                 onClick = {
                                     viewModel.restoreDraft(draft)
                                     onNavigateToStudio()
