@@ -3,6 +3,7 @@ package com.example.network.llm
 import android.content.Context
 import com.example.domain.LocalModelManager
 import com.google.ai.edge.litertlm.Backend
+import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.LogSeverity
@@ -60,12 +61,18 @@ class Gemma3LocalLlmProvider(
 
             engine.createConversation().use { conversation ->
                 val responseBuilder = StringBuilder()
-                val tokenCount = intArrayOf(0)
+                val chunkCount = intArrayOf(0)
 
                 try {
-                    conversation.sendMessageAsync(fullPrompt).collect { token ->
-                        responseBuilder.append(token)
-                        tokenCount[0]++
+                    // sendMessageAsync emits Message objects (not raw strings).
+                    // Extract the text parts of each chunk explicitly — appending
+                    // the Message object itself would produce garbage output.
+                    conversation.sendMessageAsync(fullPrompt).collect { message ->
+                        val chunkText = message.contents.contents
+                            .filterIsInstance<Content.Text>()
+                            .joinToString("") { it.text }
+                        responseBuilder.append(chunkText)
+                        chunkCount[0]++
                     }
                 } catch (e: Exception) {
                     throw LlmException("LiteRT-LM inference failed: ${e.message}", e)
@@ -85,13 +92,5 @@ class Gemma3LocalLlmProvider(
                 )
             }
         }
-    }
-
-    /**
-     * Rough token count estimate (~4 chars per token for English text).
-     * LiteRT-LM does not expose token counts directly, so we estimate.
-     */
-    private fun estimateTokenCount(text: String): Int {
-        return (text.length / 4.0).toInt().coerceAtLeast(1)
     }
 }

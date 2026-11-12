@@ -89,6 +89,17 @@ Acceptance: focus-loss pauses playback; double-tap cannot start a second encode;
 
 ## Not testable in this environment (documented honestly)
 
-- Real Gemini Nano generation requires a physical supported device (AICore) — emulator reports unavailable; the code path will be unit-tested with fakes and verified on-device only if such a device is provided.
+- Real Gemini Nano generation requires a physical supported device (AICore) — emulator reports unavailable. **Physical-device checklist when available:** (1) Settings → Nano Local tile must show READY after AICore downloads its model; (2) Studio → CREATE LYRICS must produce a draft with provider toast "Creating lyrics with Nano Local…"; (3) airplane-mode test: generation must still work with no network; (4) `adb logcat` must show no LlmException from the Nano path.
 - Real Gemini cloud calls are not made from tests (no paid requests); provider logic tested via fakes.
 - 4K encode profile behaviour depends on device encoder caps; verified at 1080p on the emulator.
+
+## On-device verification — Gemma 3 1B (2026-11-12, emulator-5554)
+
+The Gemma 3 local inference path was verified END-TO-END on the x86_64 emulator (LiteRT-LM 0.17.1 ships x86_64 JNI):
+1. Settings → Gemma 3 tile selected; 584,417,280-byte `gemma-3-1b-it-int4.litertlm` downloaded in ~5 min with live progress; UI shows READY.
+2. Studio → CREATE LYRICS with the Gemma 3 provider: `liblitertlm_jni.so` loaded, engine initialized, inference completed in ~2 min (emulator CPU).
+3. Result: draft "Crimson Echoes" — 177 words, 7 sections ([Intro]/[Verse 1]/[Chorus]/[Verse 2]/[Bridge]/[Outro]), coherent on-theme lyrics verified in the drafts database. Drafts count incremented.
+4. **Bug found and fixed during verification:** `Gemma3LocalLlmProvider` appended the raw `Message` object from the `sendMessageAsync` Flow instead of extracting `Content.Text` — output would have been garbage. Fixed to `message.contents.contents.filterIsInstance<Content.Text>()`.
+5. Side note: `SentimentAnalyzer` logs a Nano-unavailable LlmException then falls back to heuristics — graceful, but the error-level log is noisy (cosmetic follow-up).
+
+Gemini Nano remains unverified until a physical device is available (checklist above).
