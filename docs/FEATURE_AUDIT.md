@@ -64,7 +64,7 @@ Acceptance: progress bar moves during download; PAUSE actually stops bytes; no m
 - F-6: export button disabled while `isExporting` (double-tap guard); bitrate selector chips (8/12/20/35 Mbps) wired to `bitrateMbps`; SHARE VIDEO via FileProvider (`${applicationId}.fileprovider`, `video/mp4`) after a completed export; output moved from `cacheDir` to `getExternalFilesDir(MOVIES)/exported_videos` (survives cache clears).
 - F-13: instrumented test renamed `floatingPlayerBarHiddenUntilAudioLoaded`, asserts absence when idle.
 - E2E on emulator: draft → Export screen shows chips + button; export ran ~90 s producing `Melodia_*.mp4` (5.28 MB) in `files/Movies/exported_videos/`; SHARE VIDEO opened the system share sheet (Drive/Quick Share visible).
-- Note: completion state has no visible "complete" banner — the progress card only renders while exporting; the Share button appearing is the only completion cue (minor UX, candidate for Stage 5).
+- Note: ~~completion state has no visible "complete" banner~~ — fixed in follow-up: an `EXPORT COMPLETE` card with status text and output file name now renders after a successful export (verified on emulator).
 - Note: a stale incremental build (OneDrive + Gradle incremental mix) produced an APK with old+new classes; `clean` rebuild fixed it. If UI ever looks "old", rebuild clean before debugging.
 1. Audio focus (gain/pause/duck/loss) + noisy receiver in `AudioPlayerManager`.
 2. Disable export button while exporting; add bitrate slider; add open/share for the finished MP4; move output out of `cacheDir`.
@@ -83,7 +83,9 @@ Acceptance: focus-loss pauses playback; double-tap cannot start a second encode;
 - F-16: `usesCleartextTraffic="true"` removed from the manifest; `OpenRouterLlmProvider.isAvailable()` now requires HTTPS (API key travels in a header — plain HTTP would leak it); HuggingFace provider already https-only; all model download URLs are https. 3 unit tests cover the https rule.
 - F-8: `PlaybackIslandService.start()` now returns immediately unless the Island preference is enabled — plain in-app playback no longer spawns a foreground notification. 2 Robolectric tests prove gating both ways.
 - F-19: expanded player copy corrected "MELODIA v3 AUDIO SYNTHESIS" → "MELODIA v3 PLAYBACK" (app does not synthesize audio).
-- F-15 (first slice): bottom-bar tab labels + floating-player strings extracted to `strings.xml` (`tab_*`, `player_*`); `MelodiaTab` now carries `titleRes`; values are byte-identical to the old literals so instrumented text matchers stay green. Remaining screens (Studio/Lyrics/Library/Settings/…) still hardcoded — extraction continues screen-by-screen in follow-ups; Arabic lyric handling was already real (normalizer + tests).
+- F-15 (slice 1): bottom-bar tab labels + floating-player strings extracted to `strings.xml` (`tab_*`, `player_*`); `MelodiaTab` now carries `titleRes`; values are byte-identical to the old literals so instrumented text matchers stay green.
+- F-15 (slice 2, follow-up): `SettingsScreen` (22 literals) and `VideoExporterScreen` (6 + 2 banner strings) fully extracted (`settings_*`, `model_*`, `exporter_*`). Remaining scope: ~118 literals across Vault (19), Studio sub-sections (StudioConfigSection 14, StudioHeader 5, StudioPresetsSection 4), DraftsDialog (13), Sync (9), Queue (8), and smaller files — extraction continues screen-by-screen.
+- Follow-up: export-complete banner added to `VideoExporterScreen` (`EXPORT COMPLETE` card with status + output file name); verified on emulator via UI dump after a real export.
 - Emulator checks: all 5 tab labels render from resources; forced RTL (`debug.force_rtl 1`) renders with no crash; `font_scale 1.3` renders with no crash. Both settings reset afterwards.
 - Verification: `assembleDebug` + `testDebugUnitTest` (52 tests, 0 failures) + `connectedDebugAndroidTest` (20 tests, 0 failures).
 
