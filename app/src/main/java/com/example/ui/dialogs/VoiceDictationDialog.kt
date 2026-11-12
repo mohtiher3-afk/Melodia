@@ -9,6 +9,8 @@ import android.speech.SpeechRecognizer
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -176,7 +178,7 @@ fun VoiceDictationDialog(
                                 .background(NothingRed)
                         )
                         Text(
-                            text = "VOICE-TO-TEXT // STUDIO MIC",
+                            text = stringResource(R.string.dictation_header),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 11.sp,
                             color = NothingRed,
@@ -245,7 +247,7 @@ fun VoiceDictationDialog(
                 ) {
                     Column {
                         Text(
-                            text = "DICTATED LYRICS PREVIEW",
+                            text = stringResource(R.string.dictation_preview_header),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 9.sp,
                             color = NothingGrey,
@@ -267,7 +269,7 @@ fun VoiceDictationDialog(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     NothingPillButton(
-                        text = "INSERT DICTATED LYRICS",
+                        text = stringResource(R.string.dictation_insert),
                         onClick = {
                             val sample = if (spokenText.contains("Listening") || spokenText.contains("unavailable")) {
                                 "[Verse 1]\nCity lights shining bright\nNeon echoes in the midnight sky\nRhythm pulsing through the night"

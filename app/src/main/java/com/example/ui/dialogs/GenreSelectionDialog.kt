@@ -1,5 +1,7 @@
 package com.example.ui.dialogs
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -82,7 +84,7 @@ fun GenreSelectionDialog(
                                     .background(NothingRed)
                             )
                             Text(
-                                text = "MASTER ARCHITECTURE // DIRECTORY",
+                                text = stringResource(R.string.genre_dialog_kicker),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 9.sp,
                                 color = NothingRed,
@@ -92,7 +94,7 @@ fun GenreSelectionDialog(
                         }
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "GENRE & SUBGENRE SELECTION",
+                            text = stringResource(R.string.genre_dialog_header),
                             fontFamily = NothingDotMatrixFontFamily,
                             fontSize = 17.sp,
                             color = NothingWhite,
@@ -140,7 +142,7 @@ fun GenreSelectionDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 NothingPillButton(
-                    text = "CLOSE DIRECTORY",
+                    text = stringResource(R.string.genre_dialog_close),
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
                     isPrimary = false,

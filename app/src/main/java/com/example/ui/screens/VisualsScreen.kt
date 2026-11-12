@@ -1,5 +1,7 @@
 package com.example.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -48,7 +50,7 @@ fun VisualsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "VISUAL PREVIEW",
+                        text = stringResource(R.string.visuals_preview_header),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         color = NothingGrey

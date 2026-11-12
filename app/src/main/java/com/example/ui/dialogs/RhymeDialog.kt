@@ -1,5 +1,7 @@
 package com.example.ui.dialogs
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -73,7 +75,7 @@ fun RhymeDialog(
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Column {
                     Text(
-                        text = "LYRICS // RHYME ENGINE",
+                        text = stringResource(R.string.rhyme_header),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 11.sp,
                         color = NothingRed,
@@ -81,7 +83,7 @@ fun RhymeDialog(
                         letterSpacing = 2.sp
                     )
                     Text(
-                        text = "RHYMES FOR \"${query.trim().uppercase()}\"",
+                        text = stringResource(R.string.rhymes_for, query.trim().uppercase()),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
@@ -91,14 +93,14 @@ fun RhymeDialog(
 
                 when {
                     isLoading -> Text(
-                        text = "ANALYZING SOUND PATTERNS...",
+                        text = stringResource(R.string.rhyme_analyzing),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         color = NothingGrey
                     )
 
                     result == null -> Text(
-                        text = "RHYME ENGINE UNAVAILABLE. CHECK YOUR CONNECTION.",
+                        text = stringResource(R.string.rhyme_unavailable),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         color = NothingGrey
@@ -137,7 +139,7 @@ fun RhymeDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     NothingPillButton(
-                        text = "DONE",
+                        text = stringResource(R.string.rhyme_done),
                         onClick = onDismiss
                     )
                 }

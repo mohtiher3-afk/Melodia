@@ -132,4 +132,71 @@
     <string name="drafts_restore">RESTORE TO STUDIO</string>
     <string name="drafts_clear_all">CLEAR ALL</string>
     <string name="drafts_close">CLOSE</string>
+
+    <!-- Genre selection component (GenreSelection) -->
+    <string name="genre_recent_header">RECENTLY VIEWED // LAST 3</string>
+    <string name="genre_room_db_badge">ROOM DB</string>
+    <string name="genre_no_recent">NO RECENTLY VIEWED SUBGENRES</string>
+    <string name="genre_recent_help">Select any subgenre below to track and persist your last 3 choices in Room.</string>
+    <string name="genre_catalogue_header">MASTER SUBGENRE CATALOGUE</string>
+    <string name="genre_rec_badge">REC // 0%1$s</string>
+
+    <!-- Lyrics editor (LyricsScreen) -->
+    <string name="lyrics_line_word_count">%1$s LINES // %2$s WORDS</string>
+    <string name="lyrics_duration_sections">~%1$s // %2$s SECTIONS</string>
+    <string name="lyrics_dictate">DICTATE</string>
+    <string name="lyrics_rhyme">RHYME</string>
+    <string name="lyrics_editor_placeholder">Write or paste your lyrics here...
+Use [Verse 1], [Chorus], [Bridge] tags to structure the song.</string>
+
+    <!-- Rhyme dialog (RhymeDialog) -->
+    <string name="rhyme_header">LYRICS // RHYME ENGINE</string>
+    <string name="rhymes_for">RHYMES FOR \"%1$s\"</string>
+    <string name="rhyme_analyzing">ANALYZING SOUND PATTERNS...</string>
+    <string name="rhyme_unavailable">RHYME ENGINE UNAVAILABLE. CHECK YOUR CONNECTION.</string>
+    <string name="rhyme_done">DONE</string>
+
+    <!-- Save preset dialog (SavePresetDialog) -->
+    <string name="save_preset_header">STUDIO // SAVE PRESET</string>
+    <string name="save_preset_name_label">NAME YOUR TEMPLATE</string>
+    <string name="save_preset_cancel">CANCEL</string>
+    <string name="save_preset_save">SAVE PRESET</string>
+
+    <!-- Waveform viewer (NothingWaveformView) -->
+    <string name="waveform_timings_header">WAVEFORM &amp; SYNCHRONIZED TIMINGS</string>
+    <string name="waveform_markers_header">SYNCHRONIZED TIMING MARKERS</string>
+    <string name="waveform_active_badge">ACTIVE</string>
+    <string name="waveform_close_viewer">CLOSE VIEWER</string>
+
+    <!-- Shared Nothing components (NothingComponents) -->
+    <string name="nothing_rec_on">REC // ON</string>
+    <string name="nothing_brand_badge">MELODIA // 01</string>
+    <string name="nothing_timing_header">LYRIC TIMING // SECTION ALIGNMENT</string>
+    <string name="nothing_section_tag">[%1$s]</string>
+
+    <!-- Local audio player (LocalAudioPlayer) -->
+    <string name="audio_preview_header">AUDIO PREVIEW // LOCAL</string>
+    <string name="audio_local_file_badge">LOCAL FILE</string>
+    <string name="audio_source_label">SOURCE: %1$s</string>
+    <string name="audio_save_to_library">SAVE AUDIO TO LOCAL LIBRARY</string>
+
+    <!-- More screen (MoreScreen) -->
+    <string name="more_header_kicker">MORE // WORKSPACE</string>
+    <string name="more_title">Tools &amp; settings</string>
+    <string name="more_subtitle">Creative tools and app preferences</string>
+
+    <!-- Voice dictation dialog (VoiceDictationDialog) -->
+    <string name="dictation_header">VOICE-TO-TEXT // STUDIO MIC</string>
+    <string name="dictation_preview_header">DICTATED LYRICS PREVIEW</string>
+    <string name="dictation_insert">INSERT DICTATED LYRICS</string>
+
+    <!-- Genre selection dialog (GenreSelectionDialog) -->
+    <string name="genre_dialog_kicker">MASTER ARCHITECTURE // DIRECTORY</string>
+    <string name="genre_dialog_header">GENRE &amp; SUBGENRE SELECTION</string>
+    <string name="genre_dialog_close">CLOSE DIRECTORY</string>
+
+    <!-- Studio screen + Visuals screen -->
+    <string name="studio_copy_prompt_lyrics">COPY PROMPT &amp; LYRICS</string>
+    <string name="studio_music_prompt_label">Music Prompt: %1$s</string>
+    <string name="visuals_preview_header">VISUAL PREVIEW</string>
 </resources>

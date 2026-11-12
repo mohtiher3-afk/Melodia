@@ -1,5 +1,7 @@
 package com.example.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -53,7 +55,7 @@ fun MoreScreen(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                text = "MORE // WORKSPACE",
+                text = stringResource(R.string.more_header_kicker),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
@@ -61,13 +63,13 @@ fun MoreScreen(
                 color = NothingRed
             )
             Text(
-                text = "Tools & settings",
+                text = stringResource(R.string.more_title),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = NothingWhite
             )
             Text(
-                text = "Creative tools and app preferences",
+                text = stringResource(R.string.more_subtitle),
                 fontSize = 14.sp,
                 color = NothingGrey
             )

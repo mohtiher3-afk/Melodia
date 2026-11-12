@@ -6,6 +6,8 @@ import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -174,7 +176,7 @@ fun StudioScreen(
 
                         // Copy Prompt & Lyrics Button
                                                 NothingPillButton(
-                                                    text = "COPY PROMPT & LYRICS",
+                                                    text = stringResource(R.string.studio_copy_prompt_lyrics),
                                                     onClick = {
                                                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                                         val copyText = "PROMPT: ${draft.promptText}\n\nLYRICS: ${draft.lyrics}"
@@ -198,7 +200,7 @@ fun StudioScreen(
 
                         if (draft.promptText.isNotBlank()) {
                             Text(
-                                text = "Music Prompt: ${draft.promptText}",
+                                text = stringResource(R.string.studio_music_prompt_label, draft.promptText),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 11.sp,
                                 color = NothingGrey

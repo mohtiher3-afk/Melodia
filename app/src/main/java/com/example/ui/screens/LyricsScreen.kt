@@ -1,5 +1,7 @@
 package com.example.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -122,13 +124,13 @@ fun LyricsScreen(
                     )
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "$lineCount LINES // $wordCount WORDS",
+                            text = stringResource(R.string.lyrics_line_word_count, lineCount, wordCount),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 10.sp,
                             color = NothingGrey
                         )
                         Text(
-                            text = "~${formatDuration(estimatedSeconds)} // $sectionCount SECTIONS",
+                            text = stringResource(R.string.lyrics_duration_sections, formatDuration(estimatedSeconds), sectionCount),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 9.sp,
                             color = NothingRed
@@ -142,14 +144,14 @@ fun LyricsScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     NothingPillButton(
-                        text = "DICTATE",
+                        text = stringResource(R.string.lyrics_dictate),
                         onClick = { showDictationDialog = true },
                         modifier = Modifier
                             .weight(1f)
                             .testTag("lyrics_dictate_button")
                     )
                     NothingPillButton(
-                        text = "RHYME",
+                        text = stringResource(R.string.lyrics_rhyme),
                         onClick = { showRhymeDialog = true },
                         enabled = rhymeQuery.isNotBlank(),
                         modifier = Modifier
@@ -194,7 +196,7 @@ fun LyricsScreen(
                         .testTag("lyrics_editor"),
                     placeholder = {
                         Text(
-                            text = "Write or paste your lyrics here...\nUse [Verse 1], [Chorus], [Bridge] tags to structure the song.",
+                            text = stringResource(R.string.lyrics_editor_placeholder),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 12.sp,
                             color = NothingGrey

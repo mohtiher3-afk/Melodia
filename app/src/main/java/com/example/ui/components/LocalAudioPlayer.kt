@@ -1,5 +1,7 @@
 package com.example.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -89,7 +91,7 @@ fun LocalAudioPlayer(
                         .background(if (isPlaying) NothingRed else NothingWhite)
                 )
                 Text(
-                    text = "AUDIO PREVIEW // LOCAL",
+                    text = stringResource(R.string.audio_preview_header),
                     fontFamily = NothingDotMatrixFontFamily,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -105,7 +107,7 @@ fun LocalAudioPlayer(
                     .padding(horizontal = 8.dp, vertical = 3.dp)
             ) {
                 Text(
-                    text = "LOCAL FILE",
+                    text = stringResource(R.string.audio_local_file_badge),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
@@ -125,7 +127,7 @@ fun LocalAudioPlayer(
             color = NothingWhite
         )
         Text(
-            text = "SOURCE: $streamSource",
+            text = stringResource(R.string.audio_source_label, streamSource),
             fontFamily = SpaceMonoFontFamily,
             fontSize = 10.sp,
             color = NothingRed
@@ -258,7 +260,7 @@ fun LocalAudioPlayer(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "SAVE AUDIO TO LOCAL LIBRARY",
+                text = stringResource(R.string.audio_save_to_library),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,

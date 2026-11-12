@@ -1,5 +1,7 @@
 package com.example.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -134,7 +136,7 @@ fun GlyphCard(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "REC // ON",
+                                text = stringResource(R.string.nothing_rec_on),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 9.sp,
                                 color = NothingRed,
@@ -434,7 +436,7 @@ fun NothingCoverArt(
 
         // Top right track index
         Text(
-            text = "MELODIA // 01",
+            text = stringResource(R.string.nothing_brand_badge),
             fontFamily = SpaceMonoFontFamily,
             fontSize = 9.sp,
             color = NothingGrey,
@@ -524,7 +526,7 @@ fun LyricTimelineEditor(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Text(
-            text = "LYRIC TIMING // SECTION ALIGNMENT",
+            text = stringResource(R.string.nothing_timing_header),
             fontFamily = NothingDotMatrixFontFamily,
             fontSize = 12.sp,
             color = NothingRed,
@@ -537,7 +539,7 @@ fun LyricTimelineEditor(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "[${section.name.uppercase()}]",
+                    text = stringResource(R.string.nothing_section_tag, section.name.uppercase()),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 11.sp,
                     color = NothingWhite,

@@ -1,5 +1,7 @@
 package com.example.ui.dialogs
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -39,7 +41,7 @@ fun SavePresetDialog(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "STUDIO // SAVE PRESET",
+                        text = stringResource(R.string.save_preset_header),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 11.sp,
                         color = NothingRed,
@@ -47,7 +49,7 @@ fun SavePresetDialog(
                         letterSpacing = 2.sp
                     )
                     Text(
-                        text = "NAME YOUR TEMPLATE",
+                        text = stringResource(R.string.save_preset_name_label),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
@@ -84,14 +86,14 @@ fun SavePresetDialog(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     NothingPillButton(
-                        text = "CANCEL",
+                        text = stringResource(R.string.save_preset_cancel),
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
                         isPrimary = false,
                         testTag = "cancel_save_preset"
                     )
                     NothingPillButton(
-                        text = "SAVE PRESET",
+                        text = stringResource(R.string.save_preset_save),
                         onClick = {
                             if (name.isNotBlank()) {
                                 onSave(name)

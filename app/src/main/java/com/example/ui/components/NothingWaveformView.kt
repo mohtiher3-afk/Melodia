@@ -1,5 +1,7 @@
 package com.example.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -292,7 +294,7 @@ fun WaveformLyricsDialog(
                                     .background(NothingRed)
                             )
                             Text(
-                                text = "WAVEFORM & SYNCHRONIZED TIMINGS",
+                                text = stringResource(R.string.waveform_timings_header),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 10.sp,
                                 color = NothingRed,
@@ -407,7 +409,7 @@ fun WaveformLyricsDialog(
                         .padding(14.dp)
                 ) {
                     Text(
-                        text = "SYNCHRONIZED TIMING MARKERS",
+                        text = stringResource(R.string.waveform_markers_header),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -460,7 +462,7 @@ fun WaveformLyricsDialog(
                                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                                         ) {
                                             Text(
-                                                text = "ACTIVE",
+                                                text = stringResource(R.string.waveform_active_badge),
                                                 fontFamily = SpaceMonoFontFamily,
                                                 fontSize = 8.sp,
                                                 color = NothingWhite,
@@ -477,7 +479,7 @@ fun WaveformLyricsDialog(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 NothingPillButton(
-                    text = "CLOSE VIEWER",
+                    text = stringResource(R.string.waveform_close_viewer),
                     onClick = onDismiss,
                     isPrimary = true,
                     modifier = Modifier.fillMaxWidth(),
