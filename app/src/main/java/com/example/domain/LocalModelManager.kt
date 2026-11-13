@@ -164,7 +164,52 @@ class LocalModelManager(private val appContext: Context) {
         val flag = cancelFlag(model.id)
         flag.set(false)
 
+        // Transient network errors ("Software caused connection abort", socket
+        // resets, 5xx responses) are common on mobile. Retry with exponential
+        // backoff so a flaky connection doesn't leave the model permanently
+        // failed; the partial file is preserved across attempts and resumed.
+        val maxAttempts = 3
+        var attempt = 0
+        var lastError: Exception? = null
+        while (attempt < maxAttempts) {
+            attempt++
+            val result = downloadAttempt(model, state, flag, onProgress)
+            if (result.isSuccess) {
+                return@withContext result
+            }
+            lastError = result.exceptionOrNull() as? Exception
+            if (attempt < maxAttempts && !flag.get()) {
+                val delayMs = 1000L * (1 shl (attempt - 1)) // 1s, 2s, 4s
+                Log.w(TAG, "Download attempt $attempt failed for ${model.id}; retrying in ${delayMs}ms", lastError)
+                state.postValue(DownloadState.Idle(isModelDownloaded(model)))
+                try {
+                    kotlinx.coroutines.delay(delayMs)
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    // Cancelled during backoff: keep partial data, report paused.
+                    state.postValue(DownloadState.Paused(partialBytes(model), model.expectedSizeBytes))
+                    throw e
+                }
+            }
+        }
+        val error = "Download failed after $maxAttempts attempts: ${lastError?.message}"
+        Log.e(TAG, error, lastError)
+        state.postValue(DownloadState.Failed(error))
+        Result.failure(lastError ?: IllegalStateException(error))
+    }
+
+    /**
+     * Single download attempt. On failure the partial file is kept so the next
+     * attempt can resume via HTTP Range; only a successful size check promotes
+     * the partial file to the final path.
+     */
+    private suspend fun downloadAttempt(
+        model: ModelInfo,
+        state: MediatorLiveData<DownloadState>,
+        flag: java.util.concurrent.atomic.AtomicBoolean,
+        onProgress: ((Float, Long, Long) -> Unit)?
+    ): Result<String> = withContext(Dispatchers.IO) {
         val partFile = partFile(model)
+        val finalFile = File(appContext.filesDir, model.localPath)
         var startOffset = partialBytes(model)
         val fileIsPartial = startOffset > 0 && !isModelDownloaded(model)
 
