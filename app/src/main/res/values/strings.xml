@@ -106,8 +106,19 @@
     <string name="studio_sentiment_energy">Energy: %1$s%%</string>
     <string name="studio_sentiment_melancholy">Melancholy: %1$s%%</string>
     <string name="studio_sentiment_nostalgia">Nostalgia: %1$s%%</string>
-    <string name="studio_app_name">Melodia</string>
+    <string name="studio_app_name">MELODIA</string>
     <string name="studio_app_tagline">Text-first lyric studio</string>
+    <string name="studio_step_label">STEP %1$d / %2$d · %3$s</string>
+    <string name="studio_h1">Write the lyrics</string>
+    <string name="studio_prompt_label">PROMPT</string>
+    <string name="studio_topic_placeholder">e.g. Midnight city lights, late night ambition, old memories…</string>
+    <string name="studio_generate_lyrics">GENERATE LYRICS</string>
+    <string name="studio_generate_prompt">GENERATE PROMPT</string>
+    <string name="studio_lyrics_card_title">LYRICS</string>
+    <string name="studio_section_tag">[%1$s]</string>
+    <string name="studio_progress_generating">Generating lyrics…</string>
+    <string name="studio_progress_exporting">Exporting…</string>
+    <string name="studio_section_empty">No sections yet.</string>
     <string name="studio_import_audio">Import audio</string>
     <string name="studio_queue">Queue</string>
     <string name="studio_drafts_count">Drafts (%1$s)</string>
@@ -200,7 +211,6 @@ Use [Verse 1], [Chorus], [Bridge] tags to structure the song.</string>
     <string name="studio_music_prompt_label">Music Prompt: %1$s</string>
     <string name="studio_drafting_lyrics">DRAFTING LYRICS…</string>
     <string name="studio_polishing">POLISHING…</string>
-    <string name="studio_generate_prompt">GENERATE PROMPT</string>
     <string name="studio_header_audio_on">Audio on</string>
     <string name="studio_header_text_only">Text only</string>
     <string name="studio_autosave_saving">Saving draft…</string>
@@ -214,6 +224,7 @@ Use [Verse 1], [Chorus], [Bridge] tags to structure the song.</string>
     <string name="wave_sync_active">PLAYING // SYNC ACTIVE</string>
     <string name="wave_paused">AUDIO PAUSED</string>
     <string name="wave_play_audio">PLAY AUDIO</string>
+    <string name="player_no_lyrics">NO LYRICS AVAILABLE</string>
     <string name="rhyme_exact">EXACT RHYMES</string>
     <string name="rhyme_slant">SLANT RHYMES</string>
     <string name="rhyme_synonyms">POETIC SYNONYMS</string>

@@ -1,11 +1,10 @@
 package com.example.ui
 
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.RepeatMode as ComposeRepeatMode
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -285,6 +284,7 @@ fun MelodiaIsland(
 /**
  * Task-progress island: compact title + progress bar, tap to expand, auto-collapse
  * after 4s. Renders nothing when [uiState] is Idle.
+ * Also handles Playing state with equalizer bars + track title.
  */
 @Composable
 fun MelodiaTaskIsland(
@@ -296,6 +296,7 @@ fun MelodiaTaskIsland(
 
     val isDone = uiState.status == IslandStatus.Done
     val isFailed = uiState.status == IslandStatus.Failed
+    val isPlaying = uiState.status == IslandStatus.Playing
     val accent = when {
         isDone -> MelodiaWhite
         isFailed -> MelodiaRed
@@ -305,7 +306,29 @@ fun MelodiaTaskIsland(
         IslandStatus.Done -> "DONE"
         IslandStatus.Failed -> "FAILED"
         IslandStatus.Running -> "RUNNING"
+        IslandStatus.Playing -> "NOW PLAYING"
         IslandStatus.Idle -> ""
+    }
+
+    // Equalizer bars for Playing state
+    val equalizerBars = remember {
+        (0..5).map { mutableStateOf(0.3f + (Math.random() * 0.7).toFloat()) }
+    }
+
+    // Animate equalizer when playing
+    androidx.compose.runtime.LaunchedEffect(isPlaying) {
+        if (isPlaying) {
+            while (true) {
+                equalizerBars.forEach { bar ->
+                    bar.value = 0.2f + (Math.random() * 0.8).toFloat()
+                }
+                delay(120)
+            }
+        } else {
+            equalizerBars.forEach { bar ->
+                bar.value = 0.1f
+            }
+        }
     }
 
     MelodiaIsland(
@@ -334,13 +357,37 @@ fun MelodiaTaskIsland(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
-                Text(
-                    text = label,
-                    fontFamily = Mono,
-                    fontSize = 9.sp,
-                    letterSpacing = 0.12.sp,
-                    color = accent
-                )
+                if (isPlaying) {
+                    // Mini equalizer in the island
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(1.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        equalizerBars.forEach { bar ->
+                            val animatedHeight = animateFloatAsState(
+                                targetValue = bar.value,
+                                animationSpec = androidx.compose.animation.core.tween(80),
+                                label = "eq_bar"
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .width(2.dp)
+                                    .height(8.dp * animatedHeight.value)
+                                    .background(MelodiaRed)
+                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(1.dp))
+                                    .align(Alignment.Bottom)
+                            )
+                        }
+                    }
+                } else {
+                    Text(
+                        text = label,
+                        fontFamily = Mono,
+                        fontSize = 9.sp,
+                        letterSpacing = 0.12.sp,
+                        color = accent
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(6.dp))
             Box(
@@ -367,9 +414,9 @@ fun MelodiaTaskIsland(
                     // Indeterminate sweep for running tasks
                     val sweep by animateFloatAsState(
                         targetValue = 1f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(1000),
-                            repeatMode = RepeatMode.Reverse
+                        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+                            animation = androidx.compose.animation.core.tween(1000),
+                            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
                         ),
                         label = "island_progress"
                     )
@@ -407,7 +454,7 @@ fun MelodiaSplash(
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(1000),
-            repeatMode = RepeatMode.Reverse
+            repeatMode = ComposeRepeatMode.Reverse
         ),
         label = "splash_pulse"
     )

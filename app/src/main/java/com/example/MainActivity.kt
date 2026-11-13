@@ -38,6 +38,8 @@ import com.example.ui.screens.SyncScreen
 import com.example.ui.screens.VisualsScreen
 import com.example.ui.theme.MelodiaTheme
 import com.example.ui.viewmodel.MelodiaViewModel
+import com.example.domain.AudioPlayerManager
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -131,6 +133,26 @@ fun AppRoot(
     onDestinationChange: (NtDestination) -> Unit,
     onStepChange: (ProjectStep) -> Unit
 ) {
+    val audioPlayerManager = viewModel.audioPlayerManager
+    val context = LocalContext.current
+
+    // Observe playback state and update island
+    val isPlaying by audioPlayerManager.isPlaying.collectAsState()
+    val currentTitle by audioPlayerManager.currentTitle.collectAsState()
+    val currentUrl by audioPlayerManager.currentUrl.collectAsState()
+
+    androidx.compose.runtime.LaunchedEffect(isPlaying, currentUrl, currentTitle) {
+        if (isPlaying && currentUrl != null) {
+            IslandController.showPlayback(currentTitle)
+        } else if (!isPlaying) {
+            // Only hide if not running a task
+            val islandState = IslandController.state.value
+            if (islandState.status == IslandStatus.Playing) {
+                IslandController.hidePlayback()
+            }
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         NtAppShell(
             selectedDestination = destination.navigationIndex,

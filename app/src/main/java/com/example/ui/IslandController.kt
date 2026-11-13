@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 enum class IslandState { Collapsed, Expanded, Hidden }
 
-enum class IslandStatus { Idle, Running, Done, Failed }
+enum class IslandStatus { Idle, Running, Done, Failed, Playing }
 
 /**
  * Singleton controller for the top-of-screen Melodia Island.
@@ -82,6 +82,23 @@ object IslandController {
             delay(END_MS)
             _state.value = IslandUiState()
         }
+    }
+
+    /** Show playback state: equalizer + track title. */
+    fun showPlayback(title: String) {
+        cancelJobs()
+        _state.value = IslandUiState(
+            state = IslandState.Collapsed,
+            title = title,
+            progress = -1f,
+            status = IslandStatus.Playing
+        )
+    }
+
+    /** Hide playback island. */
+    fun hidePlayback() {
+        cancelJobs()
+        _state.value = IslandUiState()
     }
 
     /** Toggle the island. Expanded running tasks auto-collapse after 4s. */

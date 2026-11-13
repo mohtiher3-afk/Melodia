@@ -18,6 +18,8 @@ import kotlinx.coroutines.delay
 
 private const val TAG = "AudioPlayerManager"
 
+enum class RepeatMode { OFF, ALL, ONE }
+
 class AudioPlayerManager private constructor(private val context: Context) {
     private var mediaPlayer: MediaPlayer? = null
     private var audioFocusRequest: AudioFocusRequest? = null
@@ -107,6 +109,16 @@ class AudioPlayerManager private constructor(private val context: Context) {
     private val _currentCoverPath = MutableStateFlow<String?>(null)
     val currentCoverPath: StateFlow<String?> = _currentCoverPath.asStateFlow()
 
+    // Shuffle/Repeat/Volume
+    private val _shuffleMode = MutableStateFlow(false)
+    val shuffleMode: StateFlow<Boolean> = _shuffleMode.asStateFlow()
+
+    private val _repeatMode = MutableStateFlow(RepeatMode.OFF)
+    val repeatMode: StateFlow<RepeatMode> = _repeatMode.asStateFlow()
+
+    private val _volume = MutableStateFlow(1.0f)
+    val volume: StateFlow<Float> = _volume.asStateFlow()
+
     private var positionJob: Job? = null
 
     fun playTrack(
@@ -170,6 +182,7 @@ class AudioPlayerManager private constructor(private val context: Context) {
                 prepareAsync()
                 setOnPreparedListener { mp ->
                     mp.start()
+                    mp.setVolume(_volume.value, _volume.value)
                     _isPlaying.value = true
                     _currentUrl.value = url
                     _duration.value = mp.duration.coerceAtLeast(0)
@@ -204,7 +217,7 @@ class AudioPlayerManager private constructor(private val context: Context) {
                         }
                     }
                 }
-                delay(100)
+                delay(250)
             }
         }
     }
@@ -277,6 +290,24 @@ class AudioPlayerManager private constructor(private val context: Context) {
             _duration.value = 0
             abandonAudioFocus()
         }
+    }
+
+    fun toggleShuffle() {
+        _shuffleMode.value = !_shuffleMode.value
+    }
+
+    fun toggleRepeat() {
+        _repeatMode.value = when (_repeatMode.value) {
+            RepeatMode.OFF -> RepeatMode.ALL
+            RepeatMode.ALL -> RepeatMode.ONE
+            RepeatMode.ONE -> RepeatMode.OFF
+        }
+    }
+
+    fun setVolume(volume: Float) {
+        val clamped = volume.coerceIn(0f, 1f)
+        _volume.value = clamped
+        mediaPlayer?.setVolume(clamped, clamped)
     }
 
     companion object {

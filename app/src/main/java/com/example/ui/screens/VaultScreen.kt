@@ -83,6 +83,10 @@ import com.example.ui.dialogs.*
 import com.example.ui.components.TapHaptic
 import com.example.ui.components.CommitHaptic
 import com.example.ui.components.pressable
+import com.example.ui.screens.PlayerScreen
+import com.example.domain.AudioPlayerManager
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.Dialog
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -103,18 +107,21 @@ fun VaultScreen(
     val songs by viewModel.savedSongs.collectAsStateWithLifecycle()
     val drafts by viewModel.savedDrafts.collectAsStateWithLifecycle()
     val context = LocalContext.current
-        var searchQuery by remember { mutableStateOf("") }
-        var selectedCategory by remember { mutableStateOf(CategoryFilterType.ALL) }
-        var selectedSubTag by remember { mutableStateOf<String?>(null) }
-        var isBulkEditing by remember { mutableStateOf(false) }
-        var selectedIds by remember { mutableStateOf(setOf<Long>()) }
-        var showBulkTagsDialog by remember { mutableStateOf(false) }
+    val audioPlayerManager = AudioPlayerManager.getInstance(context)
 
-        var selectedSongForLyrics by remember { mutableStateOf<Song?>(null) }
-        var selectedSongForExport by remember { mutableStateOf<Song?>(null) }
-        var selectedSongForTags by remember { mutableStateOf<Song?>(null) }
-        var selectedSongForWaveform by remember { mutableStateOf<Song?>(null) }
-        var selectedSongForSync by remember { mutableStateOf<Song?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf(CategoryFilterType.ALL) }
+    var selectedSubTag by remember { mutableStateOf<String?>(null) }
+    var isBulkEditing by remember { mutableStateOf(false) }
+    var selectedIds by remember { mutableStateOf(setOf<Long>()) }
+    var showBulkTagsDialog by remember { mutableStateOf(false) }
+
+    var selectedSongForLyrics by remember { mutableStateOf<Song?>(null) }
+    var selectedSongForExport by remember { mutableStateOf<Song?>(null) }
+    var selectedSongForTags by remember { mutableStateOf<Song?>(null) }
+    var selectedSongForWaveform by remember { mutableStateOf<Song?>(null) }
+    var selectedSongForSync by remember { mutableStateOf<Song?>(null) }
+    var showPlayerDialog by remember { mutableStateOf(false) }
 
         val audioPickerLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.OpenDocument()
@@ -543,7 +550,10 @@ fun VaultScreen(
                         onOpenWaveform = { selectedSongForWaveform = song },
                         onOpenSync = { selectedSongForSync = song },
                         onRegenerateCover = { viewModel.regenerateCoverArt(song) },
-                        onPlay = { viewModel.playSong(song) }
+                        onPlay = {
+                            viewModel.playSong(song)
+                            showPlayerDialog = true
+                        }
                     )
                 }
             }
@@ -573,6 +583,19 @@ fun VaultScreen(
                     testTag = "bulk_edit_tags_button"
                 )
             }
+        }
+    }
+
+    // Full-screen Player Dialog
+    if (showPlayerDialog) {
+        Dialog(
+            onDismissRequest = { showPlayerDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            PlayerScreen(
+                audioPlayerManager = audioPlayerManager,
+                onDismiss = { showPlayerDialog = false }
+            )
         }
     }
 }
