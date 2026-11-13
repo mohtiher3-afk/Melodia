@@ -43,4 +43,10 @@
     <string name="nt_haptics">Haptics</string>
     <string name="nt_quality">Video quality</string>
     <string name="nt_storage">Storage used</string>
+    <string name="nt_appearance">APPEARANCE</string>
+    <string name="nt_theme_mode">Theme Mode</string>
+    <string name="nt_accent_color">Accent Color</string>
+    <string name="nt_theme_mode_system">System</string>
+    <string name="nt_theme_mode_light">Light</string>
+    <string name="nt_theme_mode_dark">Dark</string>
 </resources>

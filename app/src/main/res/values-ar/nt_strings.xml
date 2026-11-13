@@ -43,4 +43,10 @@
     <string name="nt_haptics">الاهتزاز</string>
     <string name="nt_quality">جودة الفيديو</string>
     <string name="nt_storage">المساحة المستخدمة</string>
+    <string name="nt_appearance">المظهر</string>
+    <string name="nt_theme_mode">وضع السمة</string>
+    <string name="nt_accent_color">لون التمييز</string>
+    <string name="nt_theme_mode_system">النظام</string>
+    <string name="nt_theme_mode_light">فاتح</string>
+    <string name="nt_theme_mode_dark">داكن</string>
 </resources>
