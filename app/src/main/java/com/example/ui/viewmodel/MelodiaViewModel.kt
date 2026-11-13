@@ -17,6 +17,7 @@ import com.example.data.repository.RecentSubGenreRepository
 import com.example.data.repository.SongRepository
 import com.example.domain.AudioPlayerManager
 import com.example.domain.CoverArtGenerator
+import com.example.ui.IslandController
 import com.example.domain.ExportProgressState
 import com.example.domain.ImportedAudioMetadata
 import com.example.domain.LocalAudioImporter
@@ -304,6 +305,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
 
     fun generateLyricsOnly() {
         viewModelScope.launch {
+            IslandController.start(s(R.string.island_lyrics_generation))
             val state = _studioState.value
             _studioState.update {
                 it.copy(
@@ -383,6 +385,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
 
                 val completedDraft = draft.copy(coverImagePath = coverPath)
 
+                IslandController.done(s(R.string.island_lyrics_complete))
                 _studioState.update {
                     it.copy(
                         isGenerating = false,
@@ -395,6 +398,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 triggerDebouncedAutoSave()
                 analyzeSentiment()
             } catch (e: Exception) {
+                IslandController.fail(s(R.string.island_lyrics_failed))
                 _studioState.update {
                     it.copy(
                         isGenerating = false,
@@ -480,6 +484,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             return
         }
         viewModelScope.launch {
+            IslandController.start(s(R.string.island_cover_drawing))
             _studioState.update {
                 it.copy(
                     isGeneratingCover = true,
@@ -495,6 +500,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                     genre = draft.genre,
                     mood = draft.mood
                 )
+                IslandController.done(s(R.string.island_cover_complete))
                 _studioState.update {
                     it.copy(
                         isGeneratingCover = false,
@@ -505,6 +511,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 }
                 triggerDebouncedAutoSave()
             } catch (e: Exception) {
+                IslandController.fail(s(R.string.island_cover_failed))
                 _studioState.update {
                     it.copy(
                         isGeneratingCover = false,
@@ -740,6 +747,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
         val wordTimings = karaoke?.wordTimings ?: emptyList()
 
         viewModelScope.launch {
+            IslandController.start(s(R.string.island_exporting_video))
             _studioState.update {
                 it.copy(
                     exportProgress = ExportProgressState(
@@ -762,6 +770,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 bitrateMbps = bitrateMbps,
                 fps = fps,
                 onProgress = { progressRatio, statusText ->
+                    IslandController.update(progressRatio)
                     _studioState.update { state ->
                         state.copy(
                             exportProgress = state.exportProgress.copy(
@@ -774,6 +783,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             )
 
             result.onSuccess { file ->
+                IslandController.done(s(R.string.island_export_complete))
                 _studioState.update {
                     it.copy(
                         exportProgress = ExportProgressState(
@@ -786,6 +796,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                     )
                 }
             }.onFailure { err ->
+                IslandController.fail(s(R.string.island_export_failed))
                 _studioState.update {
                     it.copy(
                         exportProgress = ExportProgressState(
@@ -876,6 +887,7 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
 
     fun regenerateCoverArt(song: Song) {
         viewModelScope.launch {
+            IslandController.start(s(R.string.island_cover_drawing))
             _studioState.update { it.copy(statusMessage = s(R.string.status_regenerating_cover, song.title)) }
             try {
                 val newCover = CoverArtGenerator.generateCoverArt(
@@ -887,8 +899,10 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
                 )
                 val updated = song.copy(coverImagePath = newCover)
                 repository.updateSong(updated)
+                IslandController.done(s(R.string.island_cover_complete))
                 _studioState.update { it.copy(statusMessage = s(R.string.status_cover_saved, song.title)) }
             } catch (e: Exception) {
+                IslandController.fail(s(R.string.island_cover_failed))
                 _studioState.update { it.copy(statusMessage = s(R.string.status_cover_note)) }
             }
         }

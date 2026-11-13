@@ -6,16 +6,23 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ui.IslandController
+import com.example.ui.IslandStatus
+import com.example.ui.MelodiaTaskIsland
 import com.example.ui.MelodiaSplash
 import com.example.ui.components.FloatingPlayerBar
 import com.example.ui.nothing.NtAppShell
@@ -124,35 +131,53 @@ fun AppRoot(
     onDestinationChange: (NtDestination) -> Unit,
     onStepChange: (ProjectStep) -> Unit
 ) {
-    NtAppShell(
-        selectedDestination = destination.navigationIndex,
-        onSelectDestination = { idx -> onDestinationChange(NtDestination.fromIndex(idx)) },
-        topLabel = topLabel,
-        stepIndex = projectStep.index.takeIf { destination == NtDestination.PROJECT },
-        onSelectStep = onStepChange?.let { stepChange -> { idx -> stepChange(ProjectStep.fromIndex(idx)) } },
-        scrollContent = false,
-        modifier = Modifier.fillMaxSize(),
-        bottomExtra = {
-            FloatingPlayerBar(audioPlayerManager = viewModel.audioPlayerManager)
-        }
-    ) {
-        saveableStateHolder.SaveableStateProvider(routeKey) {
-            when (destination) {
-                NtDestination.PROJECT -> when (projectStep) {
-                    ProjectStep.STUDIO -> StudioScreen(viewModel = viewModel)
-                    ProjectStep.LYRICS -> LyricsScreen(viewModel = viewModel)
-                    ProjectStep.VISUALS -> VisualsScreen(viewModel = viewModel)
-                    ProjectStep.SYNC -> SyncScreen(viewModel = viewModel)
-                    ProjectStep.EXPORT -> ExportScreen(viewModel = viewModel)
-                }
-                NtDestination.LIBRARY -> LibraryScreen(
-                    viewModel = viewModel,
-                    onNavigateToStudio = {
-                        onDestinationChange(NtDestination.PROJECT)
-                        onStepChange(ProjectStep.STUDIO)
+    Box(modifier = Modifier.fillMaxSize()) {
+        NtAppShell(
+            selectedDestination = destination.navigationIndex,
+            onSelectDestination = { idx -> onDestinationChange(NtDestination.fromIndex(idx)) },
+            topLabel = topLabel,
+            stepIndex = projectStep.index.takeIf { destination == NtDestination.PROJECT },
+            onSelectStep = onStepChange?.let { stepChange -> { idx -> stepChange(ProjectStep.fromIndex(idx)) } },
+            scrollContent = false,
+            modifier = Modifier.fillMaxSize(),
+            bottomExtra = {
+                FloatingPlayerBar(audioPlayerManager = viewModel.audioPlayerManager)
+            }
+        ) {
+            saveableStateHolder.SaveableStateProvider(routeKey) {
+                when (destination) {
+                    NtDestination.PROJECT -> when (projectStep) {
+                        ProjectStep.STUDIO -> StudioScreen(viewModel = viewModel)
+                        ProjectStep.LYRICS -> LyricsScreen(viewModel = viewModel)
+                        ProjectStep.VISUALS -> VisualsScreen(viewModel = viewModel)
+                        ProjectStep.SYNC -> SyncScreen(viewModel = viewModel)
+                        ProjectStep.EXPORT -> ExportScreen(viewModel = viewModel)
                     }
+                    NtDestination.LIBRARY -> LibraryScreen(
+                        viewModel = viewModel,
+                        onNavigateToStudio = {
+                            onDestinationChange(NtDestination.PROJECT)
+                            onStepChange(ProjectStep.STUDIO)
+                        }
+                    )
+                    NtDestination.SETTINGS -> SettingsScreen(viewModel = viewModel)
+                }
+            }
+        }
+
+        // Top-center island overlay. Box-anchored so it never pushes content down.
+        val islandUi by IslandController.state.collectAsState()
+        if (islandUi.status != IslandStatus.Idle) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .testTag("melodia_island_overlay"),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                MelodiaTaskIsland(
+                    uiState = islandUi,
+                    onToggle = { IslandController.toggle() }
                 )
-                NtDestination.SETTINGS -> SettingsScreen(viewModel = viewModel)
             }
         }
     }

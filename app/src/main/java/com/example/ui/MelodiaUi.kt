@@ -248,8 +248,6 @@ fun NothingButton(
 
 // ─── Melodia Island ────────────────────────────────────────────────────────
 
-enum class IslandState { Collapsed, Expanded, Hidden }
-
 @Composable
 fun MelodiaIsland(
     state: IslandState = IslandState.Collapsed,
@@ -281,6 +279,110 @@ fun MelodiaIsland(
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         content()
+    }
+}
+
+/**
+ * Task-progress island: compact title + progress bar, tap to expand, auto-collapse
+ * after 4s. Renders nothing when [uiState] is Idle.
+ */
+@Composable
+fun MelodiaTaskIsland(
+    uiState: IslandUiState,
+    onToggle: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    if (uiState.status == IslandStatus.Idle) return
+
+    val isDone = uiState.status == IslandStatus.Done
+    val isFailed = uiState.status == IslandStatus.Failed
+    val accent = when {
+        isDone -> MelodiaWhite
+        isFailed -> MelodiaRed
+        else -> MelodiaRed
+    }
+    val label = when (uiState.status) {
+        IslandStatus.Done -> "DONE"
+        IslandStatus.Failed -> "FAILED"
+        IslandStatus.Running -> "RUNNING"
+        IslandStatus.Idle -> ""
+    }
+
+    MelodiaIsland(
+        state = uiState.state,
+        onStateChange = { onToggle() },
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = uiState.title.uppercase(),
+                    fontFamily = Mono,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp,
+                    letterSpacing = 0.08.sp,
+                    color = MelodiaWhite,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = label,
+                    fontFamily = Mono,
+                    fontSize = 9.sp,
+                    letterSpacing = 0.12.sp,
+                    color = accent
+                )
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(MelodiaLine)
+            ) {
+                val fill = when {
+                    isDone || isFailed -> 1f
+                    uiState.progress < 0f -> null
+                    else -> uiState.progress.coerceIn(0f, 1f)
+                }
+                if (fill != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(fill)
+                            .background(accent)
+                            .clip(RoundedCornerShape(2.dp))
+                    )
+                } else {
+                    // Indeterminate sweep for running tasks
+                    val sweep by animateFloatAsState(
+                        targetValue = 1f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(1000),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "island_progress"
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(sweep)
+                            .background(accent)
+                            .clip(RoundedCornerShape(2.dp))
+                    )
+                }
+            }
+        }
     }
 }
 

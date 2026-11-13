@@ -306,5 +306,14 @@ Use [Verse 1], [Chorus], [Bridge] tags to structure the song.</string>
     <string name="status_analyzing_sentiment">Analyzing emotional sentiment…</string>
     <string name="status_sentiment_result">Sentiment: %1$s</string>
     <string name="status_preset_saved">Preset saved // %1$s</string>
-    <string name="status_preset_loaded">Loaded preset // %1$s</string>
+    <string name="island_lyrics_generation">Generating Lyrics</string>
+<string name="island_cover_drawing">Drawing Cover Art</string>
+<string name="island_exporting_video">Exporting Lyric Video</string>
+<string name="island_export_complete">Export Complete</string>
+<string name="island_export_failed">Export Failed</string>
+<string name="island_lyrics_complete">Lyrics Ready</string>
+<string name="island_lyrics_failed">Lyrics Failed</string>
+<string name="island_cover_complete">Cover Ready</string>
+<string name="island_cover_failed">Cover Failed</string>
+<string name="status_preset_loaded">Loaded preset // %1$s</string>
 </resources>
