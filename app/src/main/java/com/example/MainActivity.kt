@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
@@ -24,8 +25,9 @@ import com.example.ui.IslandController
 import com.example.ui.IslandStatus
 import com.example.ui.MelodiaTaskIsland
 import com.example.ui.MelodiaSplash
-import com.example.ui.components.FloatingPlayerBar
+import com.example.ui.components.MelodiaMiniPlayer
 import com.example.ui.nothing.NtAppShell
+import com.example.ui.screens.PlayerScreen
 import com.example.ui.nothing.NtDestination
 import com.example.ui.nothing.ProjectStep
 import com.example.ui.nothing.ntStepLabel
@@ -153,17 +155,23 @@ fun AppRoot(
         }
     }
 
+    // Full player dialog state
+    var showFullPlayer by remember { mutableStateOf(false) }
+
     Box(modifier = Modifier.fillMaxSize()) {
         NtAppShell(
             selectedDestination = destination.navigationIndex,
             onSelectDestination = { idx -> onDestinationChange(NtDestination.fromIndex(idx)) },
             topLabel = topLabel,
             stepIndex = projectStep.index.takeIf { destination == NtDestination.PROJECT },
-            onSelectStep = onStepChange?.let { stepChange -> { idx -> stepChange(ProjectStep.fromIndex(idx)) } },
+            onSelectStep = { idx -> onStepChange(ProjectStep.fromIndex(idx)) },
             scrollContent = false,
             modifier = Modifier.fillMaxSize(),
             bottomExtra = {
-                FloatingPlayerBar(audioPlayerManager = viewModel.audioPlayerManager)
+                MelodiaMiniPlayer(
+                    audioPlayerManager = viewModel.audioPlayerManager,
+                    onOpenFullPlayer = { showFullPlayer = true }
+                )
             }
         ) {
             saveableStateHolder.SaveableStateProvider(routeKey) {
@@ -185,6 +193,14 @@ fun AppRoot(
                     NtDestination.SETTINGS -> SettingsScreen(viewModel = viewModel)
                 }
             }
+        }
+
+        // Full player dialog
+        if (showFullPlayer) {
+            PlayerScreen(
+                audioPlayerManager = audioPlayerManager,
+                onDismiss = { showFullPlayer = false }
+            )
         }
 
         // Top-center island overlay. Box-anchored so it never pushes content down.
