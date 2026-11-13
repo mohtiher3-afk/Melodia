@@ -28,7 +28,6 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,14 +46,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.data.model.Song
 import com.example.domain.LyricsExportManager
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
 import com.example.ui.theme.NothingDarkGrey
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingOffWhite
-import com.example.ui.components.pressable
 import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingWhite
 import com.example.ui.theme.SpaceMonoFontFamily
@@ -147,21 +146,15 @@ fun ExportLyricsDialog(
                         )
                     }
 
-                    IconButton(
+                    NothingButton(
+                        text = "",
                         onClick = onDismiss,
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(NothingCardSurface)
-                            .testTag("close_export_dialog")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = NothingWhite,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                            .size(48.dp)
+                            .testTag("close_export_dialog"),
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close
+                    )
                 }
 
                 // Format Toggle Tabs (LRC, WORD, TEXT, JSON)
@@ -174,43 +167,20 @@ fun ExportLyricsDialog(
                 ) {
                     ExportPreviewFormat.entries.forEach { format ->
                         val isSelected = previewFormat == format
-                        Box(
+                        NothingButton(
+                            text = format.label,
+                            onClick = { previewFormat = format },
                             modifier = Modifier
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(if (isSelected) NothingRed else NothingCardSurface)
-                                .border(1.dp, if (isSelected) NothingRed else NothingBorder, RoundedCornerShape(14.dp))
-                                .pressable(
-                                    pressedScale = 0.94f,
-                                    haptic = com.example.ui.components.TapHaptic
-                                ) { previewFormat = format }
                                 .padding(horizontal = 12.dp, vertical = 7.dp)
                                 .testTag("export_tab_${format.name.lowercase()}"),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(5.dp)
-                            ) {
-                                Icon(
-                                    imageVector = when (format) {
-                                        ExportPreviewFormat.LRC -> Icons.Default.MusicNote
-                                        ExportPreviewFormat.WORD -> Icons.Default.Description
-                                        ExportPreviewFormat.TEXT -> Icons.Default.TextFields
-                                        ExportPreviewFormat.JSON -> Icons.Default.Code
-                                    },
-                                    contentDescription = null,
-                                    tint = if (isSelected) NothingWhite else NothingGrey,
-                                    modifier = Modifier.size(13.dp)
-                                )
-                                Text(
-                                    text = format.label,
-                                    fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 11.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) NothingWhite else NothingGrey
-                                )
+                            style = if (isSelected) NothingButtonStyle.Primary else NothingButtonStyle.Secondary,
+                            icon = when (format) {
+                                ExportPreviewFormat.LRC -> Icons.Default.MusicNote
+                                ExportPreviewFormat.WORD -> Icons.Default.Description
+                                ExportPreviewFormat.TEXT -> Icons.Default.TextFields
+                                ExportPreviewFormat.JSON -> Icons.Default.Code
                             }
-                        }
+                        )
                     }
                 }
 
@@ -268,7 +238,7 @@ fun ExportLyricsDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    NothingPillButton(
+                    NothingButton(
                         text = "COPY CONTENT",
                         onClick = {
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -276,12 +246,13 @@ fun ExportLyricsDialog(
                             clipboard.setPrimaryClip(clip)
                             Toast.makeText(context, "Copied ${previewFormat.label} to clipboard", Toast.LENGTH_SHORT).show()
                         },
-                        modifier = Modifier.weight(1f),
-                        isPrimary = false,
-                        testTag = "copy_format_button"
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("copy_format_button"),
+                        style = NothingButtonStyle.Secondary
                     )
 
-                    NothingPillButton(
+                    NothingButton(
                         text = "EXPORT ${previewFormat.extension}",
                         onClick = {
                             try {
@@ -296,9 +267,10 @@ fun ExportLyricsDialog(
                                 Toast.makeText(context, "Export error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                             }
                         },
-                        modifier = Modifier.weight(1.3f),
-                        isRedAccent = true,
-                        testTag = "export_current_format_button"
+                        modifier = Modifier
+                            .weight(1.3f)
+                            .testTag("export_current_format_button"),
+                        style = NothingButtonStyle.Primary
                     )
                 }
             }

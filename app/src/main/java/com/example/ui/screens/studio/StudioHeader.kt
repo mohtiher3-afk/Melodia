@@ -34,9 +34,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.MelodiaActionButton
-import com.example.ui.MelodiaButtonStyle
+import com.example.ui.NothingButton
 import com.example.ui.MelodiaRadius
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
 import com.example.ui.theme.NothingDotMatrixFontFamily
@@ -102,24 +102,27 @@ fun StudioHeader(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            MelodiaActionButton(
+            NothingButton(
                 text = stringResource(R.string.studio_import_audio),
                 onClick = onImportAudio,
                 icon = Icons.Default.Upload,
-                style = MelodiaButtonStyle.Primary,
-                modifier = Modifier.weight(1.35f)
+                modifier = Modifier.weight(1.35f),
+                style = NothingButtonStyle.Primary,
+                testTag = "studio_import_audio"
             )
-            MelodiaActionButton(
+            NothingButton(
                 text = stringResource(R.string.studio_queue),
                 onClick = onOpenQueue,
                 modifier = Modifier
                     .weight(1f)
-                    .testTag("studio_open_queue")
+                    .testTag("studio_open_queue"),
+                style = NothingButtonStyle.Secondary
             )
-            MelodiaActionButton(
+            NothingButton(
                 text = stringResource(R.string.studio_drafts_count, draftsCount),
                 onClick = onOpenDrafts,
-                modifier = Modifier.weight(1.1f)
+                modifier = Modifier.weight(1.1f),
+                style = NothingButtonStyle.Secondary
             )
         }
     }

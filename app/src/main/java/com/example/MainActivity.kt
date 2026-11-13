@@ -1,18 +1,22 @@
 package com.example
 
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ui.MelodiaSplash
 import com.example.ui.components.FloatingPlayerBar
 import com.example.ui.nothing.NtAppShell
 import com.example.ui.nothing.NtDestination
@@ -40,7 +44,6 @@ class MainActivity : ComponentActivity() {
                 val saveableStateHolder = rememberSaveableStateHolder()
 
                 BackHandler(enabled = destination != NtDestination.PROJECT || projectStep != ProjectStep.STUDIO) {
-                    // Preserve the existing behavior: Back returns to the Studio home.
                     destination = NtDestination.PROJECT
                     projectStep = ProjectStep.STUDIO
                 }
@@ -56,38 +59,100 @@ class MainActivity : ComponentActivity() {
                     NtDestination.SETTINGS -> "settings"
                 }
 
-                NtAppShell(
-                    selectedDestination = destination.navigationIndex,
-                    onSelectDestination = { destination = NtDestination.fromIndex(it) },
+                MelodiaRoot(
+                    viewModel = viewModel,
+                    destination = destination,
+                    projectStep = projectStep,
+                    saveableStateHolder = saveableStateHolder,
                     topLabel = topLabel,
-                    stepIndex = projectStep.index.takeIf { destination == NtDestination.PROJECT },
-                    onSelectStep = { projectStep = ProjectStep.fromIndex(it) },
-                    scrollContent = false,
-                    modifier = Modifier.fillMaxSize(),
-                    bottomExtra = {
-                        FloatingPlayerBar(audioPlayerManager = viewModel.audioPlayerManager)
-                    }
-                ) {
-                    saveableStateHolder.SaveableStateProvider(routeKey) {
-                        when (destination) {
-                            NtDestination.PROJECT -> when (projectStep) {
-                                ProjectStep.STUDIO -> StudioScreen(viewModel = viewModel)
-                                ProjectStep.LYRICS -> LyricsScreen(viewModel = viewModel)
-                                ProjectStep.VISUALS -> VisualsScreen(viewModel = viewModel)
-                                ProjectStep.SYNC -> SyncScreen(viewModel = viewModel)
-                                ProjectStep.EXPORT -> ExportScreen(viewModel = viewModel)
-                            }
-                            NtDestination.LIBRARY -> LibraryScreen(
-                                viewModel = viewModel,
-                                onNavigateToStudio = {
-                                    destination = NtDestination.PROJECT
-                                    projectStep = ProjectStep.STUDIO
-                                }
-                            )
-                            NtDestination.SETTINGS -> SettingsScreen(viewModel = viewModel)
-                        }
-                    }
+                    routeKey = routeKey,
+                    onDestinationChange = { destination = it },
+                    onStepChange = { projectStep = it }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MelodiaRoot(
+    viewModel: MelodiaViewModel,
+    destination: NtDestination,
+    projectStep: ProjectStep,
+    saveableStateHolder: androidx.compose.runtime.saveable.SaveableStateHolder,
+    topLabel: String,
+    routeKey: String,
+    onDestinationChange: (NtDestination) -> Unit,
+    onStepChange: (ProjectStep) -> Unit
+) {
+    val animationsEnabled = Settings.Global.getInt(
+        LocalContext.current.contentResolver,
+        Settings.Global.ANIMATOR_DURATION_SCALE,
+        1
+    ) > 0
+
+    var ready by rememberSaveable { mutableStateOf(!animationsEnabled) }
+
+    if (!ready) {
+        MelodiaSplash(
+            onComplete = {
+                if (animationsEnabled) ready = true
+            }
+        )
+    } else {
+        AppRoot(
+            viewModel = viewModel,
+            destination = destination,
+            projectStep = projectStep,
+            saveableStateHolder = saveableStateHolder,
+            topLabel = topLabel,
+            routeKey = routeKey,
+            onDestinationChange = onDestinationChange,
+            onStepChange = onStepChange
+        )
+    }
+}
+
+@Composable
+fun AppRoot(
+    viewModel: MelodiaViewModel,
+    destination: NtDestination,
+    projectStep: ProjectStep,
+    saveableStateHolder: androidx.compose.runtime.saveable.SaveableStateHolder,
+    topLabel: String,
+    routeKey: String,
+    onDestinationChange: (NtDestination) -> Unit,
+    onStepChange: (ProjectStep) -> Unit
+) {
+    NtAppShell(
+        selectedDestination = destination.navigationIndex,
+        onSelectDestination = { idx -> onDestinationChange(NtDestination.fromIndex(idx)) },
+        topLabel = topLabel,
+        stepIndex = projectStep.index.takeIf { destination == NtDestination.PROJECT },
+        onSelectStep = onStepChange?.let { stepChange -> { idx -> stepChange(ProjectStep.fromIndex(idx)) } },
+        scrollContent = false,
+        modifier = Modifier.fillMaxSize(),
+        bottomExtra = {
+            FloatingPlayerBar(audioPlayerManager = viewModel.audioPlayerManager)
+        }
+    ) {
+        saveableStateHolder.SaveableStateProvider(routeKey) {
+            when (destination) {
+                NtDestination.PROJECT -> when (projectStep) {
+                    ProjectStep.STUDIO -> StudioScreen(viewModel = viewModel)
+                    ProjectStep.LYRICS -> LyricsScreen(viewModel = viewModel)
+                    ProjectStep.VISUALS -> VisualsScreen(viewModel = viewModel)
+                    ProjectStep.SYNC -> SyncScreen(viewModel = viewModel)
+                    ProjectStep.EXPORT -> ExportScreen(viewModel = viewModel)
                 }
+                NtDestination.LIBRARY -> LibraryScreen(
+                    viewModel = viewModel,
+                    onNavigateToStudio = {
+                        onDestinationChange(NtDestination.PROJECT)
+                        onStepChange(ProjectStep.STUDIO)
+                    }
+                )
+                NtDestination.SETTINGS -> SettingsScreen(viewModel = viewModel)
             }
         }
     }

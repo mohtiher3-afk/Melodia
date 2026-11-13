@@ -30,9 +30,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.domain.RhymeAnalyzer
 import com.example.domain.RhymeResult
-import com.example.ui.components.CommitHaptic
-import com.example.ui.components.NothingPillButton
-import com.example.ui.components.pressable
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingDarkSurface
 import com.example.ui.theme.NothingGrey
@@ -138,9 +137,11 @@ fun RhymeDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    NothingPillButton(
+                    NothingButton(
                         text = stringResource(R.string.rhyme_done),
-                        onClick = onDismiss
+                        onClick = onDismiss,
+                        modifier = Modifier.testTag("rhyme_done_button"),
+                        style = NothingButtonStyle.Primary
                     )
                 }
             }
@@ -173,25 +174,14 @@ private fun SuggestionRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             values.forEach { value ->
-                Box(
+                NothingButton(
+                    text = value,
+                    onClick = { onPick(value) },
                     modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(NothingDarkSurface)
-                        .border(1.dp, NothingBorder, RoundedCornerShape(10.dp))
-                        .pressable(
-                            pressedScale = 0.92f,
-                            haptic = CommitHaptic
-                        ) { onPick(value) }
                         .padding(horizontal = 10.dp, vertical = 6.dp)
-                        .testTag("rhyme_chip_$value")
-                ) {
-                    Text(
-                        text = value,
-                        fontFamily = SpaceMonoFontFamily,
-                        fontSize = 12.sp,
-                        color = NothingWhite
-                    )
-                }
+                        .testTag("rhyme_chip_$value"),
+                    style = NothingButtonStyle.Secondary
+                )
             }
         }
     }

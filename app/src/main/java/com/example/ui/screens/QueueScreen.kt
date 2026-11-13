@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -32,7 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.components.pressable
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
@@ -99,26 +101,13 @@ fun QueueScreen(
             }
 
             if (onClose != null) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(NothingCardSurface)
-                        .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                        .pressable(
-                            pressedScale = 0.93f,
-                            haptic = com.example.ui.components.TapHaptic
-                        ) { onClose() }
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
-                        .testTag("queue_close")
-                ) {
-                    Text(
-                        text = stringResource(R.string.queue_close),
-                        fontFamily = SpaceMonoFontFamily,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = NothingGrey
-                    )
-                }
+                NothingButton(
+                    text = "",
+                    onClick = onClose,
+                    style = NothingButtonStyle.IconOnly,
+                    icon = Icons.Default.Close,
+                    modifier = Modifier.testTag("queue_close")
+                )
             }
         }
 
@@ -156,9 +145,10 @@ fun QueueScreen(
                         color = NothingDarkGrey
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    NothingPillButton(
+                    NothingButton(
                         text = stringResource(R.string.queue_create_lyrics),
-                        onClick = onNavigateToStudio
+                        onClick = onNavigateToStudio,
+                        style = NothingButtonStyle.Primary
                     )
                 }
             }
@@ -204,12 +194,13 @@ fun QueueScreen(
                                 fontSize = 11.sp,
                                 color = NothingGrey
                             )
-                            NothingPillButton(
+                            NothingButton(
                                 text = stringResource(R.string.queue_load_in_studio),
                                 onClick = {
                                     viewModel.restoreDraft(draft)
                                     onNavigateToStudio()
                                 },
+                                style = NothingButtonStyle.Secondary,
                                 modifier = Modifier.align(Alignment.End)
                             )
                         }

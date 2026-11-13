@@ -19,7 +19,8 @@ import androidx.compose.ui.res.stringResource
 import com.example.R
 import com.example.ui.components.GlyphCard
 import com.example.ui.components.GenerationActionFeedback
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingRed
@@ -70,17 +71,18 @@ fun StudioTopicSection(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                NothingPillButton(
+                NothingButton(
                     text = if (state.isGenerating) stringResource(R.string.studio_drafting_lyrics) else stringResource(R.string.queue_create_lyrics),
                     onClick = onGenerateLyrics,
-                    isPrimary = true,
+                    style = NothingButtonStyle.Primary,
                     enabled = !state.isGenerating && !state.isPolishingPrompt,
                     modifier = Modifier.weight(1f)
                 )
 
-                NothingPillButton(
+                NothingButton(
                     text = if (state.isPolishingPrompt) stringResource(R.string.studio_polishing) else stringResource(R.string.studio_generate_prompt),
                     onClick = onGeneratePrompt,
+                    style = NothingButtonStyle.Secondary,
                     enabled = state.currentDraft != null && !state.isGenerating && !state.isPolishingPrompt,
                     modifier = Modifier.weight(1f)
                 )

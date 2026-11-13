@@ -4,7 +4,6 @@ import androidx.compose.ui.res.stringResource
 import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,10 +12,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,7 +37,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.GlyphCard
-import com.example.ui.components.pressable
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.domain.SentimentAnalyzer
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
@@ -221,45 +220,14 @@ fun StudioConfigSection(
             Spacer(modifier = Modifier.height(10.dp))
 
             // Quick button to open full Genre & Subgenre Directory Dialog with Recently Viewed section
-            Row(
+            NothingButton(
+                text = stringResource(R.string.studio_subgenres_header),
+                onClick = { onOpenGenreDirectory() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(NothingBlack)
-                    .border(1.dp, NothingBorder, RoundedCornerShape(12.dp))
-                    .clickable { onOpenGenreDirectory() }
-                    .padding(horizontal = 12.dp, vertical = 10.dp)
                     .testTag("open_genre_directory_button"),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(NothingRed)
-                    )
-                    Text(
-                        text = stringResource(R.string.studio_subgenres_header),
-                        fontFamily = SpaceMonoFontFamily,
-                        fontSize = 10.sp,
-                        color = NothingWhite,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Text(
-                    text = stringResource(R.string.studio_browse_more),
-                    fontFamily = SpaceMonoFontFamily,
-                    fontSize = 10.sp,
-                    color = NothingRed,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                style = NothingButtonStyle.Secondary
+            )
         }
 
         // User-Defined Mood Keywords Input
@@ -315,33 +283,22 @@ fun StudioConfigSection(
             ) {
                 quickMoodKeywords.forEach { keyword ->
                     val isPresent = state.moodKeywords.contains(keyword, ignoreCase = true)
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isPresent) NothingRed else NothingBlack)
-                            .border(1.dp, if (isPresent) NothingRed else NothingBorder, RoundedCornerShape(12.dp))
-                            .clickable {
-                                val current = state.moodKeywords.trim()
-                                val updated = if (current.isBlank()) {
-                                    keyword
-                                } else if (!isPresent) {
-                                    "$current, $keyword"
-                                } else {
-                                    current
-                                }
-                                onSetMoodKeywords(updated)
+                    NothingButton(
+                        text = stringResource(R.string.studio_keyword_hash, keyword),
+                        onClick = {
+                            val current = state.moodKeywords.trim()
+                            val updated = if (current.isBlank()) {
+                                keyword
+                            } else if (!isPresent) {
+                                "$current, $keyword"
+                            } else {
+                                current
                             }
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                            .testTag("mood_chip_$keyword")
-                    ) {
-                        Text(
-                            text = stringResource(R.string.studio_keyword_hash, keyword),
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 10.sp,
-                            fontWeight = if (isPresent) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isPresent) NothingWhite else NothingGrey
-                        )
-                    }
+                            onSetMoodKeywords(updated)
+                        },
+                        modifier = Modifier.testTag("mood_chip_$keyword"),
+                        style = if (isPresent) NothingButtonStyle.Primary else NothingButtonStyle.Quiet
+                    )
                 }
             }
         }
@@ -365,26 +322,12 @@ fun StudioConfigSection(
             ) {
                 vocalStyles.forEach { style ->
                     val isSelected = state.vocalStyle == style
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSelected) NothingRed else NothingBlack)
-                            .border(1.dp, if (isSelected) NothingRed else NothingBorder, RoundedCornerShape(12.dp))
-                            .pressable(
-                                pressedScale = 0.93f,
-                                haptic = com.example.ui.components.TapHaptic
-                            ) { onSetVocalStyle(style) }
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                            .testTag("vocal_style_chip_${style.replace(" ", "_")}")
-                    ) {
-                        Text(
-                            text = style.uppercase(),
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 10.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) NothingWhite else NothingGrey
-                        )
-                    }
+                    NothingButton(
+                        text = style.uppercase(),
+                        onClick = { onSetVocalStyle(style) },
+                        modifier = Modifier.testTag("vocal_style_chip_${style.replace(" ", "_")}"),
+                        style = if (isSelected) NothingButtonStyle.Primary else NothingButtonStyle.Secondary
+                    )
                 }
             }
 
@@ -407,26 +350,12 @@ fun StudioConfigSection(
             ) {
                 bpmOptions.forEach { bpm ->
                     val isSelected = state.selectedBpm == bpm
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSelected) NothingRed else NothingBlack)
-                            .border(1.dp, if (isSelected) NothingRed else NothingBorder, RoundedCornerShape(12.dp))
-                            .pressable(
-                                pressedScale = 0.93f,
-                                haptic = com.example.ui.components.TapHaptic
-                            ) { onSetSelectedBpm(bpm) }
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                            .testTag("bpm_chip_${bpm.replace(" ", "_")}")
-                    ) {
-                        Text(
-                            text = bpm,
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 10.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) NothingWhite else NothingGrey
-                        )
-                    }
+                    NothingButton(
+                        text = bpm,
+                        onClick = { onSetSelectedBpm(bpm) },
+                        modifier = Modifier.testTag("bpm_chip_${bpm.replace(" ", "_")}"),
+                        style = if (isSelected) NothingButtonStyle.Primary else NothingButtonStyle.Secondary
+                    )
                 }
             }
 
@@ -449,26 +378,12 @@ fun StudioConfigSection(
             ) {
                 reverbOptions.forEach { reverb ->
                     val isSelected = state.vocalReverb == reverb
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSelected) NothingRed else NothingBlack)
-                            .border(1.dp, if (isSelected) NothingRed else NothingBorder, RoundedCornerShape(12.dp))
-                            .pressable(
-                                pressedScale = 0.93f,
-                                haptic = com.example.ui.components.TapHaptic
-                            ) { onSetVocalReverb(reverb) }
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                            .testTag("reverb_chip_${reverb.replace(" ", "_")}")
-                    ) {
-                        Text(
-                            text = reverb.uppercase(),
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 10.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) NothingWhite else NothingGrey
-                        )
-                    }
+                    NothingButton(
+                        text = reverb.uppercase(),
+                        onClick = { onSetVocalReverb(reverb) },
+                        modifier = Modifier.testTag("reverb_chip_${reverb.replace(" ", "_")}"),
+                        style = if (isSelected) NothingButtonStyle.Primary else NothingButtonStyle.Secondary
+                    )
                 }
             }
         }
@@ -476,85 +391,20 @@ fun StudioConfigSection(
         // Sentiment Analysis Chip
         GlyphCard(headerTitle = "SENTIMENT ANALYSIS") {
             var analyzePressed by remember { mutableStateOf(false) }
-            Box(
+            NothingButton(
+                text = when {
+                    state.sentimentResult != null -> "SENTIMENT: ${state.sentimentResult!!.dominantTone}"
+                    analyzePressed -> stringResource(R.string.studio_analyzing)
+                    else -> stringResource(R.string.studio_analyze_sentiment)
+                },
+                onClick = { analyzePressed = !analyzePressed },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        if (state.sentimentResult != null) {
-                            NothingRed.copy(alpha = 0.15f)
-                        } else {
-                            NothingCardSurface
-                        }
-                    )
-                    .border(1.dp, if (state.sentimentResult != null) NothingRed else NothingBorder, RoundedCornerShape(12.dp))
-                    .pressable(
-                        pressedScale = 0.95f,
-                        haptic = com.example.ui.components.TapHaptic
-                    ) { analyzePressed = !analyzePressed }
-                    .testTag("sentiment_analyze_chip")
-            ) {
-                Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (state.sentimentResult == null && !analyzePressed) {
-                        Text(
-                            text = stringResource(R.string.studio_analyze_sentiment),
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = NothingGrey
-                        )
-                    } else if (analyzePressed) {
-                        Text(
-                            text = stringResource(R.string.studio_analyzing),
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = NothingRed
-                        )
-                    } else if (state.sentimentResult != null) {
-                        val r = state.sentimentResult
-                        val dominant = r.dominantTone
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                text = stringResource(R.string.studio_sentiment_dominant, dominant),
-                                fontFamily = SpaceMonoFontFamily,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = NothingRed
-                            )
-                            Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text(
-                                    text = stringResource(R.string.studio_sentiment_joy, r.joyScore),
-                                    fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 9.sp,
-                                    color = NothingWhite
-                                )
-                                Text(
-                                    text = stringResource(R.string.studio_sentiment_energy, r.energyScore),
-                                    fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 9.sp,
-                                    color = NothingWhite
-                                )
-                            }
-                            Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text(
-                                    text = stringResource(R.string.studio_sentiment_melancholy, r.melancholyScore),
-                                    fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 9.sp,
-                                    color = NothingWhite
-                                )
-                                Text(
-                                    text = stringResource(R.string.studio_sentiment_nostalgia, r.nostalgiaScore),
-                                    fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 9.sp,
-                                    color = NothingWhite
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+                    .heightIn(min = 48.dp)
+                    .testTag("sentiment_analyze_chip"),
+                style = if (state.sentimentResult != null) NothingButtonStyle.Primary else NothingButtonStyle.Secondary,
+                enabled = state.sentimentResult == null || analyzePressed
+            )
         }
     }
 }

@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,7 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.data.model.LyricDraft
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -112,21 +112,15 @@ fun DraftsDialog(
                         )
                     }
 
-                    IconButton(
+                    NothingButton(
+                        text = "",
                         onClick = onDismiss,
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(NothingCardSurface)
-                            .testTag("close_drafts_dialog")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = NothingWhite,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                            .size(48.dp)
+                            .testTag("close_drafts_dialog"),
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close
+                    )
                 }
 
                 Text(
@@ -236,19 +230,15 @@ fun DraftsDialog(
                                         )
                                     }
 
-                                    IconButton(
+                                    NothingButton(
+                                        text = "",
                                         onClick = { onDeleteDraft(draft) },
                                         modifier = Modifier
-                                            .size(28.dp)
-                                            .testTag("delete_draft_${draft.id}")
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = "Delete Draft",
-                                            tint = NothingGrey,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
+                                            .size(48.dp)
+                                            .testTag("delete_draft_${draft.id}"),
+                                        style = NothingButtonStyle.IconOnly,
+                                        icon = Icons.Default.Delete
+                                    )
                                 }
 
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -305,40 +295,18 @@ fun DraftsDialog(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.End
                                 ) {
-                                    Box(
+                                    NothingButton(
+                                        text = stringResource(R.string.drafts_restore),
+                                        onClick = {
+                                            onRestoreDraft(draft)
+                                            onDismiss()
+                                        },
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(NothingBlack)
-                                            .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                                            .pressable(
-                    pressedScale = 0.94f,
-                    haptic = com.example.ui.components.TapHaptic,
-                    onClick = {
-                        onRestoreDraft(draft)
-                        onDismiss()
-                    }
-                )
                                             .padding(horizontal = 10.dp, vertical = 4.dp)
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Restore,
-                                                contentDescription = null,
-                                                tint = NothingWhite,
-                                                modifier = Modifier.size(12.dp)
-                                            )
-                                            Text(
-                                                text = stringResource(R.string.drafts_restore),
-                                                fontFamily = SpaceMonoFontFamily,
-                                                fontSize = 9.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = NothingWhite
-                                            )
-                                        }
-                                    }
+                                            .testTag("restore_draft_${draft.id}"),
+                                        style = NothingButtonStyle.Secondary,
+                                        icon = Icons.Default.Restore
+                                    )
                                 }
                             }
                         }
@@ -353,21 +321,23 @@ fun DraftsDialog(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     if (drafts.isNotEmpty()) {
-                        NothingPillButton(
+                        NothingButton(
                             text = stringResource(R.string.drafts_clear_all),
                             onClick = onClearAllDrafts,
-                            modifier = Modifier.weight(1f),
-                            isPrimary = false,
-                            testTag = "clear_all_drafts_button"
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("clear_all_drafts_button"),
+                            style = NothingButtonStyle.Secondary
                         )
                     }
 
-                    NothingPillButton(
+                    NothingButton(
                         text = stringResource(R.string.drafts_close),
                         onClick = onDismiss,
-                        modifier = Modifier.weight(1f),
-                        isPrimary = drafts.isEmpty(),
-                        testTag = "close_drafts_button"
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("close_drafts_button"),
+                        style = if (drafts.isEmpty()) NothingButtonStyle.Primary else NothingButtonStyle.Secondary
                     )
                 }
             }

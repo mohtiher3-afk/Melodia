@@ -34,7 +34,8 @@ import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -339,21 +340,16 @@ fun WaveformLyricsDialog(
                         )
                     }
 
-                    IconButton(
+                    NothingButton(
+                        text = "",
                         onClick = onDismiss,
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(NothingCardSurface)
-                            .testTag("close_waveform_dialog")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = NothingWhite,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                            .size(48.dp)
+                            .testTag("close_waveform_dialog"),
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close,
+                        iconTint = NothingWhite
+                    )
                 }
 
                 // Syncing Audio Waveform Visualizer with Playback State & Scrubbing
@@ -504,11 +500,11 @@ fun WaveformLyricsDialog(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                NothingPillButton(
+                NothingButton(
                     text = stringResource(R.string.waveform_close_viewer),
                     onClick = onDismiss,
-                    isPrimary = true,
                     modifier = Modifier.fillMaxWidth(),
+                    style = NothingButtonStyle.Primary,
                     testTag = "close_waveform_view_button"
                 )
             }

@@ -2,9 +2,10 @@ package com.example.ui.screens
 
 import androidx.compose.ui.res.stringResource
 import com.example.R
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,12 +28,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.components.GlyphCard
 import com.example.ui.theme.NothingBorder
+import com.example.ui.theme.NothingBlack
+import com.example.ui.theme.NothingCardSurface
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingWhite
@@ -113,34 +117,39 @@ private fun MoreDestinationRow(
     testTag: String,
     onClick: () -> Unit
 ) {
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .clickable(role = Role.Button, onClick = onClick)
+            .background(if (true) NothingCardSurface.copy(alpha = 0.5f) else NothingBlack)
+            .clickable(onClick = onClick)
             .testTag(testTag)
-            .padding(vertical = 14.dp, horizontal = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
+            .padding(vertical = 14.dp, horizontal = 14.dp),
+        contentAlignment = Alignment.CenterStart
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = NothingRed,
-            modifier = Modifier.size(24.dp)
-        )
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(
-                text = title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = NothingWhite
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = NothingRed,
+                modifier = Modifier.size(24.dp)
             )
-            Text(
-                text = description,
-                fontSize = 12.sp,
-                color = NothingGrey
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(
+                    text = title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = NothingWhite
+                )
+                Text(
+                    text = description,
+                    fontSize = 12.sp,
+                    color = NothingGrey
+                )
+            }
         }
     }
 }

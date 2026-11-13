@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -24,7 +25,6 @@ import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Switch
@@ -53,8 +53,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.BuildConfig
 import com.example.domain.LocalModelManager
 import com.example.ui.components.GlyphCard
-import com.example.ui.components.TapHaptic
-import com.example.ui.components.pressable
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -334,27 +334,15 @@ fun SettingsScreen(
                 ) {
                     listOf("LRC", "JSON", "TXT", "DOC").forEach { fmt ->
                         val isSel = defaultExportFormat == fmt
-                        Box(
+                        NothingButton(
+                            text = fmt,
+                            onClick = { viewModel.updateDefaultExportFormat(fmt) },
                             modifier = Modifier
                                 .weight(1f)
-                                .height(40.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSel) NothingRed else NothingCardSurface)
-                                .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                                .pressable(
-                                    pressedScale = 0.95f,
-                                    haptic = com.example.ui.components.TapHaptic
-                                ) { viewModel.updateDefaultExportFormat(fmt) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = fmt,
-                                fontFamily = SpaceMonoFontFamily,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isSel) NothingBlack else NothingWhite
-                            )
-                        }
+                                .heightIn(min = 40.dp),
+                            style = if (isSel) NothingButtonStyle.Primary else NothingButtonStyle.Secondary,
+                            enabled = true
+                        )
                     }
                 }
             }
@@ -444,13 +432,11 @@ fun LocalModelDownloadSection(
                                                                                                 fontWeight = FontWeight.Bold,
                                                                                                 color = NothingRed
                                                                                             )
-                                                                                            Text(
-                                                                                                text = stringResource(R.string.model_action_remove),
-                                                                                                fontFamily = SpaceMonoFontFamily,
-                                                                                                fontSize = 10.sp,
-                                                                                                color = NothingGrey,
-                                                                                                modifier = Modifier.clickable { viewModel.deleteModel(model.id) }
-                                                                                            )
+                                                            NothingButton(
+                                                                text = stringResource(R.string.model_action_remove),
+                                                                onClick = { viewModel.deleteModel(model.id) },
+                                                                style = NothingButtonStyle.Quiet
+                                                            )
                                                                                         }
                                                                                     }
                                                                                 } else {
@@ -465,30 +451,13 @@ fun LocalModelDownloadSection(
                                                                                             fontSize = 10.sp,
                                                                                             color = NothingGrey
                                                                                         )
-                                                                                        Button(
+                                                                                        NothingButton(
+                                                                                            text = stringResource(R.string.model_action_download),
                                                                                             onClick = { viewModel.downloadModel(model.id) },
                                                                                             modifier = Modifier.testTag("download_${model.id}"),
-                                                                                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                                                                                containerColor = NothingRed,
-                                                                                                contentColor = NothingBlack
-                                                                                            )
-                                                                                        ) {
-                                                                                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                                                                Icon(
-                                                                                                    imageVector = Icons.Default.ArrowDownward,
-                                                                                                    contentDescription = "Download",
-                                                                                                    tint = NothingBlack,
-                                                                                                    modifier = Modifier.size(16.dp)
-                                                                                                )
-                                                                                                Text(
-                                                                                                    text = stringResource(R.string.model_action_download),
-                                                                                                    fontFamily = SpaceMonoFontFamily,
-                                                                                                    fontSize = 11.sp,
-                                                                                                    fontWeight = FontWeight.Bold,
-                                                                                                    color = NothingBlack
-                                                                                                )
-                                                                                            }
-                                                                                        }
+                                                                                            style = NothingButtonStyle.Primary,
+                                                                                            icon = Icons.Default.ArrowDownward
+                                                                                        )
                                                                                     }
                                                                                 }
                                                                             }
@@ -544,12 +513,10 @@ fun LocalModelDownloadSection(
                                                                 fontWeight = FontWeight.Bold,
                                                                 color = NothingRed
                                                             )
-                                                            Text(
+                                                            NothingButton(
                                                                 text = stringResource(R.string.model_action_remove),
-                                                                fontFamily = SpaceMonoFontFamily,
-                                                                fontSize = 10.sp,
-                                                                color = NothingGrey,
-                                                                modifier = Modifier.clickable { viewModel.deleteModel(model.id) }
+                                                                onClick = { viewModel.deleteModel(model.id) },
+                                                                style = NothingButtonStyle.Quiet
                                                             )
                                                         }
                                                     }
@@ -568,30 +535,13 @@ fun LocalModelDownloadSection(
                                                                                                                 color = NothingGrey
                                                                                                             )
                                                                                                         }
-                                                                                                        Button(
+                                                                                                        NothingButton(
+                                                                                                            text = stringResource(R.string.model_action_resume),
                                                                                                             onClick = { viewModel.downloadModel(model.id) },
                                                                                                             modifier = Modifier.padding(top = 4.dp),
-                                                                                                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                                                                                                containerColor = NothingRed,
-                                                                                                                contentColor = NothingBlack
-                                                                                                            )
-                                                                                                        ) {
-                                                                                                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                                                                                Icon(
-                                                                                                                    imageVector = Icons.Default.ArrowDownward,
-                                                                                                                    contentDescription = "Resume",
-                                                                                                                    tint = NothingBlack,
-                                                                                                                    modifier = Modifier.size(16.dp)
-                                                                                                                )
-                                                                                                                Text(
-                                                                                                                    text = stringResource(R.string.model_action_resume),
-                                                                                                                    fontFamily = SpaceMonoFontFamily,
-                                                                                                                    fontSize = 11.sp,
-                                                                                                                    fontWeight = FontWeight.Bold,
-                                                                                                                    color = NothingBlack
-                                                                                                                )
-                                                                                                            }
-                                                                                                        }
+                                                                                                            style = NothingButtonStyle.Primary,
+                                                                                                            icon = Icons.Default.ArrowDownward
+                                                                                                        )
                                                                                                     }
                                                                                                 }
 
@@ -619,30 +569,13 @@ fun LocalModelDownloadSection(
                                                                                                                                         )
                                                                                                                                     }
                                                                                                                                 }
-                                                                                                                                Button(
+                                                                                                                                NothingButton(
+                                                                                                                                                                    text = stringResource(R.string.model_action_retry),
                                                                                                                                                                     onClick = { viewModel.downloadModel(model.id) },
                                                                                                                                                                     modifier = Modifier.padding(top = 4.dp),
-                                                                                                                                                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                                                                                                                                                        containerColor = NothingRed,
-                                                                                                                                                                        contentColor = NothingBlack
-                                                                                                                                                                    )
-                                                                                                                                                                ) {
-                                                                                                                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                                                                                                        Icon(
-                                                                                                                                            imageVector = Icons.Default.ArrowDownward,
-                                                                                                                                            contentDescription = "Retry",
-                                                                                                                                            tint = NothingBlack,
-                                                                                                                                            modifier = Modifier.size(16.dp)
-                                                                                                                                        )
-                                                                                                                                        Text(
-                                            text = stringResource(R.string.model_action_retry),
-                                            fontFamily = SpaceMonoFontFamily,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = NothingBlack
-                                        )
-                                    }
-                                }
+                                                                                                                                                                    style = NothingButtonStyle.Primary,
+                                                                                                                                                                    icon = Icons.Default.ArrowDownward
+                                                                                                                                                                )
                             }
                         }
                     }
@@ -661,32 +594,13 @@ private fun ProviderTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    NothingButton(
+        text = label,
+        onClick = onClick,
         modifier = modifier
-            .height(44.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(if (isSel) NothingRed else NothingCardSurface)
-            .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-            .pressable(
-                pressedScale = 0.95f,
-                haptic = com.example.ui.components.TapHaptic
-            ) { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = label,
-                fontFamily = SpaceMonoFontFamily,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (isSel) NothingBlack else NothingWhite
-            )
-            Text(
-                text = badge,
-                fontFamily = SpaceMonoFontFamily,
-                fontSize = 9.sp,
-                color = if (isSel) NothingBlack else NothingGrey
-            )
-        }
-    }
+            .fillMaxWidth()
+            .heightIn(min = 44.dp),
+        style = if (isSel) NothingButtonStyle.Primary else NothingButtonStyle.Secondary,
+        enabled = true
+    )
 }

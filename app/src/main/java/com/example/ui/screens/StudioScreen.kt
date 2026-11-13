@@ -59,7 +59,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.domain.LyricsExportManager
 import com.example.ui.components.GlyphCard
 import com.example.ui.components.NothingCoverArt
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.dialogs.DraftsDialog
 import com.example.ui.dialogs.GenreSelectionDialog
 import com.example.ui.dialogs.SavePresetDialog
@@ -175,18 +176,18 @@ fun StudioScreen(
                         }
 
                         // Copy Prompt & Lyrics Button
-                                                NothingPillButton(
-                                                    text = stringResource(R.string.studio_copy_prompt_lyrics),
-                                                    onClick = {
-                                                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                                        val copyText = "PROMPT: ${draft.promptText}\n\nLYRICS: ${draft.lyrics}"
-                                                        val clipData = ClipData.newPlainText("melodia_draft", copyText)
-                                                        clipboard.setPrimaryClip(clipData)
-                                                        Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
-                                                    },
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    isRedAccent = true
-                                                )
+                        NothingButton(
+                            text = stringResource(R.string.studio_copy_prompt_lyrics),
+                            onClick = {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                val copyText = "PROMPT: ${draft.promptText}\n\nLYRICS: ${draft.lyrics}"
+                                val clipData = ClipData.newPlainText("melodia_draft", copyText)
+                                clipboard.setPrimaryClip(clipData)
+                                Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
+                            },
+                            style = NothingButtonStyle.Primary,
+                            modifier = Modifier.fillMaxWidth()
+                        )
 
                         // Cover art preview
                         NothingCoverArt(

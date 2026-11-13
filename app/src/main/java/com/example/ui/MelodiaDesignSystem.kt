@@ -116,6 +116,7 @@ fun Modifier.dotGrid(
     }
     val strokeWidth = radiusPx * 2f
     onDrawBehind {
+        // drawPoints is available in DrawScope (inside Canvas/drawWithCache/onDrawBehind)
         drawPoints(
             points = points,
             pointMode = PointMode.Points,

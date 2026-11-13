@@ -23,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -44,8 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.data.model.Song
-import com.example.ui.components.NothingPillButton
-import com.example.ui.components.pressable
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -140,21 +139,15 @@ fun EditTagsDialog(
                         )
                     }
 
-                    IconButton(
+                    NothingButton(
+                        text = "",
                         onClick = onDismiss,
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(NothingCardSurface)
-                            .testTag("close_tags_dialog")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = NothingWhite,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                            .size(48.dp)
+                            .testTag("close_tags_dialog"),
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close
+                    )
                 }
 
                 // 1. Project Status Section
@@ -172,28 +165,15 @@ fun EditTagsDialog(
                     ) {
                         ProjectStatus.entries.forEach { status ->
                             val isSelected = currentStatus == status
-                            Box(
+                            NothingButton(
+                                text = status.label,
+                                onClick = { currentStatus = status },
                                 modifier = Modifier
                                     .weight(1f)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(if (isSelected) NothingRed else NothingCardSurface)
-                                    .border(1.dp, if (isSelected) NothingRed else NothingBorder, RoundedCornerShape(12.dp))
-                                    .pressable(
-                                        pressedScale = 0.94f,
-                                        haptic = com.example.ui.components.TapHaptic,
-                                        onClick = { currentStatus = status }
-                                    )
-                                    .padding(vertical = 8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = status.label,
-                                    fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 10.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) NothingWhite else NothingGrey
-                                )
-                            }
+                                    .padding(vertical = 8.dp)
+                                    .testTag("status_${status.tag}"),
+                                style = if (isSelected) NothingButtonStyle.Primary else NothingButtonStyle.Secondary
+                            )
                         }
                     }
                 }
@@ -215,26 +195,14 @@ fun EditTagsDialog(
                     ) {
                         popularGenres.forEach { genre ->
                             val isSelected = selectedGenre.equals(genre, ignoreCase = true)
-                            Box(
+                            NothingButton(
+                                text = genre.uppercase(),
+                                onClick = { selectedGenre = genre },
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(if (isSelected) NothingWhite else NothingCardSurface)
-                                    .border(1.dp, if (isSelected) NothingWhite else NothingBorder, RoundedCornerShape(12.dp))
-                                    .pressable(
-                                        pressedScale = 0.94f,
-                                        haptic = com.example.ui.components.TapHaptic,
-                                        onClick = { selectedGenre = genre }
-                                    )
                                     .padding(horizontal = 10.dp, vertical = 6.dp)
-                            ) {
-                                Text(
-                                    text = genre.uppercase(),
-                                    fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 10.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) NothingBlack else NothingGrey
-                                )
-                            }
+                                    .testTag("genre_${genre.replace(" ", "_")}"),
+                                style = if (isSelected) NothingButtonStyle.Primary else NothingButtonStyle.Secondary
+                            )
                         }
                     }
                 }
@@ -256,26 +224,14 @@ fun EditTagsDialog(
                     ) {
                         popularMoods.forEach { mood ->
                             val isSelected = selectedMood.equals(mood, ignoreCase = true)
-                            Box(
+                            NothingButton(
+                                text = mood.uppercase(),
+                                onClick = { selectedMood = mood },
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(if (isSelected) NothingWhite else NothingCardSurface)
-                                    .border(1.dp, if (isSelected) NothingWhite else NothingBorder, RoundedCornerShape(12.dp))
-                                    .pressable(
-                                        pressedScale = 0.94f,
-                                        haptic = com.example.ui.components.TapHaptic,
-                                        onClick = { selectedMood = mood }
-                                    )
                                     .padding(horizontal = 10.dp, vertical = 6.dp)
-                            ) {
-                                Text(
-                                    text = mood.uppercase(),
-                                    fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 10.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) NothingBlack else NothingGrey
-                                )
-                            }
+                                    .testTag("mood_$mood"),
+                                style = if (isSelected) NothingButtonStyle.Primary else NothingButtonStyle.Secondary
+                            )
                         }
                     }
                 }
@@ -313,33 +269,21 @@ fun EditTagsDialog(
                             singleLine = true
                         )
 
-                        Box(
+                        NothingButton(
+                            text = "",
+                            onClick = {
+                                val trimmed = newTagInput.trim().replace(",", "")
+                                if (trimmed.isNotBlank() && !customTags.contains(trimmed)) {
+                                    customTags.add(trimmed)
+                                    newTagInput = ""
+                                }
+                            },
                             modifier = Modifier
                                 .size(48.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(NothingCardSurface)
-                                .border(1.dp, NothingRed, RoundedCornerShape(14.dp))
-                                .pressable(
-                                    pressedScale = 0.94f,
-                                    haptic = com.example.ui.components.TapHaptic,
-                                    onClick = {
-                                        val trimmed = newTagInput.trim().replace(",", "")
-                                        if (trimmed.isNotBlank() && !customTags.contains(trimmed)) {
-                                            customTags.add(trimmed)
-                                            newTagInput = ""
-                                        }
-                                    }
-                                )
                                 .testTag("add_custom_tag_button"),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Add Tag",
-                                tint = NothingRed,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                            style = NothingButtonStyle.Secondary,
+                            icon = Icons.Default.Add
+                        )
                     }
 
                     // Flow of current tags
@@ -365,17 +309,14 @@ fun EditTagsDialog(
                                         fontSize = 10.sp,
                                         color = NothingWhite
                                     )
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Remove tag",
-                                        tint = NothingRed,
+                                    NothingButton(
+                                        text = "",
+                                        onClick = { customTags.remove(tag) },
                                         modifier = Modifier
-                                            .size(12.dp)
-                                            .pressable(
-                                                pressedScale = 0.94f,
-                                                haptic = com.example.ui.components.TapHaptic,
-                                                onClick = { customTags.remove(tag) }
-                                            )
+                                            .size(24.dp)
+                                            .testTag("remove_tag_$tag"),
+                                        style = NothingButtonStyle.IconOnly,
+                                        icon = Icons.Default.Close
                                     )
                                 }
                             }
@@ -386,7 +327,7 @@ fun EditTagsDialog(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 // Save button
-                NothingPillButton(
+                NothingButton(
                     text = "SAVE TAGS & STATUS",
                     onClick = {
                         val combinedTags = mutableListOf<String>()
@@ -404,9 +345,10 @@ fun EditTagsDialog(
                         Toast.makeText(context, "Tags updated for ${song.title}", Toast.LENGTH_SHORT).show()
                         onDismiss()
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    isRedAccent = true,
-                    testTag = "save_tags_button"
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("save_tags_button"),
+                    style = NothingButtonStyle.Primary
                 )
             }
         }

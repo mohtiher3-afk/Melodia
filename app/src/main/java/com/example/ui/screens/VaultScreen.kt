@@ -39,7 +39,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -68,8 +67,8 @@ import com.example.data.model.matchesFilter
 import com.example.data.model.projectStatusFromTags
 import com.example.ui.components.GlyphCard
 import com.example.ui.components.NothingCoverArt
-import com.example.ui.components.NothingPillButton
-import com.example.ui.components.pressable
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -81,6 +80,9 @@ import com.example.ui.theme.NothingWhite
 import com.example.ui.theme.SpaceMonoFontFamily
 import com.example.ui.viewmodel.MelodiaViewModel
 import com.example.ui.dialogs.*
+import com.example.ui.components.TapHaptic
+import com.example.ui.components.CommitHaptic
+import com.example.ui.components.pressable
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -133,28 +135,14 @@ fun VaultScreen(
             onSelect: () -> Unit,
             selected: Boolean
         ) {
-            Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .background(if (isSelected) NothingRed else NothingCardSurface)
-                .border(1.dp, if (isSelected) NothingRed else NothingBorder, RoundedCornerShape(12.dp))
-                .pressable(
-                    pressedScale = 0.94f,
-                    haptic = com.example.ui.components.TapHaptic,
-                    enabled = true,
-                    onClick = onSelect
-                )
-                .padding(horizontal = 12.dp, vertical = 6.dp)
-        ) {
-            Text(
+            NothingButton(
                 text = label,
-                fontFamily = SpaceMonoFontFamily,
-                fontSize = 10.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                color = if (isSelected) NothingWhite else NothingGrey
+                onClick = onSelect,
+                modifier = Modifier
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                style = if (isSelected) NothingButtonStyle.Primary else NothingButtonStyle.Secondary
             )
         }
-    }
 
     @Composable
     fun SubTagChip(
@@ -162,26 +150,13 @@ fun VaultScreen(
         isOptSelected: Boolean,
         onSelect: () -> Unit
     ) {
-        Box(
+        NothingButton(
+            text = opt.uppercase(),
+            onClick = onSelect,
             modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .background(if (isOptSelected) NothingWhite else NothingCardSurface)
-                .border(1.dp, if (isOptSelected) NothingWhite else NothingBorder, RoundedCornerShape(12.dp))
-                .pressable(
-                    pressedScale = 0.94f,
-                    haptic = com.example.ui.components.TapHaptic,
-                    onClick = onSelect
-                )
-                .padding(horizontal = 10.dp, vertical = 5.dp)
-        ) {
-            Text(
-                text = opt.uppercase(),
-                fontFamily = SpaceMonoFontFamily,
-                fontSize = 9.sp,
-                fontWeight = if (isOptSelected) FontWeight.Bold else FontWeight.Normal,
-                color = if (isOptSelected) NothingBlack else NothingGrey
-            )
-        }
+                .padding(horizontal = 10.dp, vertical = 5.dp),
+            style = if (isOptSelected) NothingButtonStyle.Primary else NothingButtonStyle.Secondary
+        )
     }
 
     @Composable
@@ -190,26 +165,13 @@ fun VaultScreen(
         onClick: () -> Unit,
         modifier: Modifier = Modifier
     ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(NothingDarkGrey)
-                .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                .pressable(
-                    pressedScale = 0.94f,
-                    haptic = com.example.ui.components.TapHaptic,
-                    enabled = true,
-                    onClick = onClick
-                )
-                .padding(horizontal = 6.dp, vertical = 2.dp)
-        ) {
-            Text(
-                text = text,
-                fontFamily = SpaceMonoFontFamily,
-                fontSize = 9.sp,
-                color = NothingRed
-            )
-        }
+        NothingButton(
+            text = text,
+            onClick = onClick,
+            modifier = modifier
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+            style = NothingButtonStyle.Secondary
+        )
     }
 
     @Composable
@@ -217,25 +179,13 @@ fun VaultScreen(
         selectedSubTag: String?,
         onClear: () -> Unit
     ) {
-        Box(
+        NothingButton(
+            text = stringResource(R.string.vault_tag_hash, selectedSubTag?.uppercase() ?: ""),
+            onClick = onClear,
             modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(NothingDarkGrey)
-                .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                .pressable(
-                    pressedScale = 0.94f,
-                    haptic = com.example.ui.components.TapHaptic,
-                    onClick = onClear
-                )
-                .padding(horizontal = 6.dp, vertical = 2.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.vault_tag_hash, selectedSubTag?.uppercase() ?: ""),
-                fontFamily = SpaceMonoFontFamily,
-                fontSize = 9.sp,
-                color = NothingWhite
-            )
-        }
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+            style = NothingButtonStyle.Secondary
+        )
     }
 
     Column(
@@ -274,38 +224,16 @@ fun VaultScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(
+                NothingButton(
+                    text = stringResource(R.string.vault_action_import),
+                    onClick = { audioPickerLauncher.launch(arrayOf("audio/*")) },
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(NothingBlack)
-                        .border(1.dp, NothingRed, RoundedCornerShape(12.dp))
-                        .pressable(
-                            pressedScale = 0.94f,
-                            haptic = com.example.ui.components.TapHaptic,
-                            onClick = { audioPickerLauncher.launch(arrayOf("audio/*")) }
-                        )
                         .padding(horizontal = 10.dp, vertical = 6.dp)
-                        .testTag("vault_import_audio_button")
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Import",
-                            tint = NothingRed,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Text(
-                            text = stringResource(R.string.vault_action_import),
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = NothingRed
-                        )
-                    }
-                }
+                        .testTag("vault_import_audio_button"),
+                    style = NothingButtonStyle.Secondary,
+                    icon = Icons.Default.Add,
+                    iconTint = NothingRed
+                )
             }
         }
 
@@ -332,17 +260,14 @@ fun VaultScreen(
             },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
-                    IconButton(
+                    NothingButton(
+                        text = "",
                         onClick = { searchQuery = "" },
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Clear search",
-                            tint = NothingGrey,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
+                        modifier = Modifier.size(48.dp),
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close,
+                        iconTint = NothingGrey
+                    )
                 } else {
                     Box(modifier = Modifier.size(0.dp))
                 }
@@ -398,27 +323,12 @@ fun VaultScreen(
             ) {
                 // "ALL" in current sub-category
                 val isAllSub = selectedSubTag == null
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (isAllSub) NothingWhite else NothingDarkGrey)
-                        .border(1.dp, if (isAllSub) NothingWhite else NothingBorder, RoundedCornerShape(12.dp))
-                        .pressable(
-                            pressedScale = 0.94f,
-                            haptic = com.example.ui.components.TapHaptic,
-                            onClick = { selectedSubTag = null }
-                        )
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.vault_all_tag, selectedCategory.label),
-                        fontFamily = SpaceMonoFontFamily,
-                        fontSize = 9.sp,
-                        fontWeight = if (isAllSub) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isAllSub) NothingBlack else NothingGrey
-                    )
-                }
+                NothingButton(
+                    text = stringResource(R.string.vault_all_tag, selectedCategory.label),
+                    onClick = { selectedSubTag = null },
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    style = if (isAllSub) NothingButtonStyle.Primary else NothingButtonStyle.Secondary
+                )
 
                 activeSubOptions.forEach { opt ->
                     val isOptSelected = selectedSubTag.equals(opt, ignoreCase = true)
@@ -461,33 +371,15 @@ fun VaultScreen(
                 )
 
                 if (selectedSubTag != null) {
-                    Row(
+                    NothingButton(
+                        text = "",
+                        onClick = { selectedSubTag = null },
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(NothingDarkGrey)
-                            .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                            .pressable(
-                                pressedScale = 0.94f,
-                                haptic = com.example.ui.components.TapHaptic,
-                                onClick = { selectedSubTag = null }
-                            )
                             .padding(horizontal = 6.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.vault_tag_hash, selectedSubTag?.uppercase() ?: ""),
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 9.sp,
-                            color = NothingWhite
-                        )
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Clear tag",
-                            tint = NothingRed,
-                            modifier = Modifier.size(10.dp)
-                        )
-                    }
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close,
+                        iconTint = NothingRed
+                    )
                 }
             }
         }
@@ -523,20 +415,20 @@ fun VaultScreen(
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            NothingPillButton(
+                            NothingButton(
                                 text = stringResource(R.string.vault_reset_filters),
                                 onClick = {
                                     searchQuery = ""
                                     selectedCategory = CategoryFilterType.ALL
                                     selectedSubTag = null
                                 },
-                                isPrimary = false,
+                                style = NothingButtonStyle.Secondary,
                                 testTag = "reset_tags_filter_button"
                             )
-                            NothingPillButton(
+                            NothingButton(
                                 text = stringResource(R.string.vault_action_import_audio),
                                 onClick = { audioPickerLauncher.launch(arrayOf("audio/*")) },
-                                isPrimary = true,
+                                style = NothingButtonStyle.Primary,
                                 testTag = "empty_vault_import_audio_button"
                             )
                         }
@@ -594,20 +486,20 @@ fun VaultScreen(
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        NothingPillButton(
+                        NothingButton(
                             text = stringResource(R.string.vault_reset_filters),
                             onClick = {
                                 searchQuery = ""
                                 selectedCategory = CategoryFilterType.ALL
                                 selectedSubTag = null
                             },
-                            isPrimary = false,
+                            style = NothingButtonStyle.Secondary,
                             testTag = "reset_tags_filter_button"
                         )
-                        NothingPillButton(
+                        NothingButton(
                             text = stringResource(R.string.vault_action_import_audio),
                             onClick = { audioPickerLauncher.launch(arrayOf("audio/*")) },
-                            isPrimary = true,
+                            style = NothingButtonStyle.Primary,
                             testTag = "empty_vault_import_audio_button"
                         )
                     }
@@ -674,10 +566,10 @@ fun VaultScreen(
                     fontWeight = FontWeight.Bold
                 )
 
-                NothingPillButton(
+                NothingButton(
                     text = stringResource(R.string.vault_edit_tags),
                     onClick = { showBulkTagsDialog = true },
-                    isPrimary = true,
+                    style = NothingButtonStyle.Primary,
                     testTag = "bulk_edit_tags_button"
                 )
             }
@@ -862,56 +754,29 @@ fun SavedSongItem(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(NothingCardSurface)
-                            .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = song.genre.ifBlank { "UNLABELED" },
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 10.sp,
-                            color = NothingGrey
-                        )
-                    }
+                    NothingButton(
+                        text = song.genre.ifBlank { "UNLABELED" },
+                        onClick = {},
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = NothingButtonStyle.Quiet,
+                        enabled = false
+                    )
 
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(NothingCardSurface)
-                            .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = song.mood.ifBlank { "NO MOOD" },
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 10.sp,
-                            color = NothingGrey
-                        )
-                    }
+                    NothingButton(
+                        text = song.mood.ifBlank { "NO MOOD" },
+                        onClick = {},
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = NothingButtonStyle.Quiet,
+                        enabled = false
+                    )
 
                     customTagsList.forEach { tag ->
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(NothingCardSurface)
-                                .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                                .pressable(
-                                    pressedScale = 0.94f,
-                                    haptic = com.example.ui.components.TapHaptic,
-                                    onClick = { onTagClick(tag) }
-                                )
-                        ) {
-                            Text(
-                                text = tag,
-                                fontFamily = SpaceMonoFontFamily,
-                                fontSize = 10.sp,
-                                color = NothingGrey
-                            )
-                        }
+                        NothingButton(
+                            text = tag,
+                            onClick = { onTagClick(tag) },
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = NothingButtonStyle.Secondary
+                        )
                     }
                 }
 

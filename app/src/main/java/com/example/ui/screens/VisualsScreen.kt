@@ -17,7 +17,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.components.GlyphCard
 import com.example.ui.components.GenerationActionFeedback
 import com.example.ui.components.NothingCoverArt
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.components.StatusBadge
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingGrey
@@ -78,14 +79,14 @@ fun VisualsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    NothingPillButton(
+                    NothingButton(
                         text = when {
                             state.isGeneratingCover -> "GENERATING..."
                             state.isGenerating -> "WAITING FOR LYRICS..."
                             else -> "GENERATE COVER ART"
                         },
                         onClick = { viewModel.generateCoverArtOnly() },
-                        isPrimary = true,
+                        style = NothingButtonStyle.Primary,
                         enabled = draft != null && !state.isGeneratingCover && !state.isGenerating,
                         modifier = Modifier.weight(1f)
                     )

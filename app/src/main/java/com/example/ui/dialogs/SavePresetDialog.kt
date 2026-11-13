@@ -16,7 +16,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.*
 
 @Composable
@@ -85,14 +86,15 @@ fun SavePresetDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    NothingPillButton(
+                    NothingButton(
                         text = stringResource(R.string.save_preset_cancel),
                         onClick = onDismiss,
-                        modifier = Modifier.weight(1f),
-                        isPrimary = false,
-                        testTag = "cancel_save_preset"
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("cancel_save_preset"),
+                        style = NothingButtonStyle.Secondary
                     )
-                    NothingPillButton(
+                    NothingButton(
                         text = stringResource(R.string.save_preset_save),
                         onClick = {
                             if (name.isNotBlank()) {
@@ -100,10 +102,11 @@ fun SavePresetDialog(
                                 onDismiss()
                             }
                         },
-                        modifier = Modifier.weight(1f),
-                        isPrimary = true,
-                        enabled = name.isNotBlank(),
-                        testTag = "confirm_save_preset"
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("confirm_save_preset"),
+                        style = NothingButtonStyle.Primary,
+                        enabled = name.isNotBlank()
                     )
                 }
             }

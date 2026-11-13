@@ -34,10 +34,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,7 +53,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -186,21 +184,15 @@ fun VoiceDictationDialog(
                         )
                     }
 
-                    IconButton(
+                    NothingButton(
+                        text = "",
                         onClick = onDismiss,
                         modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(NothingCardSurface)
-                            .testTag("close_voice_dialog")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = NothingWhite,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
+                            .size(48.dp)
+                            .testTag("close_voice_dialog"),
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close
+                    )
                 }
 
                 // Microphone Waveform Animation
@@ -268,7 +260,7 @@ fun VoiceDictationDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    NothingPillButton(
+                    NothingButton(
                         text = stringResource(R.string.dictation_insert),
                         onClick = {
                             val sample = if (spokenText.contains("Listening") || spokenText.contains("unavailable")) {
@@ -280,8 +272,8 @@ fun VoiceDictationDialog(
                             onDismiss()
                             Toast.makeText(context, "Dictated lyrics inserted to Studio!", Toast.LENGTH_SHORT).show()
                         },
-                        isPrimary = true,
                         modifier = Modifier.weight(1f),
+                        style = NothingButtonStyle.Primary,
                         testTag = "insert_dictated_lyrics_button"
                     )
                 }

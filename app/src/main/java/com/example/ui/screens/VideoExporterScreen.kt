@@ -42,8 +42,8 @@ import android.util.Log
 import com.example.domain.VideoAspectRatio
 import com.example.domain.VideoResolution
 import com.example.ui.components.GlyphCard
-import java.io.File
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.components.StatusBadge
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
@@ -54,6 +54,7 @@ import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingWhite
 import com.example.ui.theme.SpaceMonoFontFamily
 import com.example.ui.viewmodel.MelodiaViewModel
+import java.io.File
 
 @Composable
 fun VideoExporterScreen(
@@ -278,7 +279,7 @@ fun VideoExporterScreen(
 
         // Export Action Button (guarded: one encode at a time — double MediaCodec
         // encodes would race on the muxer and corrupt output)
-        NothingPillButton(
+        NothingButton(
             text = if (exportProgress.isExporting) "ENCODING VIDEO..." else "EXPORT MP4 LYRIC VIDEO",
             onClick = {
                 viewModel.exportLyricVideo(
@@ -288,14 +289,14 @@ fun VideoExporterScreen(
                     bitrateMbps = bitrateMbps
                 )
             },
-            isPrimary = true,
+            style = NothingButtonStyle.Primary,
             enabled = !exportProgress.isExporting,
             modifier = Modifier.fillMaxWidth()
         )
 
         // Share the finished export (F-6: result was previously unreachable outside app cache)
         if (exportFinished) {
-            NothingPillButton(
+            NothingButton(
                 text = stringResource(R.string.exporter_share_video),
                 onClick = {
                     try {
@@ -316,7 +317,7 @@ fun VideoExporterScreen(
                         Log.e("VideoExporterScreen", "Failed to share video", e)
                     }
                 },
-                isPrimary = false,
+                style = NothingButtonStyle.Secondary,
                 modifier = Modifier.fillMaxWidth()
             )
         }

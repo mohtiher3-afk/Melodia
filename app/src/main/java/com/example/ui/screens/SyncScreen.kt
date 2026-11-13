@@ -23,7 +23,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.domain.LyricsExportManager
 import com.example.ui.components.GlyphCard
 import com.example.ui.components.KaraokeLyricsView
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.components.StatusBadge
 import com.example.ui.dialogs.ManualSyncDialog
 import com.example.ui.theme.*
@@ -109,14 +110,14 @@ fun SyncScreen(
                         fontSize = 10.sp,
                         color = NothingGrey
                     )
-                    NothingPillButton(
+                    NothingButton(
                         text = if (state.isTranscribingAudio) "TRANSCRIBING VOCALS..." else "EXTRACT LYRICS FROM AUDIO",
                         onClick = {
                             if (!draft?.lyrics.isNullOrBlank()) showTranscribeConfirmation = true
                             else viewModel.transcribeImportedAudio(context)
                         },
+                        style = NothingButtonStyle.Primary,
                         enabled = canTranscribe && !state.isTranscribingAudio && !state.isImportingAudio,
-                        isPrimary = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                 } else {
@@ -126,19 +127,20 @@ fun SyncScreen(
                         fontSize = 12.sp,
                         color = NothingGrey
                     )
-                    NothingPillButton(
+                    NothingButton(
                         text = stringResource(R.string.sync_import_audio),
-                        onClick = { audioPickerLauncher.launch(arrayOf("audio/*")) }
+                        onClick = { audioPickerLauncher.launch(arrayOf("audio/*")) },
+                        style = NothingButtonStyle.Secondary
                     )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                NothingPillButton(
+                NothingButton(
                     text = if (state.isAligningAudio) "CREATING WORD TIMINGS..." else "AUTO-CREATE WORD TIMINGS",
                     onClick = { viewModel.syncLyricsWithAudio(context) },
-                    enabled = !state.isAligningAudio && !draft?.lyrics.isNullOrBlank() && state.isLocalAudioActive,
-                    isPrimary = true
+                    style = NothingButtonStyle.Primary,
+                    enabled = !state.isAligningAudio && !draft?.lyrics.isNullOrBlank() && state.isLocalAudioActive
                 )
 
                 Text(
@@ -161,7 +163,7 @@ fun SyncScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        NothingPillButton(
+                        NothingButton(
                             text = stringResource(R.string.sync_share_lrc),
                             onClick = {
                                 if (draft != null) {
@@ -179,10 +181,11 @@ fun SyncScreen(
                                     context.startActivity(android.content.Intent.createChooser(intent, "Export LRC"))
                                 }
                             },
+                            style = NothingButtonStyle.Secondary,
                             modifier = Modifier.weight(1f)
                         )
 
-                        NothingPillButton(
+                        NothingButton(
                             text = stringResource(R.string.sync_share_json),
                             onClick = {
                                 if (draft != null) {
@@ -200,13 +203,14 @@ fun SyncScreen(
                                     context.startActivity(android.content.Intent.createChooser(intent, "Export JSON"))
                                 }
                             },
+                            style = NothingButtonStyle.Secondary,
                             modifier = Modifier.weight(1f)
                         )
 
-                        NothingPillButton(
+                        NothingButton(
                             text = "MANUAL SYNC",
                             onClick = { showManualSync = true },
-                            isRedAccent = true,
+                            style = NothingButtonStyle.Primary,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -228,7 +232,7 @@ fun SyncScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        NothingPillButton(
+                        NothingButton(
                             text = when {
                                 playbackUrl == null -> "IMPORT AUDIO TO PREVIEW"
                                 isPlaying -> "PAUSE PREVIEW"
@@ -237,8 +241,8 @@ fun SyncScreen(
                             onClick = {
                                 playbackUrl?.let { player.playAudio(it) }
                             },
+                            style = if (playbackUrl != null) NothingButtonStyle.Primary else NothingButtonStyle.Secondary,
                             enabled = playbackUrl != null,
-                            isPrimary = playbackUrl != null,
                             modifier = Modifier.weight(1f)
                         )
 
@@ -274,15 +278,21 @@ fun SyncScreen(
             title = { Text("Replace current lyrics?") },
             text = { Text("The imported audio will be sent to Gemini for transcription and will replace the lyrics in the current draft.") },
             confirmButton = {
-                TextButton(
+                NothingButton(
+                    text = "EXTRACT & REPLACE",
                     onClick = {
                         showTranscribeConfirmation = false
                         viewModel.transcribeImportedAudio(context, replaceExistingLyrics = true)
-                    }
-                ) { Text("EXTRACT & REPLACE") }
+                    },
+                    style = NothingButtonStyle.Primary
+                )
             },
             dismissButton = {
-                TextButton(onClick = { showTranscribeConfirmation = false }) { Text("CANCEL") }
+                NothingButton(
+                    text = "CANCEL",
+                    onClick = { showTranscribeConfirmation = false },
+                    style = NothingButtonStyle.Secondary
+                )
             }
         )
     }
