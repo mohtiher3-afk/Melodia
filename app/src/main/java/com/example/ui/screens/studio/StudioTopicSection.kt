@@ -40,7 +40,7 @@ fun StudioTopicSection(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Song Topic & Inspiration Input
-        GlyphCard(headerTitle = "TOPIC & SONG INSPIRATION") {
+        GlyphCard(headerTitle = "TOPIC & SONG INSPIRATION", modifier = Modifier) {
             OutlinedTextField(
                 value = state.userTopic,
                 onValueChange = { onSetUserTopic(it) },

@@ -45,6 +45,7 @@ import com.example.ui.components.GlyphCard
 import com.example.ui.NothingButton
 import com.example.ui.NothingButtonStyle
 import com.example.ui.components.StatusBadge
+import com.example.ui.nothing.staggeredEnter
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -80,7 +81,7 @@ fun VideoExporterScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header
-        Column {
+        Column(modifier = Modifier.staggeredEnter(1)) {
             Text(
                 text = stringResource(R.string.exporter_header_kicker),
                 fontFamily = SpaceMonoFontFamily,
@@ -104,7 +105,8 @@ fun VideoExporterScreen(
                     .fillMaxWidth()
                     .border(1.dp, NothingBorder, RoundedCornerShape(12.dp))
                     .background(NothingCardSurface)
-                    .padding(24.dp),
+                    .padding(24.dp)
+                    .staggeredEnter(2),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -118,7 +120,7 @@ fun VideoExporterScreen(
         }
 
         // Readiness Check Card
-        GlyphCard(headerTitle = "EXPORT READINESS CHECKLIST") {
+        GlyphCard(headerTitle = "EXPORT READINESS CHECKLIST", modifier = Modifier.staggeredEnter(2)) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 val hasLyrics = currentDraft.lyrics.isNotBlank()
                 val hasCover = !currentDraft.coverImagePath.isNullOrBlank()
@@ -133,7 +135,7 @@ fun VideoExporterScreen(
         }
 
         // Resolution Selector
-        GlyphCard(headerTitle = "VIDEO RESOLUTION & PROFILE") {
+        GlyphCard(headerTitle = "VIDEO RESOLUTION & PROFILE", modifier = Modifier.staggeredEnter(3)) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -199,7 +201,7 @@ fun VideoExporterScreen(
         }
 
         // Aspect Ratio Selector
-        GlyphCard(headerTitle = "ASPECT RATIO") {
+        GlyphCard(headerTitle = "ASPECT RATIO", modifier = Modifier.staggeredEnter(4)) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 VideoAspectRatio.entries.forEach { ratio ->
                     val isSel = selectedAspectRatio == ratio
@@ -235,7 +237,7 @@ fun VideoExporterScreen(
 
         // Export Progress
         if (exportProgress.isExporting) {
-            GlyphCard(headerTitle = "ENCODING IN PROGRESS") {
+            GlyphCard(headerTitle = "ENCODING IN PROGRESS", modifier = Modifier.staggeredEnter(3)) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
                         text = exportProgress.statusText,
@@ -259,7 +261,7 @@ fun VideoExporterScreen(
         val exportFinished = !exportProgress.isExporting &&
             outputFilePath != null && File(outputFilePath).exists()
         if (exportFinished) {
-            GlyphCard(headerTitle = stringResource(R.string.exporter_complete_title)) {
+            GlyphCard(headerTitle = stringResource(R.string.exporter_complete_title), modifier = Modifier.staggeredEnter(4)) {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
                         text = exportProgress.statusText.ifBlank { stringResource(R.string.exporter_complete_default) },
@@ -291,7 +293,7 @@ fun VideoExporterScreen(
             },
             style = NothingButtonStyle.Primary,
             enabled = !exportProgress.isExporting,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().staggeredEnter(5)
         )
 
         // Share the finished export (F-6: result was previously unreachable outside app cache)
@@ -318,7 +320,7 @@ fun VideoExporterScreen(
                     }
                 },
                 style = NothingButtonStyle.Secondary,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().staggeredEnter(6)
             )
         }
     }

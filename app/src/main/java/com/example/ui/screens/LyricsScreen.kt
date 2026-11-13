@@ -33,6 +33,7 @@ import com.example.ui.NothingButton
 import com.example.ui.NothingButtonStyle
 import com.example.ui.dialogs.RhymeDialog
 import com.example.ui.dialogs.VoiceDictationDialog
+import com.example.ui.nothing.staggeredEnter
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingRed
@@ -109,6 +110,7 @@ fun LyricsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
+                .staggeredEnter(1)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(

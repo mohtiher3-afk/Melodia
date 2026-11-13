@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import com.example.ui.NothingButton
 import com.example.ui.NothingButtonStyle
+import com.example.ui.nothing.staggeredEnter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,7 +56,8 @@ fun LibraryScreen(
                 .height(44.dp)
                 .clip(RoundedCornerShape(22.dp))
                 .background(NothingCardSurface)
-                .border(1.dp, NothingBorder, RoundedCornerShape(22.dp)),
+                .border(1.dp, NothingBorder, RoundedCornerShape(22.dp))
+                .staggeredEnter(1),
             verticalAlignment = Alignment.CenterVertically
         ) {
             val tabs = listOf(
@@ -77,7 +79,7 @@ fun LibraryScreen(
         }
 
         // Screen content
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().staggeredEnter(2)) {
             when (subTab) {
                 "TRACKS" -> VaultScreen(viewModel = viewModel, onNavigateToStudio = onNavigateToStudio)
                 "VIDEO" -> VideoExporterScreen(viewModel = viewModel)

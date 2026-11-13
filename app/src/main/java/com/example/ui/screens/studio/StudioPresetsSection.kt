@@ -50,7 +50,7 @@ fun StudioPresetsSection(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Studio Presets Library
-        GlyphCard(headerTitle = "STUDIO PRESETS & TEMPLATES") {
+        GlyphCard(headerTitle = "STUDIO PRESETS & TEMPLATES", modifier = Modifier) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

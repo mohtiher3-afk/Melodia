@@ -55,6 +55,7 @@ import com.example.domain.LocalModelManager
 import com.example.ui.components.GlyphCard
 import com.example.ui.NothingButton
 import com.example.ui.NothingButtonStyle
+import com.example.ui.nothing.staggeredEnter
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -105,7 +106,7 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header
-        Column {
+        Column(modifier = Modifier.staggeredEnter(1)) {
             Text(
                 text = stringResource(R.string.settings_header_kicker),
                 fontFamily = SpaceMonoFontFamily,
@@ -124,7 +125,7 @@ fun SettingsScreen(
         }
 
         // Cloud key status (not required by the local provider)
-        GlyphCard(headerTitle = "GEMINI CLOUD API") {
+        GlyphCard(headerTitle = "GEMINI CLOUD API", modifier = Modifier.staggeredEnter(2)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -166,7 +167,7 @@ fun SettingsScreen(
         }
 
         // LLM Provider Selection Card
-        GlyphCard(headerTitle = "LLM PROVIDER") {
+        GlyphCard(headerTitle = "LLM PROVIDER", modifier = Modifier.staggeredEnter(3)) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
                     text = stringResource(R.string.settings_provider_help),
@@ -232,7 +233,7 @@ fun SettingsScreen(
         }
 
                 // Local Model Downloads Card
-                        GlyphCard(headerTitle = "LOCAL MODEL DOWNLOADS") {
+                        GlyphCard(headerTitle = "LOCAL MODEL DOWNLOADS", modifier = Modifier.staggeredEnter(4)) {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(
                                     text = stringResource(R.string.settings_model_downloads_help),
@@ -245,7 +246,7 @@ fun SettingsScreen(
                         }
 
                         // Local Audio Privacy Card
-                        GlyphCard(headerTitle = "LOCAL AUDIO PRIVACY") {
+                        GlyphCard(headerTitle = "LOCAL AUDIO PRIVACY", modifier = Modifier.staggeredEnter(5)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -273,7 +274,7 @@ fun SettingsScreen(
             }
         }
 
-        GlyphCard(headerTitle = "SYSTEM PLAYBACK ISLAND") {
+        GlyphCard(headerTitle = "SYSTEM PLAYBACK ISLAND", modifier = Modifier.staggeredEnter(6)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,

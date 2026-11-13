@@ -68,6 +68,7 @@ import com.example.ui.screens.studio.StudioConfigSection
 import com.example.ui.screens.studio.StudioHeader
 import com.example.ui.screens.studio.StudioPresetsSection
 import com.example.ui.screens.studio.StudioTopicSection
+import com.example.ui.nothing.staggeredEnter
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -118,7 +119,8 @@ fun StudioScreen(
             draftsCount = drafts.size,
             onImportAudio = { audioPickerLauncher.launch(arrayOf("audio/*")) },
             onOpenDrafts = { showDraftsDialog = true },
-            onOpenQueue = { showQueueDialog = true }
+            onOpenQueue = { showQueueDialog = true },
+            modifier = Modifier.staggeredEnter(1)
         )
 
         // Dashboard Content
@@ -128,7 +130,8 @@ fun StudioScreen(
                 state = state,
                 onSetUserTopic = { viewModel.setUserTopic(it) },
                 onGenerateLyrics = { viewModel.generateLyricsOnly() },
-                onGeneratePrompt = { viewModel.generateMusicPromptOnly() }
+                onGeneratePrompt = { viewModel.generateMusicPromptOnly() },
+                modifier = Modifier.staggeredEnter(2)
             )
 
             // Secondary configuration follows the primary writing action.
@@ -140,13 +143,14 @@ fun StudioScreen(
                 onSetVocalStyle = { viewModel.setVocalStyle(it) },
                 onSetSelectedBpm = { viewModel.setSelectedBpm(it) },
                 onSetVocalReverb = { viewModel.setVocalReverb(it) },
-                onOpenGenreDirectory = { showGenreDirectoryDialog = true }
+                onOpenGenreDirectory = { showGenreDirectoryDialog = true },
+                modifier = Modifier.staggeredEnter(3)
             )
 
             // Active Draft Overview Card
             val draft = state.currentDraft
             if (draft != null) {
-                GlyphCard(headerTitle = "CURRENT SONG DRAFT OVERVIEW") {
+                GlyphCard(headerTitle = "CURRENT SONG DRAFT OVERVIEW", modifier = Modifier.staggeredEnter(4)) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -216,7 +220,8 @@ fun StudioScreen(
                 state = state,
                 presets = presets,
                 onOpenSavePresetDialog = { showSavePresetDialog = true },
-                onLoadPreset = { viewModel.loadPreset(it) }
+                onLoadPreset = { viewModel.loadPreset(it) },
+                modifier = Modifier.staggeredEnter(5)
             )
         }
     }

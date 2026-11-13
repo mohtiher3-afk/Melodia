@@ -20,6 +20,7 @@ import com.example.ui.components.NothingCoverArt
 import com.example.ui.NothingButton
 import com.example.ui.NothingButtonStyle
 import com.example.ui.components.StatusBadge
+import com.example.ui.nothing.staggeredEnter
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingWhite
@@ -42,7 +43,7 @@ fun VisualsScreen(
     ) {
         val draft = state.currentDraft
 
-        GlyphCard(headerTitle = "COVER ART GENERATOR") {
+        GlyphCard(headerTitle = "COVER ART GENERATOR", modifier = Modifier.staggeredEnter(1)) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 // Header with StatusBadge
                 Row(

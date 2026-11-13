@@ -69,6 +69,7 @@ import com.example.ui.components.GlyphCard
 import com.example.ui.components.NothingCoverArt
 import com.example.ui.NothingButton
 import com.example.ui.NothingButtonStyle
+import com.example.ui.nothing.staggeredEnter
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -205,7 +206,7 @@ fun VaultScreen(
     ) {
         // Header
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().staggeredEnter(1),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -250,7 +251,8 @@ fun VaultScreen(
             onValueChange = { searchQuery = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("vault_search_input"),
+                .testTag("vault_search_input")
+                .staggeredEnter(2),
             placeholder = {
                 Text(
                     "Search by track name, lyrics, or tag...",
@@ -294,7 +296,8 @@ fun VaultScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
+                .horizontalScroll(rememberScrollState())
+                .staggeredEnter(3),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -324,7 +327,8 @@ fun VaultScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
+                    .horizontalScroll(rememberScrollState())
+                    .staggeredEnter(4),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -516,7 +520,8 @@ fun VaultScreen(
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .staggeredEnter(5),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(filteredSongs, key = { it.id }) { song ->
@@ -564,7 +569,8 @@ fun VaultScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(NothingCardSurface)
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .staggeredEnter(6),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {

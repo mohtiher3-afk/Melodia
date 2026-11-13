@@ -108,17 +108,17 @@
     <string name="studio_sentiment_nostalgia">Nostalgia: %1$s%%</string>
     <string name="studio_app_name">MELODIA</string>
     <string name="studio_app_tagline">Text-first lyric studio</string>
-    <string name="studio_step_label">STEP %1$d / %2$d · %3$s</string>
-    <string name="studio_h1">Write the lyrics</string>
-    <string name="studio_prompt_label">PROMPT</string>
-    <string name="studio_topic_placeholder">e.g. Midnight city lights, late night ambition, old memories…</string>
-    <string name="studio_generate_lyrics">GENERATE LYRICS</string>
-    <string name="studio_generate_prompt">GENERATE PROMPT</string>
-    <string name="studio_lyrics_card_title">LYRICS</string>
-    <string name="studio_section_tag">[%1$s]</string>
-    <string name="studio_progress_generating">Generating lyrics…</string>
-    <string name="studio_progress_exporting">Exporting…</string>
-    <string name="studio_section_empty">No sections yet.</string>
+    <string name="studio_step_label" translatable="false">STEP %1$d / %2$d · %3$s</string>
+    <string name="studio_h1" translatable="false">Write the lyrics</string>
+    <string name="studio_prompt_label" translatable="false">PROMPT</string>
+    <string name="studio_topic_placeholder" translatable="false">e.g. Midnight city lights, late night ambition, old memories…</string>
+    <string name="studio_generate_lyrics" translatable="false">GENERATE LYRICS</string>
+    <string name="studio_generate_prompt" translatable="false">GENERATE PROMPT</string>
+    <string name="studio_lyrics_card_title" translatable="false">LYRICS</string>
+    <string name="studio_section_tag" translatable="false">[%1$s]</string>
+    <string name="studio_progress_generating" translatable="false">Generating lyrics…</string>
+    <string name="studio_progress_exporting" translatable="false">Exporting…</string>
+    <string name="studio_section_empty" translatable="false">No sections yet.</string>
     <string name="studio_import_audio">Import audio</string>
     <string name="studio_queue">Queue</string>
     <string name="studio_drafts_count">Drafts (%1$s)</string>
@@ -224,7 +224,7 @@ Use [Verse 1], [Chorus], [Bridge] tags to structure the song.</string>
     <string name="wave_sync_active">PLAYING // SYNC ACTIVE</string>
     <string name="wave_paused">AUDIO PAUSED</string>
     <string name="wave_play_audio">PLAY AUDIO</string>
-    <string name="player_no_lyrics">NO LYRICS AVAILABLE</string>
+    <string name="player_no_lyrics" translatable="false">NO LYRICS AVAILABLE</string>
     <string name="rhyme_exact">EXACT RHYMES</string>
     <string name="rhyme_slant">SLANT RHYMES</string>
     <string name="rhyme_synonyms">POETIC SYNONYMS</string>
@@ -317,14 +317,14 @@ Use [Verse 1], [Chorus], [Bridge] tags to structure the song.</string>
     <string name="status_analyzing_sentiment">Analyzing emotional sentiment…</string>
     <string name="status_sentiment_result">Sentiment: %1$s</string>
     <string name="status_preset_saved">Preset saved // %1$s</string>
-    <string name="island_lyrics_generation">Generating Lyrics</string>
-<string name="island_cover_drawing">Drawing Cover Art</string>
-<string name="island_exporting_video">Exporting Lyric Video</string>
-<string name="island_export_complete">Export Complete</string>
-<string name="island_export_failed">Export Failed</string>
-<string name="island_lyrics_complete">Lyrics Ready</string>
-<string name="island_lyrics_failed">Lyrics Failed</string>
-<string name="island_cover_complete">Cover Ready</string>
-<string name="island_cover_failed">Cover Failed</string>
+    <string name="island_lyrics_generation" translatable="false">Generating Lyrics</string>
+<string name="island_cover_drawing" translatable="false">Drawing Cover Art</string>
+<string name="island_exporting_video" translatable="false">Exporting Lyric Video</string>
+<string name="island_export_complete" translatable="false">Export Complete</string>
+<string name="island_export_failed" translatable="false">Export Failed</string>
+<string name="island_lyrics_complete" translatable="false">Lyrics Ready</string>
+<string name="island_lyrics_failed" translatable="false">Lyrics Failed</string>
+<string name="island_cover_complete" translatable="false">Cover Ready</string>
+<string name="island_cover_failed" translatable="false">Cover Failed</string>
 <string name="status_preset_loaded">Loaded preset // %1$s</string>
 </resources>

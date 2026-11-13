@@ -27,6 +27,7 @@ import com.example.ui.NothingButton
 import com.example.ui.NothingButtonStyle
 import com.example.ui.components.StatusBadge
 import com.example.ui.dialogs.ManualSyncDialog
+import com.example.ui.nothing.staggeredEnter
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.MelodiaViewModel
 
@@ -65,7 +66,7 @@ fun SyncScreen(
         val draft = state.currentDraft
         val karaoke = state.karaokeLyrics
 
-        GlyphCard(headerTitle = "AUTOMATIC LYRICS & SYNC") {
+        GlyphCard(headerTitle = "AUTOMATIC LYRICS & SYNC", modifier = Modifier.staggeredEnter(1)) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 // Header with StatusBadge
                 Row(
@@ -219,7 +220,7 @@ fun SyncScreen(
         }
 
         if (karaoke != null) {
-            GlyphCard(headerTitle = "KARAOKE PREVIEW") {
+            GlyphCard(headerTitle = "KARAOKE PREVIEW", modifier = Modifier.staggeredEnter(2)) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     KaraokeLyricsView(
                         karaokeLyrics = karaoke,
