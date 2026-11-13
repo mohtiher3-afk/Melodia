@@ -2,7 +2,6 @@ package com.example.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,7 +20,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
-import com.example.ui.components.pressable
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
+import com.example.ui.nothing.staggeredEnter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,7 +56,8 @@ fun LibraryScreen(
                 .height(44.dp)
                 .clip(RoundedCornerShape(22.dp))
                 .background(NothingCardSurface)
-                .border(1.dp, NothingBorder, RoundedCornerShape(22.dp)),
+                .border(1.dp, NothingBorder, RoundedCornerShape(22.dp))
+                .staggeredEnter(1),
             verticalAlignment = Alignment.CenterVertically
         ) {
             val tabs = listOf(
@@ -65,37 +66,20 @@ fun LibraryScreen(
             )
             tabs.forEach { (label, key) ->
                 val isSelected = subTab == key
-                val tabBackground by androidx.compose.animation.animateColorAsState(
-                    targetValue = if (isSelected) NothingRed else NothingCardSurface,
-                    animationSpec = androidx.compose.animation.core.tween(180),
-                    label = "library_subtab_bg"
-                )
-                Box(
+                NothingButton(
+                    text = label,
+                    onClick = { subTab = key },
                     modifier = Modifier
                         .weight(1f)
-                        .padding(3.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(tabBackground)
-                        .pressable(
-                            pressedScale = 0.95f,
-                            haptic = com.example.ui.components.TapHaptic
-                        ) { subTab = key }
                         .testTag("library_subtab_${key.lowercase()}"),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = label,
-                        fontFamily = SpaceMonoFontFamily,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isSelected) NothingWhite else NothingGrey
-                    )
-                }
+                    style = if (isSelected) NothingButtonStyle.Primary else NothingButtonStyle.Secondary,
+                    enabled = !isSelected
+                )
             }
         }
 
         // Screen content
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().staggeredEnter(2)) {
             when (subTab) {
                 "TRACKS" -> VaultScreen(viewModel = viewModel, onNavigateToStudio = onNavigateToStudio)
                 "VIDEO" -> VideoExporterScreen(viewModel = viewModel)

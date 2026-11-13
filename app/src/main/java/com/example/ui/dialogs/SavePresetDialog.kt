@@ -1,5 +1,7 @@
 package com.example.ui.dialogs
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -14,7 +16,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.*
 
 @Composable
@@ -39,7 +42,7 @@ fun SavePresetDialog(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "STUDIO // SAVE PRESET",
+                        text = stringResource(R.string.save_preset_header),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 11.sp,
                         color = NothingRed,
@@ -47,7 +50,7 @@ fun SavePresetDialog(
                         letterSpacing = 2.sp
                     )
                     Text(
-                        text = "NAME YOUR TEMPLATE",
+                        text = stringResource(R.string.save_preset_name_label),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
@@ -83,25 +86,27 @@ fun SavePresetDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    NothingPillButton(
-                        text = "CANCEL",
+                    NothingButton(
+                        text = stringResource(R.string.save_preset_cancel),
                         onClick = onDismiss,
-                        modifier = Modifier.weight(1f),
-                        isPrimary = false,
-                        testTag = "cancel_save_preset"
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("cancel_save_preset"),
+                        style = NothingButtonStyle.Secondary
                     )
-                    NothingPillButton(
-                        text = "SAVE PRESET",
+                    NothingButton(
+                        text = stringResource(R.string.save_preset_save),
                         onClick = {
                             if (name.isNotBlank()) {
                                 onSave(name)
                                 onDismiss()
                             }
                         },
-                        modifier = Modifier.weight(1f),
-                        isPrimary = true,
-                        enabled = name.isNotBlank(),
-                        testTag = "confirm_save_preset"
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("confirm_save_preset"),
+                        style = NothingButtonStyle.Primary,
+                        enabled = name.isNotBlank()
                     )
                 }
             }

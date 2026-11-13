@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import java.util.Locale
 import java.util.UUID
 
 data class ImportedAudioMetadata(
@@ -155,11 +156,11 @@ object LocalAudioImporter {
     }
 
     private fun getExtensionFromNameOrMime(name: String, mime: String?): String {
-        val nameExt = name.substringAfterLast(".", "").lowercase()
+        val nameExt = name.substringAfterLast(".", "").lowercase(Locale.ROOT)
         if (nameExt in listOf("mp3", "wav", "m4a", "aac", "ogg", "flac")) {
             return nameExt
         }
-        return when (mime?.lowercase()) {
+        return when (mime?.lowercase(Locale.ROOT)) {
             "audio/wav", "audio/x-wav" -> "wav"
             "audio/mp4", "audio/m4a", "audio/aac" -> "m4a"
             "audio/ogg", "audio/opus" -> "ogg"
@@ -172,7 +173,7 @@ object LocalAudioImporter {
         if (!mime.isNullOrBlank() && mime.startsWith("audio/")) {
             return mime
         }
-        return when (extension.lowercase()) {
+        return when (extension.lowercase(Locale.ROOT)) {
             "wav" -> "audio/wav"
             "m4a", "aac" -> "audio/aac"
             "ogg" -> "audio/ogg"

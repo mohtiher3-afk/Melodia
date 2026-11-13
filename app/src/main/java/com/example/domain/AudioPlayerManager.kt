@@ -2,8 +2,11 @@ package com.example.domain
 
 import android.content.Context
 import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.util.Log
+import com.example.service.PlaybackIslandService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,8 +16,74 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 
-class AudioPlayerManager(private val context: Context) {
+private const val TAG = "AudioPlayerManager"
+
+enum class RepeatMode { OFF, ALL, ONE }
+
+class AudioPlayerManager private constructor(private val context: Context) {
     private var mediaPlayer: MediaPlayer? = null
+    private var audioFocusRequest: AudioFocusRequest? = null
+    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+    /**
+     * F-7: melodic playback must respect audio focus. Focus is requested when a
+     * track starts and abandoned when playback stops. On loss we pause instead
+     * of fighting the other app (calls, navigation, other players).
+     */
+    private val focusChangeListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
+        when (focusChange) {
+            AudioManager.AUDIOFOCUS_LOSS,
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                try {
+                    mediaPlayer?.let { mp ->
+                        if (mp.isPlaying) {
+                            mp.pause()
+                            _isPlaying.value = false
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error pausing on audio focus loss", e)
+                }
+            }
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                try {
+                    mediaPlayer?.setVolume(0.2f, 0.2f)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error ducking volume", e)
+                }
+            }
+            AudioManager.AUDIOFOCUS_GAIN -> {
+                try {
+                    mediaPlayer?.setVolume(1f, 1f)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error restoring volume", e)
+                }
+            }
+        }
+    }
+
+    private fun requestAudioFocus(): Boolean {
+        val request = audioFocusRequest ?: AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .build()
+            )
+            .setOnAudioFocusChangeListener(focusChangeListener)
+            .setWillPauseWhenDucked(true)
+            .build()
+            .also { audioFocusRequest = it }
+        return audioManager.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+    }
+
+    private fun abandonAudioFocus() {
+        try {
+            audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error abandoning audio focus", e)
+        }
+    }
 
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
@@ -40,6 +109,16 @@ class AudioPlayerManager(private val context: Context) {
     private val _currentCoverPath = MutableStateFlow<String?>(null)
     val currentCoverPath: StateFlow<String?> = _currentCoverPath.asStateFlow()
 
+    // Shuffle/Repeat/Volume
+    private val _shuffleMode = MutableStateFlow(false)
+    val shuffleMode: StateFlow<Boolean> = _shuffleMode.asStateFlow()
+
+    private val _repeatMode = MutableStateFlow(RepeatMode.OFF)
+    val repeatMode: StateFlow<RepeatMode> = _repeatMode.asStateFlow()
+
+    private val _volume = MutableStateFlow(1.0f)
+    val volume: StateFlow<Float> = _volume.asStateFlow()
+
     private var positionJob: Job? = null
 
     fun playTrack(
@@ -60,6 +139,7 @@ class AudioPlayerManager(private val context: Context) {
     fun playAudio(url: String) {
         try {
             if (_currentUrl.value == url && mediaPlayer != null) {
+                PlaybackIslandService.start(context)
                 mediaPlayer?.let { mp ->
                     if (mp.isPlaying) {
                         pauseAudio()
@@ -77,6 +157,13 @@ class AudioPlayerManager(private val context: Context) {
             }
 
             stopAudio()
+            // Do not start a new track while another app holds audio focus.
+            if (!requestAudioFocus()) {
+                Log.w(TAG, "Audio focus not granted; playback postponed")
+                return
+            }
+            _currentUrl.value = url
+            PlaybackIslandService.start(context)
 
             mediaPlayer = MediaPlayer().apply {
                 setAudioAttributes(
@@ -95,6 +182,7 @@ class AudioPlayerManager(private val context: Context) {
                 prepareAsync()
                 setOnPreparedListener { mp ->
                     mp.start()
+                    mp.setVolume(_volume.value, _volume.value)
                     _isPlaying.value = true
                     _currentUrl.value = url
                     _duration.value = mp.duration.coerceAtLeast(0)
@@ -129,7 +217,7 @@ class AudioPlayerManager(private val context: Context) {
                         }
                     }
                 }
-                delay(100)
+                delay(250)
             }
         }
     }
@@ -200,6 +288,37 @@ class AudioPlayerManager(private val context: Context) {
             _currentUrl.value = null
             _currentPosition.value = 0
             _duration.value = 0
+            abandonAudioFocus()
+        }
+    }
+
+    fun toggleShuffle() {
+        _shuffleMode.value = !_shuffleMode.value
+    }
+
+    fun toggleRepeat() {
+        _repeatMode.value = when (_repeatMode.value) {
+            RepeatMode.OFF -> RepeatMode.ALL
+            RepeatMode.ALL -> RepeatMode.ONE
+            RepeatMode.ONE -> RepeatMode.OFF
+        }
+    }
+
+    fun setVolume(volume: Float) {
+        val clamped = volume.coerceIn(0f, 1f)
+        _volume.value = clamped
+        mediaPlayer?.setVolume(clamped, clamped)
+    }
+
+    companion object {
+        @Volatile
+        private var instance: AudioPlayerManager? = null
+
+        fun getInstance(context: Context): AudioPlayerManager {
+            instance?.let { return it }
+            return synchronized(this) {
+                instance ?: AudioPlayerManager(context.applicationContext).also { instance = it }
+            }
         }
     }
 }

@@ -36,7 +36,7 @@ object CoverArtGenerator {
         mood: String,
         lyrics: String
     ): String {
-        val genreDesc = when (genre.lowercase()) {
+        val genreDesc = when (genre.lowercase(Locale.ROOT)) {
             "electronic", "edm", "techno", "house" -> "futuristic electronic music with synthesizers and beats"
             "ambient", "drone" -> "atmospheric ambient soundscapes with slow evolving textures"
             "rock", "metal", "punk" -> "raw rock music with electric guitars and driving drums"
@@ -48,7 +48,7 @@ object CoverArtGenerator {
             else -> "music in the $genre genre"
         }
 
-        val moodDesc = when (mood.lowercase()) {
+        val moodDesc = when (mood.lowercase(Locale.ROOT)) {
             "dark", "melancholic", "sad", "moody" -> "dark, melancholic atmosphere"
             "energetic", "upbeat", "happy", "bright" -> "energetic, uplifting energy"
             "chill", "relaxed", "calm", "peaceful" -> "calm, peaceful atmosphere"
@@ -120,7 +120,8 @@ object CoverArtGenerator {
 
             // --- Derive seed from title + genre for variety ---
             val seed = (title + genre).hashCode()
-            val rng = Random(abs(seed.toLong()) and 0x7FFFFFFF.toLong())
+            val rng = Random(abs(seed.toLong()) and 0x7FFFFFFFL)
+            val useRedAccent = rng.nextBoolean() || mood.contains("energetic", ignoreCase = true) || mood.contains("bright", ignoreCase = true)
 
             // --- Dynamic margin based on seed ---
             val margin = 40f + (rng.nextFloat() * 20f).coerceIn(40f, 60f)
@@ -226,7 +227,7 @@ object CoverArtGenerator {
                 isFakeBoldText = false
             }
             canvas.drawText(
-                "${genre.uppercase()} // ${mood.uppercase()}",
+                "${genre.uppercase(Locale.ROOT)} // ${mood.uppercase(Locale.ROOT)}",
                 margin + 30f, size - margin - 10f,
                 whitePaint
             )
@@ -240,14 +241,14 @@ object CoverArtGenerator {
                         }
             val genreFormatted = genre.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
             canvas.drawText(
-                "NOTHING // MELODIA • $genreFormatted",
+                "NOTHING // MELODIA • ${genre.replaceFirstChar { it.uppercase(Locale.ROOT) }}",
                 size - margin - 280f, margin + 36f,
                 whitePaint
             )
 
             // --- Save bitmap ---
             val coversDir = File(context.filesDir, "covers").apply { mkdirs() }
-            val cleanName = title.lowercase().replace(Regex("[^a-z0-9]"), "_").take(16)
+            val cleanName = title.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]"), "_").take(16)
             val file = File(coversDir, "cover_${cleanName}_${System.currentTimeMillis()}.png")
             FileOutputStream(file).use { out ->
                 bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
@@ -264,7 +265,7 @@ object CoverArtGenerator {
 
     fun saveCoverBitmap(context: Context, bitmap: Bitmap, title: String): String {
         val coversDir = File(context.filesDir, "covers").apply { mkdirs() }
-        val cleanName = title.lowercase().replace(Regex("[^a-z0-9]"), "_").take(16)
+        val cleanName = title.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]"), "_").take(16)
         val file = File(coversDir, "cover_${cleanName}_${System.currentTimeMillis()}.png")
         FileOutputStream(file).use { out ->
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
@@ -279,7 +280,7 @@ object CoverArtGenerator {
 
         try {
             val bitmap = BitmapFactory.decodeFile(sourceFile.absolutePath) ?: return false
-            val safeTitle = title.lowercase().replace(Regex("[^a-z0-9]"), "_").take(20)
+            val safeTitle = title.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]"), "_").take(20)
             val fileName = "melodia_cover_${safeTitle}_${System.currentTimeMillis()}.png"
 
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {

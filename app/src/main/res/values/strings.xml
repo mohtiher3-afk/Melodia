@@ -1,4 +1,330 @@
 <resources>
     <string name="app_name">Melodia</string>
-</resources>
 
+    <!-- Bottom navigation (NothingBottomBar) -->
+    <string name="tab_studio">Studio</string>
+    <string name="tab_lyrics">Lyrics</string>
+    <string name="tab_library">Library</string>
+    <string name="tab_sync">Sync</string>
+    <string name="tab_more">More</string>
+    <string name="tab_visuals">Visuals</string>
+    <string name="tab_export">Export</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- Floating player bar (FloatingPlayerBar) -->
+    <string name="player_now_playing">NOW PLAYING // NOTHING PLAYER</string>
+    <string name="player_app_badge">MELODIA v3 PLAYBACK</string>
+    <string name="player_live_lyrics">LIVE SYNCHRONIZED LYRICS</string>
+    <string name="player_realtime_sync">REALTIME SYNC</string>
+    <string name="player_state_active">ACTIVE</string>
+
+    <!-- Settings screen (SettingsScreen) -->
+    <string name="settings_header_kicker">CONFIG // SYSTEM</string>
+    <string name="settings_title">Melodia Studio Settings</string>
+    <string name="settings_gemini_api_key_label">Cloud Gemini API Key</string>
+    <string name="settings_provider_help">Nano runs on-device on supported phones (AICore may download its model once). Gemma 3 runs fully offline after a Settings download. Cloud options may have quotas or charges:</string>
+    <string name="settings_model_downloads_help">Download free, open-source AI models directly to this device. No API keys, no cloud. Each model downloads with one tap.</string>
+    <string name="settings_allow_cloud_transcription">Allow Gemini cloud transcription</string>
+    <string name="settings_floating_playback_controls">Floating playback controls</string>
+    <string name="settings_timing_format_help">Select default timing format when exporting synced lyrics:</string>
+    <string name="settings_about_title">Melodia v3.2 Text-First Lyric Studio</string>
+    <string name="settings_about_body">// Gemini Nano lyrics on supported phones\n// Cloud audio transcription is OFF by default\n// Local Whisper and image-diffusion models are pending</string>
+
+    <!-- Local model download states & actions (SettingsScreen) -->
+    <string name="model_state_ready">READY</string>
+    <string name="model_state_paused">PAUSED: %1$s / %2$s</string>
+    <string name="model_state_failed">FAILED: %1$s</string>
+    <string name="model_action_download">DOWNLOAD</string>
+    <string name="model_action_pause">PAUSE</string>
+    <string name="model_action_resume">RESUME</string>
+    <string name="model_action_retry">RETRY</string>
+    <string name="model_action_remove">Remove</string>
+    <string name="model_size_format">Size: %1$s</string>
+    <string name="model_download_progress">%1$s%% • %2$s / %3$s</string>
+
+    <!-- Video exporter screen (VideoExporterScreen) -->
+    <string name="exporter_header_kicker">EXPORT // LYRIC VIDEO STUDIO</string>
+    <string name="exporter_title">Hardware MP4 Video Exporter</string>
+    <string name="exporter_no_draft">NO ACTIVE SONG DRAFT // CREATE LYRICS FIRST IN STUDIO</string>
+    <string name="exporter_bitrate_label">BITRATE</string>
+    <string name="exporter_bitrate_mbps">%1$s Mbps</string>
+    <string name="exporter_share_video">SHARE VIDEO</string>
+    <string name="exporter_complete_title">EXPORT COMPLETE</string>
+    <string name="exporter_complete_default">Lyric video exported</string>
+
+    <!-- Vault / library screen (VaultScreen) -->
+    <string name="vault_header_kicker">LIBRARY // CATEGORIES &amp; TAGS</string>
+    <string name="vault_action_import">IMPORT</string>
+    <string name="vault_action_import_audio">+ IMPORT AUDIO</string>
+    <string name="vault_all_tag">ALL %1$s</string>
+    <string name="vault_tag_hash">#%1$s</string>
+    <string name="vault_drafts_count">%1$s AUTO-SAVED DRAFTS IN DATABASE</string>
+    <string name="vault_tracks_matching">%1$s TRACKS MATCHING TAGS</string>
+    <string name="vault_selected_count">%1$s SELECTED</string>
+    <string name="vault_empty_drafts">NO AUTO-SAVED DRAFTS</string>
+    <string name="vault_empty_drafts_help">Lyrics and prompt edits in the Studio are automatically saved to your local drafts database.</string>
+    <string name="vault_empty_tracks">NO TRACKS MATCHING TAGS</string>
+    <string name="vault_empty_tracks_help">Try clearing the search query or selecting a different genre, mood, or status filter.</string>
+    <string name="vault_reset_filters">RESET FILTERS</string>
+    <string name="vault_edit_tags">EDIT TAGS</string>
+    <string name="vault_track_local_badge">LOCAL</string>
+    <string name="vault_matched_snippet">Matched: %1$s</string>
+
+    <!-- Sync screen (SyncScreen) -->
+    <string name="sync_alignment_status">ALIGNMENT STATUS</string>
+    <string name="sync_imported_audio">IMPORTED AUDIO: %1$s</string>
+    <string name="sync_no_audio">NO LOCAL AUDIO TRACK IMPORTED</string>
+    <string name="sync_import_audio">IMPORT LOCAL AUDIO FILE</string>
+    <string name="sync_timing_help">Timing follows active audio regions and lyric sections. This is a heuristic, not speech recognition; review before export.</string>
+    <string name="sync_word_timestamps">WORD TIMESTAMPS GENERATED (%1$s WORDS)</string>
+    <string name="sync_share_lrc">SHARE LRC</string>
+    <string name="sync_share_json">SHARE JSON</string>
+    <string name="sync_position_clock">%1$s / %2$s</string>
+
+    <!-- Queue screen (QueueScreen) -->
+    <string name="queue_header_kicker">STUDIO QUEUE // DRAFTS MONITOR</string>
+    <string name="queue_active_projects">Active Projects</string>
+    <string name="queue_close">CLOSE</string>
+    <string name="queue_empty">NO DRAFTS IN QUEUE</string>
+    <string name="queue_empty_help">Create new lyrics in Studio to begin.</string>
+    <string name="queue_create_lyrics">CREATE LYRICS</string>
+    <string name="queue_draft_meta">%1$s // %2$s // %3$s</string>
+    <string name="queue_load_in_studio">LOAD IN STUDIO</string>
+
+    <!-- Studio sub-sections -->
+    <string name="studio_subgenres_header">SUBGENRES MATRIX // RECENT &amp; ALL</string>
+    <string name="studio_browse_more">BROWSE &gt;</string>
+    <string name="studio_quick_suggestions">QUICK SUGGESTIONS // TAP TO ADD</string>
+    <string name="studio_keyword_hash">#%1$s</string>
+    <string name="studio_vocal_style">VOCAL STYLE</string>
+    <string name="studio_tempo_bpm">TEMPO / BPM</string>
+    <string name="studio_reverb_space">REVERB / ACOUSTIC SPACE</string>
+    <string name="studio_analyze_sentiment">ANALYZE SENTIMENT</string>
+    <string name="studio_analyzing">ANALYZING...</string>
+    <string name="studio_sentiment_dominant">DOMINANT: %1$s</string>
+    <string name="studio_sentiment_joy">Joy: %1$s%%</string>
+    <string name="studio_sentiment_energy">Energy: %1$s%%</string>
+    <string name="studio_sentiment_melancholy">Melancholy: %1$s%%</string>
+    <string name="studio_sentiment_nostalgia">Nostalgia: %1$s%%</string>
+    <string name="studio_app_name">MELODIA</string>
+    <string name="studio_app_tagline">Text-first lyric studio</string>
+    <string name="studio_step_label" translatable="false">STEP %1$d / %2$d · %3$s</string>
+    <string name="studio_h1" translatable="false">Write the lyrics</string>
+    <string name="studio_prompt_label" translatable="false">PROMPT</string>
+    <string name="studio_topic_placeholder" translatable="false">e.g. Midnight city lights, late night ambition, old memories…</string>
+    <string name="studio_generate_lyrics" translatable="false">GENERATE LYRICS</string>
+    <string name="studio_generate_prompt" translatable="false">GENERATE PROMPT</string>
+    <string name="studio_lyrics_card_title" translatable="false">LYRICS</string>
+    <string name="studio_section_tag" translatable="false">[%1$s]</string>
+    <string name="studio_progress_generating" translatable="false">Generating lyrics…</string>
+    <string name="studio_progress_exporting" translatable="false">Exporting…</string>
+    <string name="studio_section_empty" translatable="false">No sections yet.</string>
+    <string name="studio_import_audio">Import audio</string>
+    <string name="studio_queue">Queue</string>
+    <string name="studio_drafts_count">Drafts (%1$s)</string>
+    <string name="studio_save_config_template">SAVE CONFIG TEMPLATE</string>
+    <string name="studio_save_as_preset">SAVE AS PRESET</string>
+    <string name="studio_no_presets">NO PRESETS SAVED YET</string>
+    <string name="studio_preset_meta">%1$s // %2$s</string>
+    <string name="studio_revert_history">REVERT TO PREVIOUS PROMPT CONFIGURATIONS</string>
+    <string name="studio_version_label">v%1$s // %2$s</string>
+
+    <!-- Drafts dialog (DraftsDialog) -->
+    <string name="drafts_db_kicker">LOCAL DATABASE // AUTO-SAVE</string>
+    <string name="drafts_saved_count">SAVED DRAFTS (%1$s)</string>
+    <string name="drafts_autosave_help">Lyric edits and generations auto-save here whenever you pause typing.</string>
+    <string name="drafts_empty">NO DRAFTS YET</string>
+    <string name="drafts_empty_help">Start editing lyrics or topic in the Studio to create auto-saved drafts.</string>
+    <string name="drafts_active_badge">ACTIVE</string>
+    <string name="drafts_meta_line">%1$s / %2$s</string>
+    <string name="drafts_meta_slash">/</string>
+    <string name="drafts_topic_label">Topic: %1$s</string>
+    <string name="drafts_snippet_quote">"%1$s"</string>
+    <string name="drafts_restore">RESTORE TO STUDIO</string>
+    <string name="drafts_clear_all">CLEAR ALL</string>
+    <string name="drafts_close">CLOSE</string>
+
+    <!-- Genre selection component (GenreSelection) -->
+    <string name="genre_recent_header">RECENTLY VIEWED // LAST 3</string>
+    <string name="genre_room_db_badge">ROOM DB</string>
+    <string name="genre_no_recent">NO RECENTLY VIEWED SUBGENRES</string>
+    <string name="genre_recent_help">Select any subgenre below to track and persist your last 3 choices in Room.</string>
+    <string name="genre_catalogue_header">MASTER SUBGENRE CATALOGUE</string>
+    <string name="genre_rec_badge">REC // 0%1$s</string>
+
+    <!-- Lyrics editor (LyricsScreen) -->
+    <string name="lyrics_line_word_count">%1$s LINES // %2$s WORDS</string>
+    <string name="lyrics_duration_sections">~%1$s // %2$s SECTIONS</string>
+    <string name="lyrics_dictate">DICTATE</string>
+    <string name="lyrics_rhyme">RHYME</string>
+    <string name="lyrics_editor_placeholder">Write or paste your lyrics here...
+Use [Verse 1], [Chorus], [Bridge] tags to structure the song.</string>
+
+    <!-- Rhyme dialog (RhymeDialog) -->
+    <string name="rhyme_header">LYRICS // RHYME ENGINE</string>
+    <string name="rhymes_for">RHYMES FOR \"%1$s\"</string>
+    <string name="rhyme_analyzing">ANALYZING SOUND PATTERNS...</string>
+    <string name="rhyme_unavailable">RHYME ENGINE UNAVAILABLE. CHECK YOUR CONNECTION.</string>
+    <string name="rhyme_done">DONE</string>
+
+    <!-- Save preset dialog (SavePresetDialog) -->
+    <string name="save_preset_header">STUDIO // SAVE PRESET</string>
+    <string name="save_preset_name_label">NAME YOUR TEMPLATE</string>
+    <string name="save_preset_cancel">CANCEL</string>
+    <string name="save_preset_save">SAVE PRESET</string>
+
+    <!-- Waveform viewer (NothingWaveformView) -->
+    <string name="waveform_timings_header">WAVEFORM &amp; SYNCHRONIZED TIMINGS</string>
+    <string name="waveform_markers_header">SYNCHRONIZED TIMING MARKERS</string>
+    <string name="waveform_active_badge">ACTIVE</string>
+    <string name="waveform_close_viewer">CLOSE VIEWER</string>
+
+    <!-- Shared Nothing components (NothingComponents) -->
+    <string name="nothing_rec_on">REC // ON</string>
+    <string name="nothing_brand_badge">MELODIA // 01</string>
+    <string name="nothing_timing_header">LYRIC TIMING // SECTION ALIGNMENT</string>
+    <string name="nothing_section_tag">[%1$s]</string>
+
+    <!-- Local audio player (LocalAudioPlayer) -->
+    <string name="audio_preview_header">AUDIO PREVIEW // LOCAL</string>
+    <string name="audio_local_file_badge">LOCAL FILE</string>
+    <string name="audio_source_label">SOURCE: %1$s</string>
+    <string name="audio_save_to_library">SAVE AUDIO TO LOCAL LIBRARY</string>
+
+    <!-- More screen (MoreScreen) -->
+    <string name="more_header_kicker">MORE // WORKSPACE</string>
+    <string name="more_title">Tools &amp; settings</string>
+    <string name="more_subtitle">Creative tools and app preferences</string>
+
+    <!-- Voice dictation dialog (VoiceDictationDialog) -->
+    <string name="dictation_header">VOICE-TO-TEXT // STUDIO MIC</string>
+    <string name="dictation_preview_header">DICTATED LYRICS PREVIEW</string>
+    <string name="dictation_insert">INSERT DICTATED LYRICS</string>
+
+    <!-- Genre selection dialog (GenreSelectionDialog) -->
+    <string name="genre_dialog_kicker">MASTER ARCHITECTURE // DIRECTORY</string>
+    <string name="genre_dialog_header">GENRE &amp; SUBGENRE SELECTION</string>
+    <string name="genre_dialog_close">CLOSE DIRECTORY</string>
+
+    <!-- Studio screen + Visuals screen -->
+    <string name="studio_copy_prompt_lyrics">COPY PROMPT &amp; LYRICS</string>
+    <string name="studio_music_prompt_label">Music Prompt: %1$s</string>
+    <string name="studio_drafting_lyrics">DRAFTING LYRICS…</string>
+    <string name="studio_polishing">POLISHING…</string>
+    <string name="studio_header_audio_on">Audio on</string>
+    <string name="studio_header_text_only">Text only</string>
+    <string name="studio_autosave_saving">Saving draft…</string>
+    <string name="studio_autosave_saved_at">Saved at %1$s</string>
+    <string name="studio_autosave_on">Auto-save is on</string>
+    <string name="visuals_preview_header">VISUAL PREVIEW</string>
+    <!-- Conditional/derived strings (i18n slice 6) -->
+    <string name="lyrics_writing">WRITING…</string>
+    <string name="lyrics_generate">GENERATE</string>
+    <string name="player_play">PLAY</string>
+    <string name="wave_sync_active">PLAYING // SYNC ACTIVE</string>
+    <string name="wave_paused">AUDIO PAUSED</string>
+    <string name="wave_play_audio">PLAY AUDIO</string>
+    <string name="player_no_lyrics" translatable="false">NO LYRICS AVAILABLE</string>
+    <string name="rhyme_exact">EXACT RHYMES</string>
+    <string name="rhyme_slant">SLANT RHYMES</string>
+    <string name="rhyme_synonyms">POETIC SYNONYMS</string>
+    <string name="rhyme_inserted">INSERTED: %1$s</string>
+    <string name="rhyme_tap_to_insert">TAP A WORD TO INSERT IT INTO THE DRAFT</string>
+    <string name="settings_gemini_configured_note">Configured; cloud requests may use quota/billing</string>
+    <string name="settings_gemini_not_configured_note">Not configured — not needed for local Nano</string>
+    <string name="settings_cloud_transcription_on">Imported audio may be sent online (up to 14 MB).</string>
+    <string name="settings_cloud_transcription_off">Off by default. Local audio stays on this device; Whisper model integration is pending.</string>
+    <string name="settings_island_enabled">Enabled. The Island appears while a track is active.</string>
+    <string name="settings_island_off_default">Off by default. You can turn it on at any time.</string>
+    <string name="settings_island_off_permission">Off by default. Android asks for display-over-apps access only if enabled.</string>
+    <!-- ViewModel status/feedback messages (i18n slice 7) -->
+    <string name="status_checking_provider">Checking the text-generation provider…</string>
+    <string name="status_provider_init_failed">Text provider initialization failed: %1$s</string>
+    <string name="status_provider_init_help">Couldn\'t start the text provider. Check Settings and try again.</string>
+    <string name="status_provider_check_failed">Text provider availability check failed: %1$s</string>
+    <string name="status_provider_check_help">Couldn\'t check this provider. Try selecting another one in Settings.</string>
+    <string name="status_provider_not_ready">Choose or configure an available text provider in Settings.</string>
+    <string name="status_drafting_with">Drafting structured lyrics with %1$s…</string>
+    <string name="status_creating_with">Creating lyrics with %1$s…</string>
+    <string name="status_generate_draft_failed">Failed to generate draft</string>
+    <string name="status_lyrics_drafted">Lyrics Drafted // %1$s</string>
+    <string name="status_lyrics_ready">Lyrics ready: %1$s</string>
+    <string name="status_lyrics_failed">Lyrics drafting failed: %1$s</string>
+    <string name="status_lyrics_error">Couldn\'t create lyrics: %1$s</string>
+    <string name="status_please_retry">Please try again.</string>
+    <string name="status_need_draft">Create or restore a draft first.</string>
+    <string name="status_creating_prompt_full">Creating text production prompt…</string>
+    <string name="status_creating_prompt">Creating the text prompt…</string>
+    <string name="status_prompt_basic">Basic Music Prompt Generated Locally</string>
+    <string name="status_prompt_text_only">Music Prompt Generated (Text Only)</string>
+    <string name="status_prompt_fallback">Basic prompt created locally. %1$s</string>
+    <string name="status_polish_unavailable">AI polishing was unavailable.</string>
+    <string name="status_prompt_polished">AI-polished prompt ready and saved to this draft.</string>
+    <string name="status_prompt_failed">Prompt generation failed: %1$s</string>
+    <string name="status_prompt_error">Couldn\'t create the prompt: %1$s</string>
+    <string name="status_need_draft_studio">Create or restore a draft in Studio first.</string>
+    <string name="status_creating_cover">Creating monochromatic cover art…</string>
+    <string name="status_generating_cover">Generating cover art…</string>
+    <string name="status_cover_generated">Cover Art Generated // Nothing Monochrome</string>
+    <string name="status_cover_ready">Cover art ready.</string>
+    <string name="status_cover_failed">Cover art generation failed: %1$s</string>
+    <string name="status_cover_error">Couldn\'t generate cover art: %1$s</string>
+    <string name="status_reading_audio">Reading local audio file…</string>
+    <string name="status_audio_too_large">Audio imported // File is over the 14 MB cloud transcription limit</string>
+    <string name="status_audio_local_only">Audio imported locally // cloud transcription is off; no audio uploaded</string>
+    <string name="status_audio_transcribing">Audio imported // Transcribing with Gemini cloud AI…</string>
+    <string name="status_transcribed_ok">Local track imported // Lyrics transcribed via Gemini cloud</string>
+    <string name="status_transcribe_skipped_size">Local track imported // Cloud transcription skipped (file over 14 MB)</string>
+    <string name="status_transcribe_skipped_off">Local track imported // Kept on device; cloud transcription is off</string>
+    <string name="status_transcribe_unavailable">Local track imported // Cloud AI transcription unavailable — retry from SYNC</string>
+    <string name="status_import_failed">Import failed: %1$s</string>
+    <string name="status_unknown_error">Unknown error</string>
+    <string name="status_need_audio_transcribe">Import a local audio file before transcription</string>
+    <string name="status_transcribe_off">Cloud transcription is off. This build does not yet include a local Whisper model; no audio was uploaded.</string>
+    <string name="status_transcribe_limit">AI transcription supports audio files up to 14 MB. The imported audio is kept locally.</string>
+    <string name="status_lyrics_exist">Lyrics already exist. Confirm replacement before transcribing this track.</string>
+    <string name="status_transcribing_vocals">Transcribing imported vocals with AI…</string>
+    <string name="status_no_transcription">No transcription was returned. Check the Gemini API key and network connection.</string>
+    <string name="status_transcribed_timing">Lyrics transcribed // Creating automatic word timing…</string>
+    <string name="status_transcription_failed">Transcription failed: %1$s</string>
+    <string name="status_need_lyrics_align">Add lyrics before aligning audio</string>
+    <string name="status_need_audio_align">Import a local audio file first</string>
+
+    <!-- Whisper.cpp local transcription -->
+    <string name="status_whisper_transcribing">Transcribing with local Whisper (%1$s)…</string>
+    <string name="status_whisper_aligned">Word timings aligned via Whisper // %1$d words</string>
+    <string name="status_whisper_failed">Whisper transcription failed: %1$s</string>
+    <string name="status_whisper_model_missing">No Whisper model downloaded. Download whisper_tiny or whisper_base in Settings.</string>
+    <string name="status_whisper_fallback">Whisper unavailable — using estimated timing.</string>
+
+    <string name="status_creating_timing">Creating automatic word timing from local audio duration…</string>
+    <string name="status_timing_created">Estimated word timings created // %1$d words — review and adjust</string>
+    <string name="status_alignment_note">Alignment note: %1$s</string>
+    <string name="status_starting_export">Starting hardware video encoding…</string>
+    <string name="status_export_complete">Export Complete!</string>
+    <string name="status_video_exported">Lyric Video Exported // %1$s</string>
+    <string name="status_export_failed_short">Export failed</string>
+    <string name="status_video_export_failed">Video export failed</string>
+    <string name="status_no_audio">No audio attached to %1$s</string>
+    <string name="status_loaded_studio">Loaded into Studio // %1$s</string>
+    <string name="status_tags_updated">Tags updated for %1$d track(s)</string>
+    <string name="status_regenerating_cover">Generating new cover art for %1$s…</string>
+    <string name="status_cover_saved">New cover art saved // %1$s</string>
+    <string name="status_cover_note">Cover art generation note</string>
+    <string name="status_has_intro">Song already contains [Intro]</string>
+    <string name="status_tag_inserted">Inserted %1$s section tag</string>
+    <string name="status_draft_restored">Restored draft // %1$s</string>
+    <string name="status_analyzing_sentiment">Analyzing emotional sentiment…</string>
+    <string name="status_sentiment_result">Sentiment: %1$s</string>
+    <string name="status_preset_saved">Preset saved // %1$s</string>
+    <string name="island_lyrics_generation" translatable="false">Generating Lyrics</string>
+<string name="island_cover_drawing" translatable="false">Drawing Cover Art</string>
+<string name="island_exporting_video" translatable="false">Exporting Lyric Video</string>
+<string name="island_export_complete" translatable="false">Export Complete</string>
+<string name="island_export_failed" translatable="false">Export Failed</string>
+<string name="island_lyrics_complete" translatable="false">Lyrics Ready</string>
+<string name="island_lyrics_failed" translatable="false">Lyrics Failed</string>
+<string name="island_cover_complete" translatable="false">Cover Ready</string>
+<string name="island_cover_failed" translatable="false">Cover Failed</string>
+<string name="status_preset_loaded">Loaded preset // %1$s</string>
+</resources>

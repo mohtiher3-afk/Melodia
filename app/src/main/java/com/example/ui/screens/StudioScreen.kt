@@ -6,6 +6,8 @@ import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -57,7 +59,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.domain.LyricsExportManager
 import com.example.ui.components.GlyphCard
 import com.example.ui.components.NothingCoverArt
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.dialogs.DraftsDialog
 import com.example.ui.dialogs.GenreSelectionDialog
 import com.example.ui.dialogs.SavePresetDialog
@@ -65,6 +68,7 @@ import com.example.ui.screens.studio.StudioConfigSection
 import com.example.ui.screens.studio.StudioHeader
 import com.example.ui.screens.studio.StudioPresetsSection
 import com.example.ui.screens.studio.StudioTopicSection
+import com.example.ui.nothing.staggeredEnter
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -115,12 +119,22 @@ fun StudioScreen(
             draftsCount = drafts.size,
             onImportAudio = { audioPickerLauncher.launch(arrayOf("audio/*")) },
             onOpenDrafts = { showDraftsDialog = true },
-            onOpenQueue = { showQueueDialog = true }
+            onOpenQueue = { showQueueDialog = true },
+            modifier = Modifier.staggeredEnter(1)
         )
 
         // Dashboard Content
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            // Configuration Controls
+            // Lead with the primary task; keep the creative controls immediately visible.
+            StudioTopicSection(
+                state = state,
+                onSetUserTopic = { viewModel.setUserTopic(it) },
+                onGenerateLyrics = { viewModel.generateLyricsOnly() },
+                onGeneratePrompt = { viewModel.generateMusicPromptOnly() },
+                modifier = Modifier.staggeredEnter(2)
+            )
+
+            // Secondary configuration follows the primary writing action.
             StudioConfigSection(
                 state = state,
                 onSetGenre = { viewModel.setGenre(it) },
@@ -129,21 +143,14 @@ fun StudioScreen(
                 onSetVocalStyle = { viewModel.setVocalStyle(it) },
                 onSetSelectedBpm = { viewModel.setSelectedBpm(it) },
                 onSetVocalReverb = { viewModel.setVocalReverb(it) },
-                onOpenGenreDirectory = { showGenreDirectoryDialog = true }
-            )
-
-            // Topic & Actions
-            StudioTopicSection(
-                state = state,
-                onSetUserTopic = { viewModel.setUserTopic(it) },
-                onGenerateLyrics = { viewModel.generateLyricsOnly() },
-                onGeneratePrompt = { viewModel.generateMusicPromptOnly() }
+                onOpenGenreDirectory = { showGenreDirectoryDialog = true },
+                modifier = Modifier.staggeredEnter(3)
             )
 
             // Active Draft Overview Card
             val draft = state.currentDraft
             if (draft != null) {
-                GlyphCard(headerTitle = "CURRENT SONG DRAFT OVERVIEW") {
+                GlyphCard(headerTitle = "CURRENT SONG DRAFT OVERVIEW", modifier = Modifier.staggeredEnter(4)) {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -173,18 +180,18 @@ fun StudioScreen(
                         }
 
                         // Copy Prompt & Lyrics Button
-                                                NothingPillButton(
-                                                    text = "COPY PROMPT & LYRICS",
-                                                    onClick = {
-                                                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                                        val copyText = "PROMPT: ${draft.promptText}\n\nLYRICS: ${draft.lyrics}"
-                                                        val clipData = ClipData.newPlainText("melodia_draft", copyText)
-                                                        clipboard.setPrimaryClip(clipData)
-                                                        Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
-                                                    },
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    isRedAccent = true
-                                                )
+                        NothingButton(
+                            text = stringResource(R.string.studio_copy_prompt_lyrics),
+                            onClick = {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                val copyText = "PROMPT: ${draft.promptText}\n\nLYRICS: ${draft.lyrics}"
+                                val clipData = ClipData.newPlainText("melodia_draft", copyText)
+                                clipboard.setPrimaryClip(clipData)
+                                Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
+                            },
+                            style = NothingButtonStyle.Primary,
+                            modifier = Modifier.fillMaxWidth()
+                        )
 
                         // Cover art preview
                         NothingCoverArt(
@@ -198,7 +205,7 @@ fun StudioScreen(
 
                         if (draft.promptText.isNotBlank()) {
                             Text(
-                                text = "Music Prompt: ${draft.promptText}",
+                                text = stringResource(R.string.studio_music_prompt_label, draft.promptText),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 11.sp,
                                 color = NothingGrey
@@ -213,7 +220,8 @@ fun StudioScreen(
                 state = state,
                 presets = presets,
                 onOpenSavePresetDialog = { showSavePresetDialog = true },
-                onLoadPreset = { viewModel.loadPreset(it) }
+                onLoadPreset = { viewModel.loadPreset(it) },
+                modifier = Modifier.staggeredEnter(5)
             )
         }
     }

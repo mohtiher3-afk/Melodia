@@ -1,5 +1,7 @@
 package com.example.ui.screens.studio
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -32,9 +34,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.MelodiaActionButton
-import com.example.ui.MelodiaButtonStyle
+import com.example.ui.NothingButton
 import com.example.ui.MelodiaRadius
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
 import com.example.ui.theme.NothingDotMatrixFontFamily
@@ -60,7 +62,8 @@ fun StudioHeader(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Row(
@@ -70,7 +73,7 @@ fun StudioHeader(
         ) {
             Column(modifier = Modifier.weight(1f, fill = false)) {
                 Text(
-                    text = "Melodia",
+                    text = stringResource(R.string.studio_app_name),
                     fontFamily = NothingDotMatrixFontFamily,
                     fontSize = 36.sp,
                     lineHeight = 40.sp,
@@ -78,7 +81,7 @@ fun StudioHeader(
                     maxLines = 1
                 )
                 Text(
-                    text = "Text-first lyric studio",
+                    text = stringResource(R.string.studio_app_tagline),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 12.sp,
                     color = NothingGrey
@@ -100,24 +103,27 @@ fun StudioHeader(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            MelodiaActionButton(
-                text = "Import audio",
+            NothingButton(
+                text = stringResource(R.string.studio_import_audio),
                 onClick = onImportAudio,
                 icon = Icons.Default.Upload,
-                style = MelodiaButtonStyle.Primary,
-                modifier = Modifier.weight(1.35f)
+                modifier = Modifier.weight(1.35f),
+                style = NothingButtonStyle.Primary,
+                testTag = "studio_import_audio"
             )
-            MelodiaActionButton(
-                text = "Queue",
+            NothingButton(
+                text = stringResource(R.string.studio_queue),
                 onClick = onOpenQueue,
                 modifier = Modifier
                     .weight(1f)
-                    .testTag("studio_open_queue")
+                    .testTag("studio_open_queue"),
+                style = NothingButtonStyle.Secondary
             )
-            MelodiaActionButton(
-                text = "Drafts ($draftsCount)",
+            NothingButton(
+                text = stringResource(R.string.studio_drafts_count, draftsCount),
                 onClick = onOpenDrafts,
-                modifier = Modifier.weight(1.1f)
+                modifier = Modifier.weight(1.1f),
+                style = NothingButtonStyle.Secondary
             )
         }
     }
@@ -142,7 +148,7 @@ private fun ModeChip(isAudioActive: Boolean, modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.width(6.dp))
         Text(
-            text = if (isAudioActive) "Audio on" else "Text only",
+            text = if (isAudioActive) stringResource(R.string.studio_header_audio_on) else stringResource(R.string.studio_header_text_only),
             fontFamily = SpaceMonoFontFamily,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold,
@@ -190,9 +196,9 @@ private fun SaveStatusLine(
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = when {
-                isSaving -> "Saving draft\u2026"
-                lastSavedTime != null -> "Saved at $lastSavedTime"
-                else -> "Auto-save is on"
+                isSaving -> stringResource(R.string.studio_autosave_saving)
+                lastSavedTime != null -> stringResource(R.string.studio_autosave_saved_at, lastSavedTime)
+                else -> stringResource(R.string.studio_autosave_on)
             },
             fontFamily = SpaceMonoFontFamily,
             fontSize = 11.sp,

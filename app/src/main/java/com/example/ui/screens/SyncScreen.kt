@@ -14,6 +14,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -21,9 +23,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.domain.LyricsExportManager
 import com.example.ui.components.GlyphCard
 import com.example.ui.components.KaraokeLyricsView
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.components.StatusBadge
 import com.example.ui.dialogs.ManualSyncDialog
+import com.example.ui.nothing.staggeredEnter
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.MelodiaViewModel
 
@@ -62,7 +66,7 @@ fun SyncScreen(
         val draft = state.currentDraft
         val karaoke = state.karaokeLyrics
 
-        GlyphCard(headerTitle = "AUTOMATIC LYRICS & SYNC") {
+        GlyphCard(headerTitle = "AUTOMATIC LYRICS & SYNC", modifier = Modifier.staggeredEnter(1)) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 // Header with StatusBadge
                 Row(
@@ -71,7 +75,7 @@ fun SyncScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "ALIGNMENT STATUS",
+                        text = stringResource(R.string.sync_alignment_status),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         color = NothingGrey
@@ -88,7 +92,7 @@ fun SyncScreen(
 
                 if (state.isLocalAudioActive && state.localAudioMetadata != null) {
                     Text(
-                        text = "IMPORTED AUDIO: ${state.localAudioMetadata!!.title}",
+                        text = stringResource(R.string.sync_imported_audio, state.localAudioMetadata!!.title),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         color = NothingWhite,
@@ -107,40 +111,41 @@ fun SyncScreen(
                         fontSize = 10.sp,
                         color = NothingGrey
                     )
-                    NothingPillButton(
+                    NothingButton(
                         text = if (state.isTranscribingAudio) "TRANSCRIBING VOCALS..." else "EXTRACT LYRICS FROM AUDIO",
                         onClick = {
                             if (!draft?.lyrics.isNullOrBlank()) showTranscribeConfirmation = true
                             else viewModel.transcribeImportedAudio(context)
                         },
+                        style = NothingButtonStyle.Primary,
                         enabled = canTranscribe && !state.isTranscribingAudio && !state.isImportingAudio,
-                        isPrimary = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                 } else {
                     Text(
-                        text = "NO LOCAL AUDIO TRACK IMPORTED",
+                        text = stringResource(R.string.sync_no_audio),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         color = NothingGrey
                     )
-                    NothingPillButton(
-                        text = "IMPORT LOCAL AUDIO FILE",
-                        onClick = { audioPickerLauncher.launch(arrayOf("audio/*")) }
+                    NothingButton(
+                        text = stringResource(R.string.sync_import_audio),
+                        onClick = { audioPickerLauncher.launch(arrayOf("audio/*")) },
+                        style = NothingButtonStyle.Secondary
                     )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                NothingPillButton(
+                NothingButton(
                     text = if (state.isAligningAudio) "CREATING WORD TIMINGS..." else "AUTO-CREATE WORD TIMINGS",
                     onClick = { viewModel.syncLyricsWithAudio(context) },
-                    enabled = !state.isAligningAudio && !draft?.lyrics.isNullOrBlank() && state.isLocalAudioActive,
-                    isPrimary = true
+                    style = NothingButtonStyle.Primary,
+                    enabled = !state.isAligningAudio && !draft?.lyrics.isNullOrBlank() && state.isLocalAudioActive
                 )
 
                 Text(
-                    text = "Timing follows active audio regions and lyric sections. This is a heuristic, not speech recognition; review before export.",
+                    text = stringResource(R.string.sync_timing_help),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 10.sp,
                     color = NothingGrey
@@ -148,7 +153,7 @@ fun SyncScreen(
 
                 if (karaoke != null) {
                     Text(
-                        text = "WORD TIMESTAMPS GENERATED (${karaoke.wordTimings.size} WORDS)",
+                        text = stringResource(R.string.sync_word_timestamps, karaoke.wordTimings.size),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 11.sp,
                         color = NothingRed,
@@ -159,8 +164,8 @@ fun SyncScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        NothingPillButton(
-                            text = "SHARE LRC",
+                        NothingButton(
+                            text = stringResource(R.string.sync_share_lrc),
                             onClick = {
                                 if (draft != null) {
                                     val song = com.example.data.model.Song(
@@ -177,11 +182,12 @@ fun SyncScreen(
                                     context.startActivity(android.content.Intent.createChooser(intent, "Export LRC"))
                                 }
                             },
+                            style = NothingButtonStyle.Secondary,
                             modifier = Modifier.weight(1f)
                         )
 
-                        NothingPillButton(
-                            text = "SHARE JSON",
+                        NothingButton(
+                            text = stringResource(R.string.sync_share_json),
                             onClick = {
                                 if (draft != null) {
                                     val song = com.example.data.model.Song(
@@ -198,13 +204,14 @@ fun SyncScreen(
                                     context.startActivity(android.content.Intent.createChooser(intent, "Export JSON"))
                                 }
                             },
+                            style = NothingButtonStyle.Secondary,
                             modifier = Modifier.weight(1f)
                         )
 
-                        NothingPillButton(
+                        NothingButton(
                             text = "MANUAL SYNC",
                             onClick = { showManualSync = true },
-                            isRedAccent = true,
+                            style = NothingButtonStyle.Primary,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -213,7 +220,7 @@ fun SyncScreen(
         }
 
         if (karaoke != null) {
-            GlyphCard(headerTitle = "KARAOKE PREVIEW") {
+            GlyphCard(headerTitle = "KARAOKE PREVIEW", modifier = Modifier.staggeredEnter(2)) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     KaraokeLyricsView(
                         karaokeLyrics = karaoke,
@@ -226,7 +233,7 @@ fun SyncScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        NothingPillButton(
+                        NothingButton(
                             text = when {
                                 playbackUrl == null -> "IMPORT AUDIO TO PREVIEW"
                                 isPlaying -> "PAUSE PREVIEW"
@@ -235,13 +242,13 @@ fun SyncScreen(
                             onClick = {
                                 playbackUrl?.let { player.playAudio(it) }
                             },
+                            style = if (playbackUrl != null) NothingButtonStyle.Primary else NothingButtonStyle.Secondary,
                             enabled = playbackUrl != null,
-                            isPrimary = playbackUrl != null,
                             modifier = Modifier.weight(1f)
                         )
 
                         Text(
-                            text = "${formatClock(playbackPosition)} / ${formatClock(playbackDuration)}",
+                            text = stringResource(R.string.sync_position_clock, formatClock(playbackPosition), formatClock(playbackDuration)),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 11.sp,
                             color = NothingGrey,
@@ -272,15 +279,21 @@ fun SyncScreen(
             title = { Text("Replace current lyrics?") },
             text = { Text("The imported audio will be sent to Gemini for transcription and will replace the lyrics in the current draft.") },
             confirmButton = {
-                TextButton(
+                NothingButton(
+                    text = "EXTRACT & REPLACE",
                     onClick = {
                         showTranscribeConfirmation = false
                         viewModel.transcribeImportedAudio(context, replaceExistingLyrics = true)
-                    }
-                ) { Text("EXTRACT & REPLACE") }
+                    },
+                    style = NothingButtonStyle.Primary
+                )
             },
             dismissButton = {
-                TextButton(onClick = { showTranscribeConfirmation = false }) { Text("CANCEL") }
+                NothingButton(
+                    text = "CANCEL",
+                    onClick = { showTranscribeConfirmation = false },
+                    style = NothingButtonStyle.Secondary
+                )
             }
         )
     }

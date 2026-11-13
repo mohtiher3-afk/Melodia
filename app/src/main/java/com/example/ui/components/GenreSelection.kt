@@ -1,5 +1,7 @@
 package com.example.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -167,7 +169,7 @@ fun GenreSelection(
                                 .background(MelodiaTheme.Accent)
                         )
                         Text(
-                            text = "RECENTLY VIEWED // LAST 3",
+                            text = stringResource(R.string.genre_recent_header),
                             fontFamily = NothingDotMatrixFontFamily,
                             fontSize = 13.sp,
                             color = MelodiaTheme.Accent,
@@ -184,7 +186,7 @@ fun GenreSelection(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "ROOM DB",
+                            text = stringResource(R.string.genre_room_db_badge),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 9.sp,
                             color = NothingGrey,
@@ -207,7 +209,7 @@ fun GenreSelection(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "NO RECENTLY VIEWED SUBGENRES",
+                                text = stringResource(R.string.genre_no_recent),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
@@ -215,7 +217,7 @@ fun GenreSelection(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Select any subgenre below to track and persist your last 3 choices in Room.",
+                                text = stringResource(R.string.genre_recent_help),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 10.sp,
                                 color = MelodiaTheme.TextSecondary,
@@ -261,7 +263,7 @@ fun GenreSelection(
                             .background(NothingBorder)
                     )
                     Text(
-                        text = "MASTER SUBGENRE CATALOGUE",
+                        text = stringResource(R.string.genre_catalogue_header),
                         fontFamily = NothingDotMatrixFontFamily,
                         fontSize = 11.sp,
                         color = NothingGrey,
@@ -354,7 +356,7 @@ fun RecentlyViewedSubGenreCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "REC // 0$index",
+                        text = stringResource(R.string.genre_rec_badge, index),
                         fontFamily = NothingDotMatrixFontFamily,
                         fontSize = 10.sp,
                         color = MelodiaTheme.Accent,

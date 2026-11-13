@@ -9,6 +9,8 @@ import android.speech.SpeechRecognizer
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -32,10 +34,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,7 +53,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -176,7 +176,7 @@ fun VoiceDictationDialog(
                                 .background(NothingRed)
                         )
                         Text(
-                            text = "VOICE-TO-TEXT // STUDIO MIC",
+                            text = stringResource(R.string.dictation_header),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 11.sp,
                             color = NothingRed,
@@ -184,21 +184,15 @@ fun VoiceDictationDialog(
                         )
                     }
 
-                    IconButton(
+                    NothingButton(
+                        text = "",
                         onClick = onDismiss,
                         modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(NothingCardSurface)
-                            .testTag("close_voice_dialog")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = NothingWhite,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
+                            .size(48.dp)
+                            .testTag("close_voice_dialog"),
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close
+                    )
                 }
 
                 // Microphone Waveform Animation
@@ -245,7 +239,7 @@ fun VoiceDictationDialog(
                 ) {
                     Column {
                         Text(
-                            text = "DICTATED LYRICS PREVIEW",
+                            text = stringResource(R.string.dictation_preview_header),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 9.sp,
                             color = NothingGrey,
@@ -266,8 +260,8 @@ fun VoiceDictationDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    NothingPillButton(
-                        text = "INSERT DICTATED LYRICS",
+                    NothingButton(
+                        text = stringResource(R.string.dictation_insert),
                         onClick = {
                             val sample = if (spokenText.contains("Listening") || spokenText.contains("unavailable")) {
                                 "[Verse 1]\nCity lights shining bright\nNeon echoes in the midnight sky\nRhythm pulsing through the night"
@@ -278,8 +272,8 @@ fun VoiceDictationDialog(
                             onDismiss()
                             Toast.makeText(context, "Dictated lyrics inserted to Studio!", Toast.LENGTH_SHORT).show()
                         },
-                        isPrimary = true,
                         modifier = Modifier.weight(1f),
+                        style = NothingButtonStyle.Primary,
                         testTag = "insert_dictated_lyrics_button"
                     )
                 }

@@ -1,5 +1,7 @@
 package com.example.ui.screens
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,9 +29,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.components.GlyphCard
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.dialogs.RhymeDialog
 import com.example.ui.dialogs.VoiceDictationDialog
+import com.example.ui.nothing.staggeredEnter
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingRed
@@ -106,6 +110,7 @@ fun LyricsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
+                .staggeredEnter(1)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(
@@ -122,13 +127,13 @@ fun LyricsScreen(
                     )
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "$lineCount LINES // $wordCount WORDS",
+                            text = stringResource(R.string.lyrics_line_word_count, lineCount, wordCount),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 10.sp,
                             color = NothingGrey
                         )
                         Text(
-                            text = "~${formatDuration(estimatedSeconds)} // $sectionCount SECTIONS",
+                            text = stringResource(R.string.lyrics_duration_sections, formatDuration(estimatedSeconds), sectionCount),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 9.sp,
                             color = NothingRed
@@ -141,29 +146,31 @@ fun LyricsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    NothingPillButton(
-                        text = "DICTATE",
+                    NothingButton(
+                        text = stringResource(R.string.lyrics_dictate),
                         onClick = { showDictationDialog = true },
+                        style = NothingButtonStyle.Secondary,
                         modifier = Modifier
                             .weight(1f)
                             .testTag("lyrics_dictate_button")
                     )
-                    NothingPillButton(
-                        text = "RHYME",
+                    NothingButton(
+                        text = stringResource(R.string.lyrics_rhyme),
                         onClick = { showRhymeDialog = true },
+                        style = NothingButtonStyle.Secondary,
                         enabled = rhymeQuery.isNotBlank(),
                         modifier = Modifier
                             .weight(1f)
                             .testTag("lyrics_rhyme_button")
                     )
-                    NothingPillButton(
-                        text = if (state.isGenerating) "WRITING..." else "GENERATE",
+                    NothingButton(
+                        text = if (state.isGenerating) stringResource(R.string.lyrics_writing) else stringResource(R.string.lyrics_generate),
                         onClick = {
                             if (editorText.isNotBlank()) showGenerateConfirmation = true
                             else viewModel.generateLyricsOnly()
                         },
+                        style = NothingButtonStyle.Primary,
                         enabled = !state.isGenerating,
-                        isPrimary = true,
                         modifier = Modifier
                             .weight(1f)
                             .testTag("lyrics_generate_button")
@@ -178,9 +185,10 @@ fun LyricsScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     SECTION_TAGS.forEach { tag ->
-                        NothingPillButton(
+                        NothingButton(
                             text = tag,
-                            onClick = { insertSectionTag(tag) }
+                            onClick = { insertSectionTag(tag) },
+                            style = NothingButtonStyle.Quiet
                         )
                     }
                 }
@@ -194,7 +202,7 @@ fun LyricsScreen(
                         .testTag("lyrics_editor"),
                     placeholder = {
                         Text(
-                            text = "Write or paste your lyrics here...\nUse [Verse 1], [Chorus], [Bridge] tags to structure the song.",
+                            text = stringResource(R.string.lyrics_editor_placeholder),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 12.sp,
                             color = NothingGrey
@@ -241,17 +249,21 @@ fun LyricsScreen(
             title = { Text("Generate new lyrics?") },
             text = { Text("This will replace the lyrics currently in the editor. Cancel or save a copy first if you want to keep this text.") },
             confirmButton = {
-                androidx.compose.material3.TextButton(
+                NothingButton(
+                    text = "GENERATE",
                     onClick = {
                         showGenerateConfirmation = false
                         viewModel.generateLyricsOnly()
-                    }
-                ) { Text("GENERATE") }
+                    },
+                    style = NothingButtonStyle.Primary
+                )
             },
             dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { showGenerateConfirmation = false }) {
-                    Text("CANCEL")
-                }
+                NothingButton(
+                    text = "CANCEL",
+                    onClick = { showGenerateConfirmation = false },
+                    style = NothingButtonStyle.Secondary
+                )
             }
         )
     }

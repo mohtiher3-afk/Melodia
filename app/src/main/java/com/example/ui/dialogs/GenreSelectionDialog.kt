@@ -1,5 +1,7 @@
 package com.example.ui.dialogs
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,7 +32,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.data.model.RecentSubGenre
 import com.example.ui.components.GenreSelection
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -81,7 +83,7 @@ fun GenreSelectionDialog(
                                     .background(NothingRed)
                             )
                             Text(
-                                text = "MASTER ARCHITECTURE // DIRECTORY",
+                                text = stringResource(R.string.genre_dialog_kicker),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 9.sp,
                                 color = NothingRed,
@@ -91,7 +93,7 @@ fun GenreSelectionDialog(
                         }
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "GENRE & SUBGENRE SELECTION",
+                            text = stringResource(R.string.genre_dialog_header),
                             fontFamily = NothingDotMatrixFontFamily,
                             fontSize = 17.sp,
                             color = NothingWhite,
@@ -99,21 +101,15 @@ fun GenreSelectionDialog(
                         )
                     }
 
-                    IconButton(
+                    NothingButton(
+                        text = "",
                         onClick = onDismiss,
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(NothingCardSurface)
-                            .testTag("close_genre_dialog")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = NothingWhite,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                            .size(48.dp)
+                            .testTag("close_genre_dialog"),
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close
+                    )
                 }
 
                 // Main GenreSelection content with Recently Viewed section at the top
@@ -138,12 +134,13 @@ fun GenreSelectionDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                NothingPillButton(
-                    text = "CLOSE DIRECTORY",
+                NothingButton(
+                    text = stringResource(R.string.genre_dialog_close),
                     onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                    isPrimary = false,
-                    testTag = "dismiss_genre_dialog_button"
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("dismiss_genre_dialog_button"),
+                    style = NothingButtonStyle.Secondary
                 )
             }
         }

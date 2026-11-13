@@ -1,5 +1,7 @@
 package com.example.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -59,6 +61,7 @@ import com.example.ui.theme.NothingDarkGrey
 import com.example.ui.theme.NothingDarkSurface
 import com.example.ui.theme.NothingElevatedSurface
 import com.example.ui.theme.NothingGrey
+import com.example.ui.theme.NothingOffWhite
 import com.example.ui.theme.NothingDotMatrixFontFamily
 import com.example.network.LyricSection
 import com.example.ui.theme.NothingRed
@@ -72,7 +75,7 @@ fun GlyphCard(
     modifier: Modifier = Modifier,
     backgroundColor: Color = NothingCardSurface,
     borderColor: Color = NothingBorder,
-    cornerRadius: Dp = 20.dp,
+    cornerRadius: Dp = 22.dp,
     hasRedDot: Boolean = false,
     headerTitle: String? = null,
     testTag: String = "glyph_card",
@@ -82,7 +85,7 @@ fun GlyphCard(
     Surface(
         modifier = modifier
             .testTag(testTag)
-            .shadow(8.dp, shape)
+            .shadow(4.dp, shape)
             .border(width = 1.dp, color = borderColor, shape = shape)
             .clip(shape),
         shape = shape,
@@ -91,7 +94,7 @@ fun GlyphCard(
         Column(
             modifier = Modifier
                 .background(Brush.verticalGradient(listOf(NothingElevatedSurface.copy(alpha = 0.32f), backgroundColor)))
-                .padding(16.dp)
+                .padding(18.dp)
         ) {
             if ((headerTitle != null) || hasRedDot) {
                 Row(
@@ -112,11 +115,11 @@ fun GlyphCard(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = headerTitle.uppercase(),
-                                fontFamily = NothingDotMatrixFontFamily,
+                                fontFamily = SpaceMonoFontFamily,
                                 fontWeight = FontWeight.Normal,
-                                fontSize = 13.sp,
+                                fontSize = 11.sp,
                                 letterSpacing = 1.2.sp,
-                                color = NothingGrey
+                                color = NothingOffWhite
                             )
                         }
                     } else {
@@ -132,7 +135,7 @@ fun GlyphCard(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "REC // ON",
+                                text = stringResource(R.string.nothing_rec_on),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 9.sp,
                                 color = NothingRed,
@@ -160,13 +163,13 @@ fun NothingPillButton(
     val bgColor = when {
         !enabled -> NothingDarkGrey
         isRedAccent -> NothingRed
-        isPrimary -> NothingWhite
+        isPrimary -> NothingRed
         else -> NothingElevatedSurface
     }
     val textColor = when {
         !enabled -> NothingGrey
         isRedAccent -> NothingWhite
-        isPrimary -> NothingBlack
+        isPrimary -> NothingWhite
         else -> NothingWhite
     }
 
@@ -432,7 +435,7 @@ fun NothingCoverArt(
 
         // Top right track index
         Text(
-            text = "MELODIA // 01",
+            text = stringResource(R.string.nothing_brand_badge),
             fontFamily = SpaceMonoFontFamily,
             fontSize = 9.sp,
             color = NothingGrey,
@@ -522,7 +525,7 @@ fun LyricTimelineEditor(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Text(
-            text = "LYRIC TIMING // SECTION ALIGNMENT",
+            text = stringResource(R.string.nothing_timing_header),
             fontFamily = NothingDotMatrixFontFamily,
             fontSize = 12.sp,
             color = NothingRed,
@@ -535,7 +538,7 @@ fun LyricTimelineEditor(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
-                    text = "[${section.name.uppercase()}]",
+                    text = stringResource(R.string.nothing_section_tag, section.name.uppercase()),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 11.sp,
                     color = NothingWhite,

@@ -29,17 +29,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.util.Log
 import com.example.domain.VideoAspectRatio
 import com.example.domain.VideoResolution
 import com.example.ui.components.GlyphCard
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.components.StatusBadge
+import com.example.ui.nothing.staggeredEnter
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -49,6 +55,7 @@ import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingWhite
 import com.example.ui.theme.SpaceMonoFontFamily
 import com.example.ui.viewmodel.MelodiaViewModel
+import java.io.File
 
 @Composable
 fun VideoExporterScreen(
@@ -74,9 +81,9 @@ fun VideoExporterScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header
-        Column {
+        Column(modifier = Modifier.staggeredEnter(1)) {
             Text(
-                text = "EXPORT // LYRIC VIDEO STUDIO",
+                text = stringResource(R.string.exporter_header_kicker),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 11.sp,
                 color = NothingRed,
@@ -84,7 +91,7 @@ fun VideoExporterScreen(
                 letterSpacing = 2.sp
             )
             Text(
-                text = "Hardware MP4 Video Exporter",
+                text = stringResource(R.string.exporter_title),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
@@ -98,11 +105,12 @@ fun VideoExporterScreen(
                     .fillMaxWidth()
                     .border(1.dp, NothingBorder, RoundedCornerShape(12.dp))
                     .background(NothingCardSurface)
-                    .padding(24.dp),
+                    .padding(24.dp)
+                    .staggeredEnter(2),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "NO ACTIVE SONG DRAFT // CREATE LYRICS FIRST IN STUDIO",
+                    text = stringResource(R.string.exporter_no_draft),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 12.sp,
                     color = NothingGrey
@@ -112,7 +120,7 @@ fun VideoExporterScreen(
         }
 
         // Readiness Check Card
-        GlyphCard(headerTitle = "EXPORT READINESS CHECKLIST") {
+        GlyphCard(headerTitle = "EXPORT READINESS CHECKLIST", modifier = Modifier.staggeredEnter(2)) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 val hasLyrics = currentDraft.lyrics.isNotBlank()
                 val hasCover = !currentDraft.coverImagePath.isNullOrBlank()
@@ -127,7 +135,7 @@ fun VideoExporterScreen(
         }
 
         // Resolution Selector
-        GlyphCard(headerTitle = "VIDEO RESOLUTION & PROFILE") {
+        GlyphCard(headerTitle = "VIDEO RESOLUTION & PROFILE", modifier = Modifier.staggeredEnter(3)) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -155,11 +163,45 @@ fun VideoExporterScreen(
                         }
                     }
                 }
+
+                // Bitrate selector (F-6: was hardcoded at 12 Mbps with no UI)
+                Text(
+                    text = stringResource(R.string.exporter_bitrate_label),
+                    fontFamily = SpaceMonoFontFamily,
+                    fontSize = 10.sp,
+                    color = NothingGrey
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf(8, 12, 20, 35).forEach { mbps ->
+                        val isSel = bitrateMbps == mbps
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(36.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isSel) NothingRed else NothingCardSurface)
+                                .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
+                                .clickable { bitrateMbps = mbps },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(R.string.exporter_bitrate_mbps, mbps),
+                                fontFamily = SpaceMonoFontFamily,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isSel) NothingBlack else NothingWhite
+                            )
+                        }
+                    }
+                }
             }
         }
 
         // Aspect Ratio Selector
-        GlyphCard(headerTitle = "ASPECT RATIO") {
+        GlyphCard(headerTitle = "ASPECT RATIO", modifier = Modifier.staggeredEnter(4)) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 VideoAspectRatio.entries.forEach { ratio ->
                     val isSel = selectedAspectRatio == ratio
@@ -195,7 +237,7 @@ fun VideoExporterScreen(
 
         // Export Progress
         if (exportProgress.isExporting) {
-            GlyphCard(headerTitle = "ENCODING IN PROGRESS") {
+            GlyphCard(headerTitle = "ENCODING IN PROGRESS", modifier = Modifier.staggeredEnter(3)) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
                         text = exportProgress.statusText,
@@ -213,8 +255,33 @@ fun VideoExporterScreen(
             }
         }
 
-        // Export Action Button
-        NothingPillButton(
+        // Export complete state (was invisible: the progress card vanished on
+        // completion and the Share button appearing was the only cue)
+        val outputFilePath = exportProgress.outputFilePath
+        val exportFinished = !exportProgress.isExporting &&
+            outputFilePath != null && File(outputFilePath).exists()
+        if (exportFinished) {
+            GlyphCard(headerTitle = stringResource(R.string.exporter_complete_title), modifier = Modifier.staggeredEnter(4)) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = exportProgress.statusText.ifBlank { stringResource(R.string.exporter_complete_default) },
+                        fontFamily = SpaceMonoFontFamily,
+                        fontSize = 12.sp,
+                        color = NothingRed
+                    )
+                    Text(
+                        text = File(outputFilePath).name,
+                        fontFamily = SpaceMonoFontFamily,
+                        fontSize = 10.sp,
+                        color = NothingGrey
+                    )
+                }
+            }
+        }
+
+        // Export Action Button (guarded: one encode at a time — double MediaCodec
+        // encodes would race on the muxer and corrupt output)
+        NothingButton(
             text = if (exportProgress.isExporting) "ENCODING VIDEO..." else "EXPORT MP4 LYRIC VIDEO",
             onClick = {
                 viewModel.exportLyricVideo(
@@ -224,9 +291,38 @@ fun VideoExporterScreen(
                     bitrateMbps = bitrateMbps
                 )
             },
-            isPrimary = true,
-            modifier = Modifier.fillMaxWidth()
+            style = NothingButtonStyle.Primary,
+            enabled = !exportProgress.isExporting,
+            modifier = Modifier.fillMaxWidth().staggeredEnter(5)
         )
+
+        // Share the finished export (F-6: result was previously unreachable outside app cache)
+        if (exportFinished) {
+            NothingButton(
+                text = stringResource(R.string.exporter_share_video),
+                onClick = {
+                    try {
+                        val videoUri = FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            File(outputFilePath)
+                        )
+                        val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                            type = "video/mp4"
+                            putExtra(android.content.Intent.EXTRA_STREAM, videoUri)
+                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(
+                            android.content.Intent.createChooser(shareIntent, "Share lyric video")
+                        )
+                    } catch (e: Exception) {
+                        Log.e("VideoExporterScreen", "Failed to share video", e)
+                    }
+                },
+                style = NothingButtonStyle.Secondary,
+                modifier = Modifier.fillMaxWidth().staggeredEnter(6)
+            )
+        }
     }
 }
 

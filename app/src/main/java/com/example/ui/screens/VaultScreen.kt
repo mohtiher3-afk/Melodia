@@ -39,7 +39,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -52,6 +51,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -66,8 +67,9 @@ import com.example.data.model.matchesFilter
 import com.example.data.model.projectStatusFromTags
 import com.example.ui.components.GlyphCard
 import com.example.ui.components.NothingCoverArt
-import com.example.ui.components.NothingPillButton
-import com.example.ui.components.pressable
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
+import com.example.ui.nothing.staggeredEnter
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -79,6 +81,13 @@ import com.example.ui.theme.NothingWhite
 import com.example.ui.theme.SpaceMonoFontFamily
 import com.example.ui.viewmodel.MelodiaViewModel
 import com.example.ui.dialogs.*
+import com.example.ui.components.TapHaptic
+import com.example.ui.components.CommitHaptic
+import com.example.ui.components.pressable
+import com.example.ui.screens.PlayerScreen
+import com.example.domain.AudioPlayerManager
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.Dialog
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -99,18 +108,21 @@ fun VaultScreen(
     val songs by viewModel.savedSongs.collectAsStateWithLifecycle()
     val drafts by viewModel.savedDrafts.collectAsStateWithLifecycle()
     val context = LocalContext.current
-        var searchQuery by remember { mutableStateOf("") }
-        var selectedCategory by remember { mutableStateOf(CategoryFilterType.ALL) }
-        var selectedSubTag by remember { mutableStateOf<String?>(null) }
-        var isBulkEditing by remember { mutableStateOf(false) }
-        var selectedIds by remember { mutableStateOf(setOf<Long>()) }
-        var showBulkTagsDialog by remember { mutableStateOf(false) }
+    val audioPlayerManager = AudioPlayerManager.getInstance(context)
 
-        var selectedSongForLyrics by remember { mutableStateOf<Song?>(null) }
-        var selectedSongForExport by remember { mutableStateOf<Song?>(null) }
-        var selectedSongForTags by remember { mutableStateOf<Song?>(null) }
-        var selectedSongForWaveform by remember { mutableStateOf<Song?>(null) }
-        var selectedSongForSync by remember { mutableStateOf<Song?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf(CategoryFilterType.ALL) }
+    var selectedSubTag by remember { mutableStateOf<String?>(null) }
+    var isBulkEditing by remember { mutableStateOf(false) }
+    var selectedIds by remember { mutableStateOf(setOf<Long>()) }
+    var showBulkTagsDialog by remember { mutableStateOf(false) }
+
+    var selectedSongForLyrics by remember { mutableStateOf<Song?>(null) }
+    var selectedSongForExport by remember { mutableStateOf<Song?>(null) }
+    var selectedSongForTags by remember { mutableStateOf<Song?>(null) }
+    var selectedSongForWaveform by remember { mutableStateOf<Song?>(null) }
+    var selectedSongForSync by remember { mutableStateOf<Song?>(null) }
+    var showPlayerDialog by remember { mutableStateOf(false) }
 
         val audioPickerLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.OpenDocument()
@@ -131,28 +143,14 @@ fun VaultScreen(
             onSelect: () -> Unit,
             selected: Boolean
         ) {
-            Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .background(if (isSelected) NothingRed else NothingCardSurface)
-                .border(1.dp, if (isSelected) NothingRed else NothingBorder, RoundedCornerShape(12.dp))
-                .pressable(
-                    pressedScale = 0.94f,
-                    haptic = com.example.ui.components.TapHaptic,
-                    enabled = true,
-                    onClick = onSelect
-                )
-                .padding(horizontal = 12.dp, vertical = 6.dp)
-        ) {
-            Text(
+            NothingButton(
                 text = label,
-                fontFamily = SpaceMonoFontFamily,
-                fontSize = 10.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                color = if (isSelected) NothingWhite else NothingGrey
+                onClick = onSelect,
+                modifier = Modifier
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                style = if (isSelected) NothingButtonStyle.Primary else NothingButtonStyle.Secondary
             )
         }
-    }
 
     @Composable
     fun SubTagChip(
@@ -160,26 +158,13 @@ fun VaultScreen(
         isOptSelected: Boolean,
         onSelect: () -> Unit
     ) {
-        Box(
+        NothingButton(
+            text = opt.uppercase(),
+            onClick = onSelect,
             modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .background(if (isOptSelected) NothingWhite else NothingCardSurface)
-                .border(1.dp, if (isOptSelected) NothingWhite else NothingBorder, RoundedCornerShape(12.dp))
-                .pressable(
-                    pressedScale = 0.94f,
-                    haptic = com.example.ui.components.TapHaptic,
-                    onClick = onSelect
-                )
-                .padding(horizontal = 10.dp, vertical = 5.dp)
-        ) {
-            Text(
-                text = opt.uppercase(),
-                fontFamily = SpaceMonoFontFamily,
-                fontSize = 9.sp,
-                fontWeight = if (isOptSelected) FontWeight.Bold else FontWeight.Normal,
-                color = if (isOptSelected) NothingBlack else NothingGrey
-            )
-        }
+                .padding(horizontal = 10.dp, vertical = 5.dp),
+            style = if (isOptSelected) NothingButtonStyle.Primary else NothingButtonStyle.Secondary
+        )
     }
 
     @Composable
@@ -188,26 +173,13 @@ fun VaultScreen(
         onClick: () -> Unit,
         modifier: Modifier = Modifier
     ) {
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(NothingDarkGrey)
-                .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                .pressable(
-                    pressedScale = 0.94f,
-                    haptic = com.example.ui.components.TapHaptic,
-                    enabled = true,
-                    onClick = onClick
-                )
-                .padding(horizontal = 6.dp, vertical = 2.dp)
-        ) {
-            Text(
-                text = text,
-                fontFamily = SpaceMonoFontFamily,
-                fontSize = 9.sp,
-                color = NothingRed
-            )
-        }
+        NothingButton(
+            text = text,
+            onClick = onClick,
+            modifier = modifier
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+            style = NothingButtonStyle.Secondary
+        )
     }
 
     @Composable
@@ -215,25 +187,13 @@ fun VaultScreen(
         selectedSubTag: String?,
         onClear: () -> Unit
     ) {
-        Box(
+        NothingButton(
+            text = stringResource(R.string.vault_tag_hash, selectedSubTag?.uppercase() ?: ""),
+            onClick = onClear,
             modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(NothingDarkGrey)
-                .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                .pressable(
-                    pressedScale = 0.94f,
-                    haptic = com.example.ui.components.TapHaptic,
-                    onClick = onClear
-                )
-                .padding(horizontal = 6.dp, vertical = 2.dp)
-        ) {
-            Text(
-                text = "#${selectedSubTag?.uppercase() ?: ""}",
-                fontFamily = SpaceMonoFontFamily,
-                fontSize = 9.sp,
-                color = NothingWhite
-            )
-        }
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+            style = NothingButtonStyle.Secondary
+        )
     }
 
     Column(
@@ -246,13 +206,13 @@ fun VaultScreen(
     ) {
         // Header
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().staggeredEnter(1),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
                 Text(
-                    text = "LIBRARY // CATEGORIES & TAGS",
+                    text = stringResource(R.string.vault_header_kicker),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 11.sp,
                     color = NothingRed,
@@ -272,38 +232,16 @@ fun VaultScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(
+                NothingButton(
+                    text = stringResource(R.string.vault_action_import),
+                    onClick = { audioPickerLauncher.launch(arrayOf("audio/*")) },
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(NothingBlack)
-                        .border(1.dp, NothingRed, RoundedCornerShape(12.dp))
-                        .pressable(
-                            pressedScale = 0.94f,
-                            haptic = com.example.ui.components.TapHaptic,
-                            onClick = { audioPickerLauncher.launch(arrayOf("audio/*")) }
-                        )
                         .padding(horizontal = 10.dp, vertical = 6.dp)
-                        .testTag("vault_import_audio_button")
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Import",
-                            tint = NothingRed,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Text(
-                            text = "IMPORT",
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = NothingRed
-                        )
-                    }
-                }
+                        .testTag("vault_import_audio_button"),
+                    style = NothingButtonStyle.Secondary,
+                    icon = Icons.Default.Add,
+                    iconTint = NothingRed
+                )
             }
         }
 
@@ -313,7 +251,8 @@ fun VaultScreen(
             onValueChange = { searchQuery = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("vault_search_input"),
+                .testTag("vault_search_input")
+                .staggeredEnter(2),
             placeholder = {
                 Text(
                     "Search by track name, lyrics, or tag...",
@@ -330,17 +269,14 @@ fun VaultScreen(
             },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
-                    IconButton(
+                    NothingButton(
+                        text = "",
                         onClick = { searchQuery = "" },
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Clear search",
-                            tint = NothingGrey,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
+                        modifier = Modifier.size(48.dp),
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close,
+                        iconTint = NothingGrey
+                    )
                 } else {
                     Box(modifier = Modifier.size(0.dp))
                 }
@@ -360,7 +296,8 @@ fun VaultScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
+                .horizontalScroll(rememberScrollState())
+                .staggeredEnter(3),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -390,33 +327,19 @@ fun VaultScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
+                    .horizontalScroll(rememberScrollState())
+                    .staggeredEnter(4),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // "ALL" in current sub-category
                 val isAllSub = selectedSubTag == null
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (isAllSub) NothingWhite else NothingDarkGrey)
-                        .border(1.dp, if (isAllSub) NothingWhite else NothingBorder, RoundedCornerShape(12.dp))
-                        .pressable(
-                            pressedScale = 0.94f,
-                            haptic = com.example.ui.components.TapHaptic,
-                            onClick = { selectedSubTag = null }
-                        )
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "ALL ${selectedCategory.label}",
-                        fontFamily = SpaceMonoFontFamily,
-                        fontSize = 9.sp,
-                        fontWeight = if (isAllSub) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isAllSub) NothingBlack else NothingGrey
-                    )
-                }
+                NothingButton(
+                    text = stringResource(R.string.vault_all_tag, selectedCategory.label),
+                    onClick = { selectedSubTag = null },
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    style = if (isAllSub) NothingButtonStyle.Primary else NothingButtonStyle.Secondary
+                )
 
                 activeSubOptions.forEach { opt ->
                     val isOptSelected = selectedSubTag.equals(opt, ignoreCase = true)
@@ -437,7 +360,7 @@ fun VaultScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${filteredDrafts.size} AUTO-SAVED DRAFTS IN DATABASE",
+                    text = stringResource(R.string.vault_drafts_count, filteredDrafts.size),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 10.sp,
                     color = NothingRed,
@@ -451,7 +374,7 @@ fun VaultScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${filteredSongs.size} TRACKS MATCHING TAGS",
+                    text = stringResource(R.string.vault_tracks_matching, filteredSongs.size),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 10.sp,
                     color = NothingRed,
@@ -459,33 +382,15 @@ fun VaultScreen(
                 )
 
                 if (selectedSubTag != null) {
-                    Row(
+                    NothingButton(
+                        text = "",
+                        onClick = { selectedSubTag = null },
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(NothingDarkGrey)
-                            .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                            .pressable(
-                                pressedScale = 0.94f,
-                                haptic = com.example.ui.components.TapHaptic,
-                                onClick = { selectedSubTag = null }
-                            )
                             .padding(horizontal = 6.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            text = "#${selectedSubTag?.uppercase()}",
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 9.sp,
-                            color = NothingWhite
-                        )
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Clear tag",
-                            tint = NothingRed,
-                            modifier = Modifier.size(10.dp)
-                        )
-                    }
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close,
+                        iconTint = NothingRed
+                    )
                 }
             }
         }
@@ -505,7 +410,7 @@ fun VaultScreen(
                         modifier = Modifier.padding(24.dp)
                     ) {
                         Text(
-                            text = "NO AUTO-SAVED DRAFTS",
+                            text = stringResource(R.string.vault_empty_drafts),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 14.sp,
                             color = NothingWhite,
@@ -513,7 +418,7 @@ fun VaultScreen(
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                         Text(
-                            text = "Lyrics and prompt edits in the Studio are automatically saved to your local drafts database.",
+                            text = stringResource(R.string.vault_empty_drafts_help),
                             fontSize = 12.sp,
                             color = NothingGrey,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -521,20 +426,20 @@ fun VaultScreen(
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            NothingPillButton(
-                                text = "RESET FILTERS",
+                            NothingButton(
+                                text = stringResource(R.string.vault_reset_filters),
                                 onClick = {
                                     searchQuery = ""
                                     selectedCategory = CategoryFilterType.ALL
                                     selectedSubTag = null
                                 },
-                                isPrimary = false,
+                                style = NothingButtonStyle.Secondary,
                                 testTag = "reset_tags_filter_button"
                             )
-                            NothingPillButton(
-                                text = "+ IMPORT AUDIO",
+                            NothingButton(
+                                text = stringResource(R.string.vault_action_import_audio),
                                 onClick = { audioPickerLauncher.launch(arrayOf("audio/*")) },
-                                isPrimary = true,
+                                style = NothingButtonStyle.Primary,
                                 testTag = "empty_vault_import_audio_button"
                             )
                         }
@@ -576,7 +481,7 @@ fun VaultScreen(
                     modifier = Modifier.padding(24.dp)
                 ) {
                     Text(
-                        text = "NO TRACKS MATCHING TAGS",
+                        text = stringResource(R.string.vault_empty_tracks),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 14.sp,
                         color = NothingGrey,
@@ -584,7 +489,7 @@ fun VaultScreen(
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                     Text(
-                        text = "Try clearing the search query or selecting a different genre, mood, or status filter.",
+                        text = stringResource(R.string.vault_empty_tracks_help),
                         fontSize = 12.sp,
                         color = NothingGrey,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -592,20 +497,20 @@ fun VaultScreen(
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        NothingPillButton(
-                            text = "RESET FILTERS",
+                        NothingButton(
+                            text = stringResource(R.string.vault_reset_filters),
                             onClick = {
                                 searchQuery = ""
                                 selectedCategory = CategoryFilterType.ALL
                                 selectedSubTag = null
                             },
-                            isPrimary = false,
+                            style = NothingButtonStyle.Secondary,
                             testTag = "reset_tags_filter_button"
                         )
-                        NothingPillButton(
-                            text = "+ IMPORT AUDIO",
+                        NothingButton(
+                            text = stringResource(R.string.vault_action_import_audio),
                             onClick = { audioPickerLauncher.launch(arrayOf("audio/*")) },
-                            isPrimary = true,
+                            style = NothingButtonStyle.Primary,
                             testTag = "empty_vault_import_audio_button"
                         )
                     }
@@ -615,7 +520,8 @@ fun VaultScreen(
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .staggeredEnter(5),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(filteredSongs, key = { it.id }) { song ->
@@ -649,7 +555,10 @@ fun VaultScreen(
                         onOpenWaveform = { selectedSongForWaveform = song },
                         onOpenSync = { selectedSongForSync = song },
                         onRegenerateCover = { viewModel.regenerateCoverArt(song) },
-                        onPlay = { viewModel.playSong(song) }
+                        onPlay = {
+                            viewModel.playSong(song)
+                            showPlayerDialog = true
+                        }
                     )
                 }
             }
@@ -660,25 +569,39 @@ fun VaultScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(NothingCardSurface)
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .staggeredEnter(6),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${selectedIds.size} SELECTED",
+                    text = stringResource(R.string.vault_selected_count, selectedIds.size),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 12.sp,
                     color = NothingWhite,
                     fontWeight = FontWeight.Bold
                 )
 
-                NothingPillButton(
-                    text = "EDIT TAGS",
+                NothingButton(
+                    text = stringResource(R.string.vault_edit_tags),
                     onClick = { showBulkTagsDialog = true },
-                    isPrimary = true,
+                    style = NothingButtonStyle.Primary,
                     testTag = "bulk_edit_tags_button"
                 )
             }
+        }
+    }
+
+    // Full-screen Player Dialog
+    if (showPlayerDialog) {
+        Dialog(
+            onDismissRequest = { showPlayerDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            PlayerScreen(
+                audioPlayerManager = audioPlayerManager,
+                onDismiss = { showPlayerDialog = false }
+            )
         }
     }
 }
@@ -794,7 +717,7 @@ fun SavedSongItem(
                                             .padding(horizontal = 5.dp, vertical = 2.dp)
                                     ) {
                                         Text(
-                                            text = "LOCAL",
+                                            text = stringResource(R.string.vault_track_local_badge),
                                             fontFamily = SpaceMonoFontFamily,
                                             fontSize = 8.sp,
                                             color = NothingWhite,
@@ -860,63 +783,36 @@ fun SavedSongItem(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(NothingCardSurface)
-                            .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = song.genre.ifBlank { "UNLABELED" },
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 10.sp,
-                            color = NothingGrey
-                        )
-                    }
+                    NothingButton(
+                        text = song.genre.ifBlank { "UNLABELED" },
+                        onClick = {},
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = NothingButtonStyle.Quiet,
+                        enabled = false
+                    )
 
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(NothingCardSurface)
-                            .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = song.mood.ifBlank { "NO MOOD" },
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 10.sp,
-                            color = NothingGrey
-                        )
-                    }
+                    NothingButton(
+                        text = song.mood.ifBlank { "NO MOOD" },
+                        onClick = {},
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = NothingButtonStyle.Quiet,
+                        enabled = false
+                    )
 
                     customTagsList.forEach { tag ->
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(NothingCardSurface)
-                                .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                                .pressable(
-                                    pressedScale = 0.94f,
-                                    haptic = com.example.ui.components.TapHaptic,
-                                    onClick = { onTagClick(tag) }
-                                )
-                        ) {
-                            Text(
-                                text = tag,
-                                fontFamily = SpaceMonoFontFamily,
-                                fontSize = 10.sp,
-                                color = NothingGrey
-                            )
-                        }
+                        NothingButton(
+                            text = tag,
+                            onClick = { onTagClick(tag) },
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = NothingButtonStyle.Secondary
+                        )
                     }
                 }
 
                 if (matchedLyricSnippet != null) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Matched: ${matchedLyricSnippet.take(120)}${if (matchedLyricSnippet.length > 120) "..." else ""}",
+                        text = stringResource(R.string.vault_matched_snippet, matchedLyricSnippet.take(120) + if (matchedLyricSnippet.length > 120) "..." else ""),
                         fontSize = 12.sp,
                         color = NothingGrey,
                         maxLines = 2

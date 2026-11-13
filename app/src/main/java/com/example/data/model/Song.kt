@@ -2,6 +2,7 @@ package com.example.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.util.Locale
 
 /**
  * Room Entity representing a generated song, its Treblo prompt, full lyrics, and cover image path.
@@ -49,12 +50,12 @@ fun Song.matchesFilter(
     subTag: String?
 ): Boolean {
     if (searchQuery.isNotBlank()) {
-        val query = searchQuery.lowercase()
-        if (!title.lowercase().contains(query) &&
-            !genre.lowercase().contains(query) &&
-            !mood.lowercase().contains(query) &&
-            !tags.lowercase().contains(query) &&
-            !lyrics.lowercase().contains(query)
+        val query = searchQuery.lowercase(Locale.ROOT)
+        if (!title.lowercase(Locale.ROOT).contains(query) &&
+            !genre.lowercase(Locale.ROOT).contains(query) &&
+            !mood.lowercase(Locale.ROOT).contains(query) &&
+            !tags.lowercase(Locale.ROOT).contains(query) &&
+            !lyrics.lowercase(Locale.ROOT).contains(query)
         ) {
             return false
         }

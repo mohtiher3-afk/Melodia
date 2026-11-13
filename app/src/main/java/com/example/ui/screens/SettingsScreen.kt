@@ -1,5 +1,8 @@
 package com.example.ui.screens
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -11,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -21,30 +25,37 @@ import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import com.example.R
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.BuildConfig
 import com.example.domain.LocalModelManager
-import com.example.domain.LocalModelManager.DownloadState
 import com.example.ui.components.GlyphCard
-import com.example.ui.components.TapHaptic
-import com.example.ui.components.pressable
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
+import com.example.ui.nothing.staggeredEnter
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -63,7 +74,27 @@ fun SettingsScreen(
     val defaultExportFormat by viewModel.defaultExportFormat.collectAsStateWithLifecycle()
     val llmProviderId by viewModel.llmProviderId.collectAsStateWithLifecycle()
     val allowCloudTranscription by viewModel.allowCloudTranscription.collectAsStateWithLifecycle()
-    val isGeminiConfigured = BuildConfig.GEMINI_API_KEY.isNotBlank() && !BuildConfig.GEMINI_API_KEY.startsWith("MY_")
+    val systemIslandEnabled by viewModel.systemIslandEnabled.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var hasOverlayPermission by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
+    var enableIslandAfterPermission by remember { mutableStateOf(false) }
+    DisposableEffect(lifecycleOwner, context) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                hasOverlayPermission = Settings.canDrawOverlays(context)
+                if (enableIslandAfterPermission) {
+                    enableIslandAfterPermission = false
+                    if (hasOverlayPermission) viewModel.setSystemIslandEnabled(true)
+                } else if (!hasOverlayPermission && systemIslandEnabled) {
+                    viewModel.setSystemIslandEnabled(false)
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    val isGeminiConfigured = BuildConfig.GEMINI_API_KEY.isNotBlank() && BuildConfig.GEMINI_API_KEY != "MY_GEMINI_API_KEY"
     val isFreeLlmConfigured = BuildConfig.FREELLM_BASE_URL.isNotBlank()
 
     Column(
@@ -75,9 +106,9 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Header
-        Column {
+        Column(modifier = Modifier.staggeredEnter(1)) {
             Text(
-                text = "CONFIG // SYSTEM",
+                text = stringResource(R.string.settings_header_kicker),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 11.sp,
                 color = NothingRed,
@@ -85,7 +116,7 @@ fun SettingsScreen(
                 letterSpacing = 2.sp
             )
             Text(
-                text = "Melodia Studio Settings",
+                text = stringResource(R.string.settings_title),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
@@ -94,7 +125,7 @@ fun SettingsScreen(
         }
 
         // Cloud key status (not required by the local provider)
-        GlyphCard(headerTitle = "GEMINI CLOUD API") {
+        GlyphCard(headerTitle = "GEMINI CLOUD API", modifier = Modifier.staggeredEnter(2)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -112,14 +143,14 @@ fun SettingsScreen(
                     )
                     Column {
                         Text(
-                            text = "Cloud Gemini API Key",
+                            text = stringResource(R.string.settings_gemini_api_key_label),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = NothingWhite
                         )
                         Text(
-                            text = if (isGeminiConfigured) "Configured; cloud requests may use quota/billing" else "Not configured — not needed for local Nano",
+                            text = if (isGeminiConfigured) stringResource(R.string.settings_gemini_configured_note) else stringResource(R.string.settings_gemini_not_configured_note),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 11.sp,
                             color = NothingGrey
@@ -136,82 +167,86 @@ fun SettingsScreen(
         }
 
         // LLM Provider Selection Card
-        GlyphCard(headerTitle = "LLM PROVIDER") {
+        GlyphCard(headerTitle = "LLM PROVIDER", modifier = Modifier.staggeredEnter(3)) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "Nano runs on-device on supported phones; Android AICore may download its model once. Cloud options may have quotas or charges:",
+                    text = stringResource(R.string.settings_provider_help),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 12.sp,
                     color = NothingGrey
                 )
+                val nanoStatus by viewModel.nanoStatus.collectAsStateWithLifecycle()
+                val gemmaDownloaded = remember {
+                    val info = LocalModelManager.getModel("gemma3_1b")
+                    info != null && LocalModelManager.getInstance(context).isModelDownloaded(info)
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    listOf(
-                        com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO to "Nano Local",
-                        com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI to "Gemini API",
-                        com.example.network.llm.LlmProviderFactory.PROVIDER_OPENROUTER to "Other Cloud"
-                    ).forEach { (id, label) ->
-                        val isSel = llmProviderId == id
-                        val configured = when (id) {
-                            com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO -> true
-                            com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI -> isGeminiConfigured
-                            else -> isFreeLlmConfigured
-                        }
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(44.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSel) NothingRed else NothingCardSurface)
-                                .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                                .pressable(
-                                    pressedScale = 0.95f,
-                                    haptic = TapHaptic
-                                ) { viewModel.updateLlmProvider(id) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = label,
-                                    fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isSel) NothingBlack else NothingWhite
-                                )
-                                Text(
-                                    text = when {
-                                        id == com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO -> "DEVICE CHECK"
-                                        configured -> "CONFIGURED"
-                                        else -> "NOT CONFIGURED"
-                                    },
-                                    fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 9.sp,
-                                    color = if (isSel) NothingBlack else NothingGrey
-                                )
-                            }
-                        }
-                    }
+                    ProviderTile(
+                        id = com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO,
+                        label = "Nano Local",
+                        badge = when {
+                            !com.example.network.llm.GeminiNanoLlmProvider().isAvailable() -> "NOT SUPPORTED"
+                            nanoStatus == null -> "CHECKING"
+                            nanoStatus == com.google.mlkit.genai.common.FeatureStatus.AVAILABLE -> "READY"
+                            nanoStatus == com.google.mlkit.genai.common.FeatureStatus.DOWNLOADING -> "DOWNLOADING"
+                            nanoStatus == com.google.mlkit.genai.common.FeatureStatus.DOWNLOADABLE -> "NEEDS DOWNLOAD"
+                            else -> "NOT SUPPORTED"
+                        },
+                        isSel = llmProviderId == com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO,
+                        onClick = { viewModel.updateLlmProvider(com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    ProviderTile(
+                        id = com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI,
+                        label = "Gemini API",
+                        badge = if (isGeminiConfigured) "CONFIGURED" else "NOT CONFIGURED",
+                        isSel = llmProviderId == com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI,
+                        onClick = { viewModel.updateLlmProvider(com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ProviderTile(
+                        id = com.example.network.llm.LlmProviderFactory.PROVIDER_GEMMA3_LOCAL,
+                        label = "Gemma 3",
+                        badge = if (gemmaDownloaded) "READY" else "NOT DOWNLOADED",
+                        isSel = llmProviderId == com.example.network.llm.LlmProviderFactory.PROVIDER_GEMMA3_LOCAL,
+                        onClick = { viewModel.updateLlmProvider(com.example.network.llm.LlmProviderFactory.PROVIDER_GEMMA3_LOCAL) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    ProviderTile(
+                        id = com.example.network.llm.LlmProviderFactory.PROVIDER_OPENROUTER,
+                        label = "Other Cloud",
+                        badge = if (isFreeLlmConfigured) "CONFIGURED" else "NOT CONFIGURED",
+                        isSel = llmProviderId == com.example.network.llm.LlmProviderFactory.PROVIDER_OPENROUTER,
+                        onClick = { viewModel.updateLlmProvider(com.example.network.llm.LlmProviderFactory.PROVIDER_OPENROUTER) },
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
 
-        // Local Model Downloads Card
-        GlyphCard(headerTitle = "LOCAL MODEL DOWNLOADS") {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "Download free, open-source AI models directly to this device. No API keys, no cloud. Each model downloads with one tap.",
-                    fontFamily = SpaceMonoFontFamily,
-                    fontSize = 11.sp,
-                    color = NothingGrey
-                )
-                LocalModelDownloadSection(viewModel = viewModel)
-            }
-        }
+                // Local Model Downloads Card
+                        GlyphCard(headerTitle = "LOCAL MODEL DOWNLOADS", modifier = Modifier.staggeredEnter(4)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    text = stringResource(R.string.settings_model_downloads_help),
+                                    fontFamily = SpaceMonoFontFamily,
+                                    fontSize = 11.sp,
+                                    color = NothingGrey
+                                )
+                                LocalModelDownloadSection(viewModel = viewModel)
+                            }
+                        }
 
-        // Local Audio Privacy Card
-        GlyphCard(headerTitle = "LOCAL AUDIO PRIVACY") {
+                        // Local Audio Privacy Card
+                        GlyphCard(headerTitle = "LOCAL AUDIO PRIVACY", modifier = Modifier.staggeredEnter(5)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -219,14 +254,14 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                     Text(
-                        text = "Allow Gemini cloud transcription",
+                        text = stringResource(R.string.settings_allow_cloud_transcription),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = NothingWhite
                     )
                     Text(
-                        text = if (allowCloudTranscription) "Imported audio may be sent online (up to 14 MB)." else "Off by default. Local audio stays on this device; Whisper model integration is pending.",
+                        text = if (allowCloudTranscription) stringResource(R.string.settings_cloud_transcription_on) else stringResource(R.string.settings_cloud_transcription_off),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 10.sp,
                         color = NothingGrey
@@ -239,11 +274,57 @@ fun SettingsScreen(
             }
         }
 
+        GlyphCard(headerTitle = "SYSTEM PLAYBACK ISLAND", modifier = Modifier.staggeredEnter(6)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                    Text(
+                        text = stringResource(R.string.settings_floating_playback_controls),
+                        fontFamily = SpaceMonoFontFamily,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = NothingWhite
+                    )
+                    Text(
+                        text = when {
+                            systemIslandEnabled -> stringResource(R.string.settings_island_enabled)
+                            hasOverlayPermission -> stringResource(R.string.settings_island_off_default)
+                            else -> stringResource(R.string.settings_island_off_permission)
+                        },
+                        fontFamily = SpaceMonoFontFamily,
+                        fontSize = 10.sp,
+                        color = NothingGrey
+                    )
+                }
+                Switch(
+                    checked = systemIslandEnabled,
+                    onCheckedChange = { enabled ->
+                        if (!enabled) {
+                            viewModel.setSystemIslandEnabled(false)
+                        } else if (hasOverlayPermission) {
+                            viewModel.setSystemIslandEnabled(true)
+                        } else {
+                            enableIslandAfterPermission = true
+                            context.startActivity(
+                                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
+                                    data = Uri.parse("package:${context.packageName}")
+                                }
+                            )
+                        }
+                    },
+                    modifier = Modifier.testTag("system_island_switch")
+                )
+            }
+        }
+
         // Default Export Format Card
         GlyphCard(headerTitle = "DEFAULT TIMING EXPORT FORMAT") {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = "Select default timing format when exporting synced lyrics:",
+                    text = stringResource(R.string.settings_timing_format_help),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 12.sp,
                     color = NothingGrey
@@ -254,27 +335,15 @@ fun SettingsScreen(
                 ) {
                     listOf("LRC", "JSON", "TXT", "DOC").forEach { fmt ->
                         val isSel = defaultExportFormat == fmt
-                        Box(
+                        NothingButton(
+                            text = fmt,
+                            onClick = { viewModel.updateDefaultExportFormat(fmt) },
                             modifier = Modifier
                                 .weight(1f)
-                                .height(40.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSel) NothingRed else NothingCardSurface)
-                                .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                                .pressable(
-                                    pressedScale = 0.95f,
-                                    haptic = TapHaptic
-                                ) { viewModel.updateDefaultExportFormat(fmt) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = fmt,
-                                fontFamily = SpaceMonoFontFamily,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isSel) NothingBlack else NothingWhite
-                            )
-                        }
+                                .heightIn(min = 40.dp),
+                            style = if (isSel) NothingButtonStyle.Primary else NothingButtonStyle.Secondary,
+                            enabled = true
+                        )
                     }
                 }
             }
@@ -284,14 +353,14 @@ fun SettingsScreen(
         GlyphCard(headerTitle = "MELODIA STUDIO ARCHITECTURE") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = "Melodia v3.2 Text-First Lyric Studio",
+                    text = stringResource(R.string.settings_about_title),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = NothingWhite
                 )
                 Text(
-                    text = "// Gemini Nano lyrics on supported phones\n// Cloud audio transcription is OFF by default\n// Local Whisper and image-diffusion models are pending",
+                    text = stringResource(R.string.settings_about_body),
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 11.sp,
                     color = NothingGrey
@@ -307,256 +376,207 @@ fun LocalModelDownloadSection(
     viewModel: MelodiaViewModel,
     modifier: Modifier = Modifier
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    // Shared singleton: the same instance the ViewModel downloads with, so the
+    // progress observed here is the actual transfer (previously this created its
+    // own manager and progress/pause acted on a different one).
+    val modelManager = viewModel.localModelManager
+
     Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        LocalModelManager.AVAILABLE_MODELS.forEach { model ->
-            val downloadStateLiveData = viewModel.localModelManager.downloadStates[model.id]
-            val downloadState by downloadStateLiveData?.observeAsState()
-                ?: remember { mutableStateOf<DownloadState?>(null) }
+            modifier = modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            com.example.domain.LocalModelManager.AVAILABLE_MODELS.forEach { model ->
+                            val downloadStateLiveData = modelManager.downloadStates[model.id]
+                            val downloadState by downloadStateLiveData?.observeAsState()
+                                ?: remember { mutableStateOf<com.example.domain.LocalModelManager.DownloadState?>(null) }
 
-            GlyphCard(headerTitle = model.name) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        text = model.description,
-                        fontFamily = SpaceMonoFontFamily,
-                        fontSize = 10.sp,
-                        color = NothingGrey,
-                        maxLines = 2
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Use local variable for smart cast
-                    val state = downloadState
-                    when (state) {
-                        null -> {
-                            // Initial state, show loading or nothing
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                        is DownloadState.Idle -> {
-                            if (state.downloaded) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.End
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.CheckCircle,
-                                            contentDescription = "Downloaded",
-                                            tint = NothingRed,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Text(
-                                            text = "READY",
-                                            fontFamily = SpaceMonoFontFamily,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = NothingRed
-                                        )
-                                        Text(
-                                            text = "Remove",
-                                            fontFamily = SpaceMonoFontFamily,
-                                            fontSize = 10.sp,
-                                            color = NothingGrey,
-                                            modifier = Modifier.clickable { viewModel.deleteModel(model.id) }
-                                        )
-                                    }
-                                }
-                            } else {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
+                            GlyphCard(headerTitle = model.name) {
+                                Column(modifier = Modifier.padding(12.dp)) {
                                     Text(
-                                        text = "Size: ${LocalModelManager.formatBytes(model.expectedSizeBytes)}",
-                                        fontFamily = SpaceMonoFontFamily,
-                                        fontSize = 10.sp,
-                                        color = NothingGrey
-                                    )
-                                    Button(
-                                        onClick = { viewModel.downloadModel(model.id) },
-                                        modifier = Modifier.testTag("download_${model.id}"),
-                                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                            containerColor = NothingRed,
-                                            contentColor = NothingBlack
-                                        )
-                                    ) {
-                                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                            Icon(
-                                                imageVector = Icons.Default.ArrowDownward,
-                                                contentDescription = "Download",
-                                                tint = NothingBlack,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                            Text(
-                                                text = "DOWNLOAD",
-                                                fontFamily = SpaceMonoFontFamily,
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = NothingBlack
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        is DownloadState.Downloading -> {
-                            Column(modifier = Modifier.fillMaxWidth()) {
-                                LinearProgressIndicator(
-                                    progress = { state.progress },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    color = NothingRed,
-                                    trackColor = NothingDarkGrey
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = "${(state.progress * 100).toInt()}% • ${LocalModelManager.formatBytes(state.downloadedBytes)} / ${LocalModelManager.formatBytes(state.totalBytes)}",
-                                        fontFamily = SpaceMonoFontFamily,
-                                        fontSize = 10.sp,
-                                        color = NothingGrey
-                                    )
-                                    Text(
-                                        text = "PAUSE",
+                                        text = model.description,
                                         fontFamily = SpaceMonoFontFamily,
                                         fontSize = 10.sp,
                                         color = NothingGrey,
-                                        modifier = Modifier.clickable { viewModel.cancelDownload(model.id) }
+                                        maxLines = 2
                                     )
-                                }
-                            }
-                        }
 
-                        is DownloadState.Complete -> {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.CheckCircle,
-                                        contentDescription = "Downloaded",
-                                        tint = NothingRed,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Text(
-                                        text = "READY",
-                                        fontFamily = SpaceMonoFontFamily,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = NothingRed
-                                    )
-                                    Text(
-                                        text = "Remove",
-                                        fontFamily = SpaceMonoFontFamily,
-                                        fontSize = 10.sp,
-                                        color = NothingGrey,
-                                        modifier = Modifier.clickable { viewModel.deleteModel(model.id) }
-                                    )
-                                }
-                            }
-                        }
+                                    Spacer(modifier = Modifier.height(8.dp))
 
-                        is DownloadState.Paused -> {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "PAUSED: ${LocalModelManager.formatBytes(state.downloadedBytes)} / ${LocalModelManager.formatBytes(state.totalBytes)}",
-                                        fontFamily = SpaceMonoFontFamily,
-                                        fontSize = 10.sp,
-                                        color = NothingGrey
-                                    )
-                                }
-                                Button(
-                                    onClick = { viewModel.downloadModel(model.id) },
-                                    modifier = Modifier.padding(top = 4.dp),
-                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                        containerColor = NothingRed,
-                                        contentColor = NothingBlack
-                                    )
-                                ) {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        Icon(
-                                            imageVector = Icons.Default.ArrowDownward,
-                                            contentDescription = "Resume",
-                                            tint = NothingBlack,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Text(
-                                            text = "RESUME",
-                                            fontFamily = SpaceMonoFontFamily,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = NothingBlack
-                                        )
-                                    }
-                                }
-                            }
-                        }
+                                    // Use local variable for smart cast
+                                                                        val state = downloadState
+                                                                        when (state) {
+                                                                            null -> {
+                                                                                // Initial state, show loading or nothing
+                                                                                Spacer(modifier = Modifier.height(8.dp))
+                                                                            }
+                                                                            is com.example.domain.LocalModelManager.DownloadState.Idle -> {
+                                                                                if (state.isModelPresent) {
+                                                                                    Row(
+                                                                                        modifier = Modifier.fillMaxWidth(),
+                                                                                        horizontalArrangement = Arrangement.End
+                                                                                    ) {
+                                                                                        Row(
+                                                                                            verticalAlignment = Alignment.CenterVertically,
+                                                                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                                                        ) {
+                                                                                            Icon(
+                                                                                                imageVector = Icons.Default.CheckCircle,
+                                                                                                contentDescription = "Downloaded",
+                                                                                                tint = NothingRed,
+                                                                                                modifier = Modifier.size(18.dp)
+                                                                                            )
+                                                                                            Text(
+                                                                                                text = stringResource(R.string.model_state_ready),
+                                                                                                fontFamily = SpaceMonoFontFamily,
+                                                                                                fontSize = 12.sp,
+                                                                                                fontWeight = FontWeight.Bold,
+                                                                                                color = NothingRed
+                                                                                            )
+                                                            NothingButton(
+                                                                text = stringResource(R.string.model_action_remove),
+                                                                onClick = { viewModel.deleteModel(model.id) },
+                                                                style = NothingButtonStyle.Quiet
+                                                            )
+                                                                                        }
+                                                                                    }
+                                                                                } else {
+                                                                                    Row(
+                                                                                        modifier = Modifier.fillMaxWidth(),
+                                                                                        verticalAlignment = Alignment.CenterVertically,
+                                                                                        horizontalArrangement = Arrangement.SpaceBetween
+                                                                                    ) {
+                                                                                        Text(
+                                                                                            text = stringResource(R.string.model_size_format, LocalModelManager.formatBytes(model.expectedSizeBytes)),
+                                                                                            fontFamily = SpaceMonoFontFamily,
+                                                                                            fontSize = 10.sp,
+                                                                                            color = NothingGrey
+                                                                                        )
+                                                                                        NothingButton(
+                                                                                            text = stringResource(R.string.model_action_download),
+                                                                                            onClick = { viewModel.downloadModel(model.id) },
+                                                                                            modifier = Modifier.testTag("download_${model.id}"),
+                                                                                            style = NothingButtonStyle.Primary,
+                                                                                            icon = Icons.Default.ArrowDownward
+                                                                                        )
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                            is com.example.domain.LocalModelManager.DownloadState.Downloading -> {
+                                                                                                                                                            Column(modifier = Modifier.fillMaxWidth()) {
+                                                                                                                LinearProgressIndicator(
+                                                                                                                    progress = state.progress,
+                                                                                                                    modifier = Modifier.fillMaxWidth(),
+                                                                                                                    color = NothingRed,
+                                                                                                                    trackColor = NothingDarkGrey
+                                                                                                                )
+                                                                                                                Spacer(modifier = Modifier.height(4.dp))
+                                                                                                                Row(
+                                                                                                                    modifier = Modifier.fillMaxWidth(),
+                                                                                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                                                                                ) {
+                                                                                                                    Text(
+                                                                                                                        text = stringResource(R.string.model_download_progress, (state.progress * 100).toInt().toString(), LocalModelManager.formatBytes(state.downloadedBytes), LocalModelManager.formatBytes(state.totalBytes)),
+                                                                                                                        fontFamily = SpaceMonoFontFamily,
+                                                                                                                        fontSize = 10.sp,
+                                                                                                                        color = NothingGrey
+                                                                                                                    )
+                                                                                                                    Text(
+                                                                                                                        text = stringResource(R.string.model_action_pause),
+                                                                                                                        fontFamily = SpaceMonoFontFamily,
+                                                                                                                        fontSize = 10.sp,
+                                                                                                                        color = NothingGrey,
+                                                                                                                        modifier = Modifier.clickable { modelManager.cancelDownload(model) }
+                                                                                                                    )
+                                                                                                                }
+                                                                                                            }
+                                                                                                        }
 
-                        is DownloadState.Failed -> {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Warning,
-                                            contentDescription = "Error",
-                                            tint = NothingRed,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Text(
-                                            text = "FAILED: ${state.error}",
-                                            fontFamily = SpaceMonoFontFamily,
-                                            fontSize = 10.sp,
-                                            color = NothingRed
-                                        )
-                                    }
-                                }
-                                Button(
-                                    onClick = { viewModel.downloadModel(model.id) },
-                                    modifier = Modifier.padding(top = 4.dp),
-                                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                                        containerColor = NothingRed,
-                                        contentColor = NothingBlack
-                                    )
-                                ) {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        Icon(
-                                            imageVector = Icons.Default.ArrowDownward,
-                                            contentDescription = "Retry",
-                                            tint = NothingBlack,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Text(
-                                            text = "RETRY",
-                                            fontFamily = SpaceMonoFontFamily,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = NothingBlack
-                                        )
-                                    }
-                                }
+                        is com.example.domain.LocalModelManager.DownloadState.Completed -> {
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.End
+                                                    ) {
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.CheckCircle,
+                                                                contentDescription = "Downloaded",
+                                                                tint = NothingRed,
+                                                                modifier = Modifier.size(18.dp)
+                                                            )
+                                                            Text(
+                                                                text = stringResource(R.string.model_state_ready),
+                                                                fontFamily = SpaceMonoFontFamily,
+                                                                fontSize = 12.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = NothingRed
+                                                            )
+                                                            NothingButton(
+                                                                text = stringResource(R.string.model_action_remove),
+                                                                onClick = { viewModel.deleteModel(model.id) },
+                                                                style = NothingButtonStyle.Quiet
+                                                            )
+                                                        }
+                                                    }
+                                                }
+
+                                                is com.example.domain.LocalModelManager.DownloadState.Paused -> {
+                                                                                                    Row(
+                                                                                                        modifier = Modifier.fillMaxWidth(),
+                                                                                                        horizontalArrangement = Arrangement.SpaceBetween
+                                                                                                    ) {
+                                                                                                        Column(modifier = Modifier.weight(1f)) {
+                                                                                                            Text(
+                                                                                                                text = stringResource(R.string.model_state_paused, LocalModelManager.formatBytes(state.downloadedBytes), LocalModelManager.formatBytes(state.totalBytes)),
+                                                                                                                fontFamily = SpaceMonoFontFamily,
+                                                                                                                fontSize = 10.sp,
+                                                                                                                color = NothingGrey
+                                                                                                            )
+                                                                                                        }
+                                                                                                        NothingButton(
+                                                                                                            text = stringResource(R.string.model_action_resume),
+                                                                                                            onClick = { viewModel.downloadModel(model.id) },
+                                                                                                            modifier = Modifier.padding(top = 4.dp),
+                                                                                                            style = NothingButtonStyle.Primary,
+                                                                                                            icon = Icons.Default.ArrowDownward
+                                                                                                        )
+                                                                                                    }
+                                                                                                }
+
+                                                                                                is com.example.domain.LocalModelManager.DownloadState.Failed -> {
+                                                                                                                            Row(
+                                                                                                                                modifier = Modifier.fillMaxWidth(),
+                                                                                                                                horizontalArrangement = Arrangement.SpaceBetween
+                                                                                                                            ) {
+                                                                                                                                Column(modifier = Modifier.weight(1f)) {
+                                                                                                                                    Row(
+                                                                                                                                        verticalAlignment = Alignment.CenterVertically,
+                                                                                                                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                                                                                                    ) {
+                                                                                                                                        Icon(
+                                                                                                                                            imageVector = Icons.Default.Warning,
+                                                                                                                                            contentDescription = "Error",
+                                                                                                                                            tint = NothingRed,
+                                                                                                                                            modifier = Modifier.size(16.dp)
+                                                                                                                                        )
+                                                                                                                                        Text(
+                                                                                                                                            text = stringResource(R.string.model_state_failed, state.error),
+                                                                                                                                            fontFamily = SpaceMonoFontFamily,
+                                                                                                                                            fontSize = 10.sp,
+                                                                                                                                            color = NothingRed
+                                                                                                                                        )
+                                                                                                                                    }
+                                                                                                                                }
+                                                                                                                                NothingButton(
+                                                                                                                                                                    text = stringResource(R.string.model_action_retry),
+                                                                                                                                                                    onClick = { viewModel.downloadModel(model.id) },
+                                                                                                                                                                    modifier = Modifier.padding(top = 4.dp),
+                                                                                                                                                                    style = NothingButtonStyle.Primary,
+                                                                                                                                                                    icon = Icons.Default.ArrowDownward
+                                                                                                                                                                )
                             }
                         }
                     }
@@ -564,4 +584,24 @@ fun LocalModelDownloadSection(
             }
         }
     }
+}
+
+@Composable
+private fun ProviderTile(
+    id: String,
+    label: String,
+    badge: String,
+    isSel: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    NothingButton(
+        text = label,
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 44.dp),
+        style = if (isSel) NothingButtonStyle.Primary else NothingButtonStyle.Secondary,
+        enabled = true
+    )
 }

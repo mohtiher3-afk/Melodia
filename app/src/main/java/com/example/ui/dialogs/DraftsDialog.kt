@@ -1,5 +1,7 @@
 package com.example.ui.dialogs
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -21,13 +23,13 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -35,7 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.data.model.LyricDraft
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -47,7 +50,6 @@ import com.example.ui.theme.NothingWhite
 import com.example.ui.theme.SpaceMonoFontFamily
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 @Composable
 fun DraftsDialog(
@@ -58,7 +60,8 @@ fun DraftsDialog(
     onClearAllDrafts: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val dateFormat = SimpleDateFormat("MMM dd / HH:mm:ss", Locale.getDefault())
+    val locale = LocalLocale.current.platformLocale
+    val dateFormat = SimpleDateFormat("MMM dd / HH:mm:ss", locale)
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -91,7 +94,7 @@ fun DraftsDialog(
                                     .background(NothingRed)
                             )
                             Text(
-                                text = "LOCAL DATABASE // AUTO-SAVE",
+                                text = stringResource(R.string.drafts_db_kicker),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 10.sp,
                                 color = NothingRed,
@@ -101,7 +104,7 @@ fun DraftsDialog(
                         }
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "SAVED DRAFTS (${drafts.size})",
+                            text = stringResource(R.string.drafts_saved_count, drafts.size),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 18.sp,
                             color = NothingWhite,
@@ -109,25 +112,19 @@ fun DraftsDialog(
                         )
                     }
 
-                    IconButton(
+                    NothingButton(
+                        text = "",
                         onClick = onDismiss,
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(NothingCardSurface)
-                            .testTag("close_drafts_dialog")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = NothingWhite,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                            .size(48.dp)
+                            .testTag("close_drafts_dialog"),
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close
+                    )
                 }
 
                 Text(
-                    text = "Lyric edits and generations auto-save here whenever you pause typing.",
+                    text = stringResource(R.string.drafts_autosave_help),
                     fontSize = 11.sp,
                     color = NothingGrey,
                     modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
@@ -150,7 +147,7 @@ fun DraftsDialog(
                             verticalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "NO DRAFTS YET",
+                                text = stringResource(R.string.drafts_empty),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
@@ -158,7 +155,7 @@ fun DraftsDialog(
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = "Start editing lyrics or topic in the Studio to create auto-saved drafts.",
+                                text = stringResource(R.string.drafts_empty_help),
                                 fontSize = 11.sp,
                                 color = NothingGrey,
                                 lineHeight = 16.sp
@@ -213,7 +210,7 @@ fun DraftsDialog(
                                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                                             ) {
                                                 Text(
-                                                    text = "ACTIVE",
+                                                    text = stringResource(R.string.drafts_active_badge),
                                                     fontFamily = SpaceMonoFontFamily,
                                                     fontSize = 8.sp,
                                                     color = NothingWhite,
@@ -233,19 +230,15 @@ fun DraftsDialog(
                                         )
                                     }
 
-                                    IconButton(
+                                    NothingButton(
+                                        text = "",
                                         onClick = { onDeleteDraft(draft) },
                                         modifier = Modifier
-                                            .size(28.dp)
-                                            .testTag("delete_draft_${draft.id}")
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = "Delete Draft",
-                                            tint = NothingGrey,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                    }
+                                            .size(48.dp)
+                                            .testTag("delete_draft_${draft.id}"),
+                                        style = NothingButtonStyle.IconOnly,
+                                        icon = Icons.Default.Delete
+                                    )
                                 }
 
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -255,13 +248,13 @@ fun DraftsDialog(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "${draft.genre.uppercase()} / ${draft.mood.uppercase()}",
+                                        text = stringResource(R.string.drafts_meta_line, draft.genre.uppercase(), draft.mood.uppercase()),
                                         fontFamily = SpaceMonoFontFamily,
                                         fontSize = 10.sp,
                                         color = NothingRed
                                     )
                                     Text(
-                                        text = "/",
+                                        text = stringResource(R.string.drafts_meta_slash),
                                         color = NothingGrey,
                                         fontSize = 10.sp
                                     )
@@ -276,7 +269,7 @@ fun DraftsDialog(
                                 if (draft.userTopic.isNotBlank()) {
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = "Topic: ${draft.userTopic}",
+                                        text = stringResource(R.string.drafts_topic_label, draft.userTopic),
                                         fontSize = 11.sp,
                                         color = NothingOffWhite,
                                         maxLines = 1,
@@ -288,7 +281,7 @@ fun DraftsDialog(
                                     Spacer(modifier = Modifier.height(6.dp))
                                     val lyricSnippet = draft.lyrics.lines().filter { it.isNotBlank() }.take(2).joinToString(" / ")
                                     Text(
-                                        text = "\"$lyricSnippet\"",
+                                        text = stringResource(R.string.drafts_snippet_quote, lyricSnippet),
                                         fontSize = 11.sp,
                                         color = NothingGrey,
                                         maxLines = 2,
@@ -302,40 +295,18 @@ fun DraftsDialog(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.End
                                 ) {
-                                    Box(
+                                    NothingButton(
+                                        text = stringResource(R.string.drafts_restore),
+                                        onClick = {
+                                            onRestoreDraft(draft)
+                                            onDismiss()
+                                        },
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(NothingBlack)
-                                            .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                                            .pressable(
-                    pressedScale = 0.94f,
-                    haptic = com.example.ui.components.TapHaptic,
-                    onClick = {
-                        onRestoreDraft(draft)
-                        onDismiss()
-                    }
-                )
                                             .padding(horizontal = 10.dp, vertical = 4.dp)
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Restore,
-                                                contentDescription = null,
-                                                tint = NothingWhite,
-                                                modifier = Modifier.size(12.dp)
-                                            )
-                                            Text(
-                                                text = "RESTORE TO STUDIO",
-                                                fontFamily = SpaceMonoFontFamily,
-                                                fontSize = 9.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = NothingWhite
-                                            )
-                                        }
-                                    }
+                                            .testTag("restore_draft_${draft.id}"),
+                                        style = NothingButtonStyle.Secondary,
+                                        icon = Icons.Default.Restore
+                                    )
                                 }
                             }
                         }
@@ -350,21 +321,23 @@ fun DraftsDialog(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     if (drafts.isNotEmpty()) {
-                        NothingPillButton(
-                            text = "CLEAR ALL",
+                        NothingButton(
+                            text = stringResource(R.string.drafts_clear_all),
                             onClick = onClearAllDrafts,
-                            modifier = Modifier.weight(1f),
-                            isPrimary = false,
-                            testTag = "clear_all_drafts_button"
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("clear_all_drafts_button"),
+                            style = NothingButtonStyle.Secondary
                         )
                     }
 
-                    NothingPillButton(
-                        text = "CLOSE",
+                    NothingButton(
+                        text = stringResource(R.string.drafts_close),
                         onClick = onDismiss,
-                        modifier = Modifier.weight(1f),
-                        isPrimary = drafts.isEmpty(),
-                        testTag = "close_drafts_button"
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("close_drafts_button"),
+                        style = if (drafts.isEmpty()) NothingButtonStyle.Primary else NothingButtonStyle.Secondary
                     )
                 }
             }

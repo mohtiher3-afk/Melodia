@@ -1,5 +1,7 @@
 package com.example.ui.components
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -32,7 +34,8 @@ import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -318,7 +321,7 @@ fun WaveformLyricsDialog(
                                     .background(NothingRed)
                             )
                             Text(
-                                text = "WAVEFORM & SYNCHRONIZED TIMINGS",
+                                text = stringResource(R.string.waveform_timings_header),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 10.sp,
                                 color = NothingRed,
@@ -337,21 +340,16 @@ fun WaveformLyricsDialog(
                         )
                     }
 
-                    IconButton(
+                    NothingButton(
+                        text = "",
                         onClick = onDismiss,
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(NothingCardSurface)
-                            .testTag("close_waveform_dialog")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = NothingWhite,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                            .size(48.dp)
+                            .testTag("close_waveform_dialog"),
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close,
+                        iconTint = NothingWhite
+                    )
                 }
 
                 // Syncing Audio Waveform Visualizer with Playback State & Scrubbing
@@ -385,7 +383,7 @@ fun WaveformLyricsDialog(
                             modifier = Modifier.size(18.dp)
                         )
                         Text(
-                            text = if (isPlaying) "PLAYING // SYNC ACTIVE" else "AUDIO PAUSED",
+                            text = if (isPlaying) stringResource(R.string.wave_sync_active) else stringResource(R.string.wave_paused),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -413,7 +411,7 @@ fun WaveformLyricsDialog(
                                 modifier = Modifier.size(14.dp)
                             )
                             Text(
-                                text = if (isPlaying) "PAUSE" else "PLAY AUDIO",
+                                text = if (isPlaying) stringResource(R.string.model_action_pause) else stringResource(R.string.wave_play_audio),
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
@@ -433,7 +431,7 @@ fun WaveformLyricsDialog(
                         .padding(14.dp)
                 ) {
                     Text(
-                        text = "SYNCHRONIZED TIMING MARKERS",
+                        text = stringResource(R.string.waveform_markers_header),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -486,7 +484,7 @@ fun WaveformLyricsDialog(
                                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                                         ) {
                                             Text(
-                                                text = "ACTIVE",
+                                                text = stringResource(R.string.waveform_active_badge),
                                                 fontFamily = SpaceMonoFontFamily,
                                                 fontSize = 8.sp,
                                                 color = NothingWhite,
@@ -502,11 +500,11 @@ fun WaveformLyricsDialog(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                NothingPillButton(
-                    text = "CLOSE VIEWER",
+                NothingButton(
+                    text = stringResource(R.string.waveform_close_viewer),
                     onClick = onDismiss,
-                    isPrimary = true,
                     modifier = Modifier.fillMaxWidth(),
+                    style = NothingButtonStyle.Primary,
                     testTag = "close_waveform_view_button"
                 )
             }

@@ -23,7 +23,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,7 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -94,21 +94,15 @@ fun LyricsDialog(
                         )
                     }
 
-                    IconButton(
+                    NothingButton(
+                        text = "",
                         onClick = onDismiss,
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(NothingCardSurface)
-                            .testTag("close_lyrics_dialog")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = NothingWhite,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                            .size(48.dp)
+                            .testTag("close_lyrics_dialog"),
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -163,7 +157,7 @@ fun LyricsDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    NothingPillButton(
+                    NothingButton(
                         text = "Copy",
                         onClick = {
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -171,12 +165,13 @@ fun LyricsDialog(
                             clipboard.setPrimaryClip(clip)
                             Toast.makeText(context, "Lyrics copied to clipboard", Toast.LENGTH_SHORT).show()
                         },
-                        modifier = Modifier.weight(1f),
-                        isPrimary = false,
-                        testTag = "copy_lyrics_button"
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("copy_lyrics_button"),
+                        style = NothingButtonStyle.Secondary
                     )
 
-                    NothingPillButton(
+                    NothingButton(
                         text = "Share Text",
                         onClick = {
                             val sendIntent = Intent().apply {
@@ -187,9 +182,10 @@ fun LyricsDialog(
                             }
                             context.startActivity(Intent.createChooser(sendIntent, "Share lyrics to social media..."))
                         },
-                        modifier = Modifier.weight(1f),
-                        isPrimary = false,
-                        testTag = "share_lyrics_button"
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("share_lyrics_button"),
+                        style = NothingButtonStyle.Secondary
                     )
                 }
 
@@ -200,7 +196,7 @@ fun LyricsDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    NothingPillButton(
+                    NothingButton(
                         text = "LRC (.lrc)",
                         onClick = {
                             try {
@@ -220,12 +216,13 @@ fun LyricsDialog(
                                 Toast.makeText(context, "Export error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                             }
                         },
-                        modifier = Modifier.weight(1f),
-                        isRedAccent = true,
-                        testTag = "export_lrc_button"
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("export_lrc_button"),
+                        style = NothingButtonStyle.Primary
                     )
 
-                    NothingPillButton(
+                    NothingButton(
                         text = "Word (.doc)",
                         onClick = {
                             try {
@@ -245,9 +242,10 @@ fun LyricsDialog(
                                 Toast.makeText(context, "Export error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                             }
                         },
-                        modifier = Modifier.weight(1f),
-                        isRedAccent = true,
-                        testTag = "export_doc_button"
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("export_doc_button"),
+                        style = NothingButtonStyle.Primary
                     )
                 }
 
@@ -258,7 +256,7 @@ fun LyricsDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    NothingPillButton(
+                    NothingButton(
                         text = "TEXT (.txt)",
                         onClick = {
                             try {
@@ -278,12 +276,13 @@ fun LyricsDialog(
                                 Toast.makeText(context, "Export error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                             }
                         },
-                        modifier = Modifier.weight(1f),
-                        isPrimary = false,
-                        testTag = "export_txt_button"
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("export_txt_button"),
+                        style = NothingButtonStyle.Secondary
                     )
 
-                    NothingPillButton(
+                    NothingButton(
                         text = "JSON (.json)",
                         onClick = {
                             try {
@@ -303,9 +302,10 @@ fun LyricsDialog(
                                 Toast.makeText(context, "Export error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                             }
                         },
-                        modifier = Modifier.weight(1f),
-                        isPrimary = false,
-                        testTag = "export_json_button"
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("export_json_button"),
+                        style = NothingButtonStyle.Secondary
                     )
                 }
             }

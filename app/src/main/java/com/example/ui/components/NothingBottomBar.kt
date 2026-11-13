@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Upload
@@ -90,13 +91,13 @@ fun NothingBottomBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(68.dp)
-                .clip(RoundedCornerShape(24.dp))
+                .height(72.dp)
+                .clip(RoundedCornerShape(26.dp))
                 .background(NothingCardSurface)
                 .border(
                     1.dp,
                     Brush.verticalGradient(listOf(NothingOutline, NothingBorder)),
-                    RoundedCornerShape(24.dp)
+                    RoundedCornerShape(26.dp)
                 )
                 .padding(horizontal = 4.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(0.dp),
@@ -122,12 +123,12 @@ private fun BottomBarItem(
     modifier: Modifier = Modifier
 ) {
     val contentColor by animateColorAsState(
-        targetValue = if (selected) NothingWhite else NothingMutedGrey,
+        targetValue = if (selected) NothingRed else NothingMutedGrey,
         animationSpec = tween(durationMillis = 180),
         label = "bottom_bar_item_color"
     )
     val containerColor by animateColorAsState(
-        targetValue = if (selected) NothingElevatedSurface else Color.Transparent,
+        targetValue = if (selected) NothingRed.copy(alpha = 0.10f) else Color.Transparent,
         animationSpec = tween(durationMillis = 200),
         label = "bottom_bar_item_container"
     )

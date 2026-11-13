@@ -18,6 +18,13 @@ interface LlmProvider {
     fun isAvailable(): Boolean
 
     /**
+     * Authoritative readiness check for coroutine call sites. Defaults to
+     * [isAvailable]; providers with async device checks (e.g. Gemini Nano via
+     * AICore) override this so gates fail before generate() is attempted.
+     */
+    suspend fun checkReady(): Boolean = isAvailable()
+
+    /**
      * Generate a text completion.
      *
      * @param prompt user prompt.

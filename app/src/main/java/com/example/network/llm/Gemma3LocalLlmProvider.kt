@@ -3,12 +3,14 @@ package com.example.network.llm
 import android.content.Context
 import com.example.domain.LocalModelManager
 import com.google.ai.edge.litertlm.Backend
+import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.LogSeverity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.Closeable
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Local LLM provider using Gemma 3 1B via LiteRT-LM.
@@ -22,13 +24,52 @@ class Gemma3LocalLlmProvider(
     private val context: Context
 ) : LlmProvider, Closeable {
 
-    private val modelManager: LocalModelManager by lazy { LocalModelManager(context) }
+    private val modelManager: LocalModelManager by lazy { LocalModelManager.getInstance(context) }
+
+    /**
+     * Cached engine (F-18): loading the 584 MB Gemma 3 model takes multiple
+     * seconds, so the engine is created once and reused across generate()
+     * calls. Invalidated when the model path changes or inference fails.
+     */
+    private val cachedEngine = AtomicReference<CachedEngine?>(null)
+
+    private class CachedEngine(val modelPath: String, val engine: Engine)
+
+    private fun obtainEngine(modelPath: String): Engine {
+        cachedEngine.get()?.let { cached ->
+            if (cached.modelPath == modelPath && cached.engine.isInitialized()) {
+                return cached.engine
+            }
+            runCatching { cached.engine.close() }
+            cachedEngine.compareAndSet(cached, null)
+        }
+        synchronized(this) {
+            cachedEngine.get()?.let { cached ->
+                if (cached.modelPath == modelPath && cached.engine.isInitialized()) {
+                    return cached.engine
+                }
+                runCatching { cached.engine.close() }
+                cachedEngine.compareAndSet(cached, null)
+            }
+            Engine.setNativeMinLogSeverity(LogSeverity.ERROR)
+            val engineConfig = EngineConfig(
+                modelPath = modelPath,
+                backend = Backend.CPU(),
+                cacheDir = context.cacheDir.absolutePath
+            )
+            val engine = Engine(engineConfig)
+            engine.initialize()
+            cachedEngine.set(CachedEngine(modelPath, engine))
+            return engine
+        }
+    }
+
+    private fun invalidateEngine() {
+        cachedEngine.getAndSet(null)?.let { runCatching { it.engine.close() } }
+    }
 
     override val id: String = LlmProviderFactory.PROVIDER_GEMMA3_LOCAL
     override val displayName: String = "Gemma 3 1B (Local)"
-
-    @Volatile
-    private var engine: Engine? = null
 
     override fun isAvailable(): Boolean {
         val modelInfo = LocalModelManager.getModel("gemma3_1b")
@@ -54,67 +95,52 @@ class Gemma3LocalLlmProvider(
             prompt
         }
 
-        val eng = getOrCreateEngine(modelPath)
+        // Reuse the cached engine when possible (F-18) — model load is the
+        // dominant cost of every generation otherwise.
+        val engine = obtainEngine(modelPath)
 
-        eng.createConversation().use { conversation ->
-            val responseBuilder = StringBuilder()
-            val tokenCount = intArrayOf(0)
+        try {
+            engine.createConversation().use { conversation ->
+                val responseBuilder = StringBuilder()
+                val chunkCount = intArrayOf(0)
 
-            try {
-                conversation.sendMessageAsync(fullPrompt).collect { token ->
-                    responseBuilder.append(token)
-                    tokenCount[0]++
+                try {
+                    // sendMessageAsync emits Message objects (not raw strings).
+                    // Extract the text parts of each chunk explicitly — appending
+                    // the Message object itself would produce garbage output.
+                    conversation.sendMessageAsync(fullPrompt).collect { message ->
+                        val chunkText = message.contents.contents
+                            .filterIsInstance<Content.Text>()
+                            .joinToString("") { it.text }
+                        responseBuilder.append(chunkText)
+                        chunkCount[0]++
+                    }
+                } catch (e: Exception) {
+                    throw LlmException("LiteRT-LM inference failed: ${e.message}", e)
                 }
-            } catch (e: Exception) {
-                throw LlmException("LiteRT-LM inference failed: ${e.message}", e)
+
+                val responseText = responseBuilder.toString().trim()
+
+                if (responseText.isEmpty()) {
+                    throw LlmException("LiteRT-LM returned empty response")
+                }
+
+                LlmResponse(
+                    text = responseText,
+                    providerId = id,
+                    model = "gemma-3-1b-it-int4",
+                    finishReason = "stop"
+                )
             }
-
-            val responseText = responseBuilder.toString().trim()
-
-            if (responseText.isEmpty()) {
-                throw LlmException("LiteRT-LM returned empty response")
-            }
-
-            LlmResponse(
-                text = responseText,
-                providerId = id,
-                model = "gemma-3-1b-it-int4",
-                finishReason = "stop"
-            )
+        } catch (e: Exception) {
+            // A failed engine must not be reused — drop the cache so the next
+            // call starts from a fresh engine.
+            invalidateEngine()
+            throw e
         }
-    }
-
-    /**
-     * Returns the cached engine, creating it on first use. The engine is initialized off the
-     * calling thread inside [withContext(Dispatchers.Default)] and retained for the lifetime of
-     * this provider so subsequent prompts do not pay the model-loading cost again.
-     */
-    private suspend fun getOrCreateEngine(modelPath: String): Engine {
-        engine?.let { return it }
-
-        return withContext(Dispatchers.Default) {
-            Engine.setNativeMinLogSeverity(LogSeverity.ERROR)
-            val engineConfig = EngineConfig(
-                modelPath = modelPath,
-                backend = Backend.CPU(),
-                cacheDir = context.cacheDir.absolutePath
-            )
-            Engine(engineConfig).also { engine = it }
-        }
-    }
-
-    /**
-     * Rough token count estimate (~4 chars per token for English text).
-     * LiteRT-LM does not expose token counts directly, so we estimate.
-     */
-    private fun estimateTokenCount(text: String): Int {
-        return (text.length / 4.0).toInt().coerceAtLeast(1)
     }
 
     override fun close() {
-        engine?.let {
-            try { it.close() } catch (_: Exception) { /* best-effort */ }
-        }
-        engine = null
+        invalidateEngine()
     }
 }

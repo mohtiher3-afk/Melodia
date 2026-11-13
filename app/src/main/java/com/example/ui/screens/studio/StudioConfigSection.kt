@@ -1,8 +1,9 @@
 package com.example.ui.screens.studio
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,10 +12,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,7 +37,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.components.GlyphCard
-import com.example.ui.components.pressable
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.domain.SentimentAnalyzer
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
@@ -219,45 +220,14 @@ fun StudioConfigSection(
             Spacer(modifier = Modifier.height(10.dp))
 
             // Quick button to open full Genre & Subgenre Directory Dialog with Recently Viewed section
-            Row(
+            NothingButton(
+                text = stringResource(R.string.studio_subgenres_header),
+                onClick = { onOpenGenreDirectory() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(NothingBlack)
-                    .border(1.dp, NothingBorder, RoundedCornerShape(12.dp))
-                    .clickable { onOpenGenreDirectory() }
-                    .padding(horizontal = 12.dp, vertical = 10.dp)
                     .testTag("open_genre_directory_button"),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(NothingRed)
-                    )
-                    Text(
-                        text = "SUBGENRES MATRIX // RECENT & ALL",
-                        fontFamily = SpaceMonoFontFamily,
-                        fontSize = 10.sp,
-                        color = NothingWhite,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Text(
-                    text = "BROWSE >",
-                    fontFamily = SpaceMonoFontFamily,
-                    fontSize = 10.sp,
-                    color = NothingRed,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                style = NothingButtonStyle.Secondary
+            )
         }
 
         // User-Defined Mood Keywords Input
@@ -298,7 +268,7 @@ fun StudioConfigSection(
 
             // Quick select mood keywords chips
             Text(
-                text = "QUICK SUGGESTIONS // TAP TO ADD",
+                text = stringResource(R.string.studio_quick_suggestions),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 9.sp,
                 color = NothingGrey,
@@ -313,243 +283,216 @@ fun StudioConfigSection(
             ) {
                 quickMoodKeywords.forEach { keyword ->
                     val isPresent = state.moodKeywords.contains(keyword, ignoreCase = true)
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isPresent) NothingRed else NothingBlack)
-                            .border(1.dp, if (isPresent) NothingRed else NothingBorder, RoundedCornerShape(12.dp))
-                            .clickable {
-                                val current = state.moodKeywords.trim()
-                                val updated = if (current.isBlank()) {
-                                    keyword
-                                } else if (!isPresent) {
-                                    "$current, $keyword"
-                                } else {
-                                    current
-                                }
-                                onSetMoodKeywords(updated)
+                    NothingButton(
+                        text = stringResource(R.string.studio_keyword_hash, keyword),
+                        onClick = {
+                            val current = state.moodKeywords.trim()
+                            val updated = if (current.isBlank()) {
+                                keyword
+                            } else if (!isPresent) {
+                                "$current, $keyword"
+                            } else {
+                                current
                             }
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                            .testTag("mood_chip_$keyword")
-                    ) {
-                        Text(
-                            text = "#$keyword",
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 10.sp,
-                            fontWeight = if (isPresent) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isPresent) NothingWhite else NothingGrey
-                        )
-                    }
-                }
-            }
-        }
-
-        // Advanced Prompt Parameters (Vocal Style, BPM, Reverb Space)
-        GlyphCard(headerTitle = "VOCAL & TEMPO PARAMETERS // PROMPT CONTROL") {
-            // Vocal Style Chips
-            Text(
-                text = "VOCAL STYLE",
-                fontFamily = SpaceMonoFontFamily,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = NothingGrey
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                vocalStyles.forEach { style ->
-                    val isSelected = state.vocalStyle == style
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSelected) NothingRed else NothingBlack)
-                            .border(1.dp, if (isSelected) NothingRed else NothingBorder, RoundedCornerShape(12.dp))
-                            .pressable(
-                                pressedScale = 0.93f,
-                                haptic = com.example.ui.components.TapHaptic
-                            ) { onSetVocalStyle(style) }
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                            .testTag("vocal_style_chip_${style.replace(" ", "_")}")
-                    ) {
-                        Text(
-                            text = style.uppercase(),
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 10.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) NothingWhite else NothingGrey
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // BPM Selector Chips
-            Text(
-                text = "TEMPO / BPM",
-                fontFamily = SpaceMonoFontFamily,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = NothingGrey
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                bpmOptions.forEach { bpm ->
-                    val isSelected = state.selectedBpm == bpm
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSelected) NothingRed else NothingBlack)
-                            .border(1.dp, if (isSelected) NothingRed else NothingBorder, RoundedCornerShape(12.dp))
-                            .pressable(
-                                pressedScale = 0.93f,
-                                haptic = com.example.ui.components.TapHaptic
-                            ) { onSetSelectedBpm(bpm) }
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                            .testTag("bpm_chip_${bpm.replace(" ", "_")}")
-                    ) {
-                        Text(
-                            text = bpm,
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 10.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) NothingWhite else NothingGrey
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Reverb Space Chips
-            Text(
-                text = "REVERB / ACOUSTIC SPACE",
-                fontFamily = SpaceMonoFontFamily,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = NothingGrey
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                reverbOptions.forEach { reverb ->
-                    val isSelected = state.vocalReverb == reverb
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSelected) NothingRed else NothingBlack)
-                            .border(1.dp, if (isSelected) NothingRed else NothingBorder, RoundedCornerShape(12.dp))
-                            .pressable(
-                                pressedScale = 0.93f,
-                                haptic = com.example.ui.components.TapHaptic
-                            ) { onSetVocalReverb(reverb) }
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                            .testTag("reverb_chip_${reverb.replace(" ", "_")}")
-                    ) {
-                        Text(
-                            text = reverb.uppercase(),
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 10.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) NothingWhite else NothingGrey
-                        )
-                    }
-                }
-            }
-        }
-
-        // Sentiment Analysis Chip
-        GlyphCard(headerTitle = "SENTIMENT ANALYSIS") {
-            var analyzePressed by remember { mutableStateOf(false) }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        if (state.sentimentResult != null) {
-                            NothingRed.copy(alpha = 0.15f)
-                        } else {
-                            NothingCardSurface
-                        }
+                            onSetMoodKeywords(updated)
+                        },
+                        style = if (isPresent) NothingButtonStyle.Primary else NothingButtonStyle.Secondary,
+                        modifier = Modifier.testTag("mood_chip_$keyword")
                     )
-                    .border(1.dp, if (state.sentimentResult != null) NothingRed else NothingBorder, RoundedCornerShape(12.dp))
-                    .pressable(
-                        pressedScale = 0.95f,
-                        haptic = com.example.ui.components.TapHaptic
-                    ) { analyzePressed = !analyzePressed }
-                    .testTag("sentiment_analyze_chip")
+                }
+            }
+        }
+
+        // Vocal Style Dropdown
+        GlyphCard(headerTitle = "VOCAL STYLE") {
+            var vocalStyleExpanded by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
+                expanded = vocalStyleExpanded,
+                onExpandedChange = { vocalStyleExpanded = it },
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (state.sentimentResult == null && !analyzePressed) {
+                OutlinedTextField(
+                    value = state.vocalStyle,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = {
                         Text(
-                            text = "ANALYZE SENTIMENT",
+                            "VOCAL STYLE",
                             fontFamily = SpaceMonoFontFamily,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp,
                             color = NothingGrey
                         )
-                    } else if (analyzePressed) {
-                        Text(
-                            text = "ANALYZING...",
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = NothingRed
+                    },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = vocalStyleExpanded)
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = NothingRed,
+                        unfocusedBorderColor = NothingBorder,
+                        focusedTextColor = NothingWhite,
+                        unfocusedTextColor = NothingWhite
+                    ),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                        .fillMaxWidth()
+                        .testTag("vocal_style_dropdown_input")
+                )
+
+                ExposedDropdownMenu(
+                    expanded = vocalStyleExpanded,
+                    onDismissRequest = { vocalStyleExpanded = false },
+                    modifier = Modifier
+                        .background(NothingDarkSurface)
+                        .border(1.dp, NothingBorder, RoundedCornerShape(12.dp))
+                ) {
+                    vocalStyles.forEach { style ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = style.uppercase(),
+                                    fontFamily = SpaceMonoFontFamily,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (style == state.vocalStyle) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (style == state.vocalStyle) NothingRed else NothingWhite
+                                )
+                            },
+                            onClick = {
+                                onSetVocalStyle(style)
+                                vocalStyleExpanded = false
+                            },
+                            modifier = Modifier.testTag("vocal_style_item_${style.replace(" ", "_")}")
                         )
-                    } else if (state.sentimentResult != null) {
-                        val r = state.sentimentResult
-                        val dominant = r.dominantTone
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                text = "DOMINANT: $dominant",
-                                fontFamily = SpaceMonoFontFamily,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = NothingRed
-                            )
-                            Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                    }
+                }
+            }
+        }
+
+        // BPM Dropdown
+        GlyphCard(headerTitle = "BPM") {
+            var bpmExpanded by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
+                expanded = bpmExpanded,
+                onExpandedChange = { bpmExpanded = it },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = state.selectedBpm,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = {
+                        Text(
+                            "BPM",
+                            fontFamily = SpaceMonoFontFamily,
+                            fontSize = 10.sp,
+                            color = NothingGrey
+                        )
+                    },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = bpmExpanded)
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = NothingRed,
+                        unfocusedBorderColor = NothingBorder,
+                        focusedTextColor = NothingWhite,
+                        unfocusedTextColor = NothingWhite
+                    ),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                        .fillMaxWidth()
+                        .testTag("bpm_dropdown_input")
+                )
+
+                ExposedDropdownMenu(
+                    expanded = bpmExpanded,
+                    onDismissRequest = { bpmExpanded = false },
+                    modifier = Modifier
+                        .background(NothingDarkSurface)
+                        .border(1.dp, NothingBorder, RoundedCornerShape(12.dp))
+                ) {
+                    bpmOptions.forEach { bpm ->
+                        DropdownMenuItem(
+                            text = {
                                 Text(
-                                    text = "Joy: ${r.joyScore}%",
+                                    text = bpm,
                                     fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 9.sp,
-                                    color = NothingWhite
+                                    fontSize = 12.sp,
+                                    fontWeight = if (bpm == state.selectedBpm) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (bpm == state.selectedBpm) NothingRed else NothingWhite
                                 )
+                            },
+                            onClick = {
+                                onSetSelectedBpm(bpm)
+                                bpmExpanded = false
+                            },
+                            modifier = Modifier.testTag("bpm_item_$bpm")
+                        )
+                    }
+                }
+            }
+        }
+
+        // Reverb Dropdown
+        GlyphCard(headerTitle = "VOCAL REVERB") {
+            var reverbExpanded by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
+                expanded = reverbExpanded,
+                onExpandedChange = { reverbExpanded = it },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = state.vocalReverb,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = {
+                        Text(
+                            "REVERB",
+                            fontFamily = SpaceMonoFontFamily,
+                            fontSize = 10.sp,
+                            color = NothingGrey
+                        )
+                    },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = reverbExpanded)
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = NothingRed,
+                        unfocusedBorderColor = NothingBorder,
+                        focusedTextColor = NothingWhite,
+                        unfocusedTextColor = NothingWhite
+                    ),
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                        .fillMaxWidth()
+                        .testTag("reverb_dropdown_input")
+                )
+
+                ExposedDropdownMenu(
+                    expanded = reverbExpanded,
+                    onDismissRequest = { reverbExpanded = false },
+                    modifier = Modifier
+                        .background(NothingDarkSurface)
+                        .border(1.dp, NothingBorder, RoundedCornerShape(12.dp))
+                ) {
+                    reverbOptions.forEach { reverb ->
+                        DropdownMenuItem(
+                            text = {
                                 Text(
-                                    text = "Energy: ${r.energyScore}%",
+                                    text = reverb.uppercase(),
                                     fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 9.sp,
-                                    color = NothingWhite
+                                    fontSize = 12.sp,
+                                    fontWeight = if (reverb == state.vocalReverb) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (reverb == state.vocalReverb) NothingRed else NothingWhite
                                 )
-                            }
-                            Row(horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text(
-                                    text = "Melancholy: ${r.melancholyScore}%",
-                                    fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 9.sp,
-                                    color = NothingWhite
-                                )
-                                Text(
-                                    text = "Nostalgia: ${r.nostalgiaScore}%",
-                                    fontFamily = SpaceMonoFontFamily,
-                                    fontSize = 9.sp,
-                                    color = NothingWhite
-                                )
-                            }
-                        }
+                            },
+                            onClick = {
+                                onSetVocalReverb(reverb)
+                                reverbExpanded = false
+                            },
+                            modifier = Modifier.testTag("reverb_item_${reverb.replace(" ", "_")}")
+                        )
                     }
                 }
             }

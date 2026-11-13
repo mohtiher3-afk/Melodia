@@ -1,0 +1,156 @@
+# Melodia — Phase 1 Feature Audit (evidence-based)
+
+Date: 2026-11-12 · Baseline: `git` working tree at `4af5995` + uncommitted local edits (reviewed, not reverted).
+
+## Baseline verification (run before any change)
+
+| Command | Result |
+|---|---|
+| `:app:assembleDebug` | ✅ BUILD SUCCESSFUL (54 s) — NDK 26.1 + CMake 3.22.1 present, native `melodia_whisper` compiles |
+| `:app:testDebugUnitTest --rerun-tasks` | ✅ BUILD SUCCESSFUL (2 m 17 s) — **30 tests, 0 failures** (8 DomainLogic, 18 AudioAlignment, 3 Robolectric, 1 Example) |
+| `:app:connectedDebugAndroidTest` (Pixel 9 AVD, API 17 image, emulator-5554) | ⚠️ **20 tests, 1 failure** — app installs and launches; `floatingPlayerBarContainerRenders` fails (pre-existing test bug, see F-13) |
+| First run of instrumented tests | ❌ `INSTALL_FAILED_UPDATE_INCOMPATIBLE` — stale differently-signed build on emulator; resolved by uninstalling the dev package (test env only) |
+
+Environment: Android SDK 36 present, JDK 21 (Temurin), emulator available. No blockers.
+
+## How each finding was verified
+
+Static trace of every screen → ViewModel → domain/network call, cross-checked with the emulator
+run (app launches, 19/20 instrumented assertions pass) and the unit-test suite. No feature was
+marked "working" from code inspection alone where a runtime check was possible.
+
+## Findings table
+
+| # | Feature (screen → path) | Status | Evidence / reason | Repro | Priority |
+|---|---|---|---|---|---|
+| F-1 | **Lyric generation** (Studio GENERATE / Lyrics GENERATE → `MelodiaViewModel.generateLyricsOnly` → `MusicEngine.generateSongDraft` → `LlmProviderFactory`) | **broken (default config)** | Default provider is `gemini_nano`; `GeminiNanoLlmProvider.isAvailable()` is hardcoded `false` and `generate()` throws "not yet integrated". The ML Kit GenAI dependency (`com.google.mlkit:genai-prompt:1.0.0-beta4`) is in `app/build.gradle.kts` but **never imported anywhere** (verified by grep). Settings labels it "DEVICE CHECK" (configured=true), contradicting the runtime failure. Cloud Gemini works only with a real key; Gemma 3 1B local works but is **not offered in Settings**. | Settings → Nano Local selected (default) → Studio → CREATE LYRICS → always "not configured / Choose another provider" | **P0** |
+| F-2 | **Gemma 3 1B local provider chain** (Settings → provider → `Gemma3LocalLlmProvider` → LiteRT-LM) | **partial → broken by wiring** | Provider code is real (LiteRT-LM `Engine`, model download from HF). But (a) Settings never lists `PROVIDER_GEMMA3_LOCAL`; (b) if it were selected, `MusicEngine.generateSongDraft/autoPolishPrompt/…` call `LlmProviderFactory.create(providerId)` **without a Context**, which throws `IllegalStateException("Context required…")` for this provider. | Not reachable from UI; code-trace confirms crash path | **P0** |
+| F-3 | **Local model downloads UI** (Settings → LOCAL MODEL DOWNLOADS → `LocalModelDownloadSection` → `viewModel.downloadModel`) | **broken (progress invisible)** | `SettingsScreen` creates its **own** `LocalModelManager(context)` to observe state, while `MelodiaViewModel.downloadModel()` creates a **different** instance. Download runs, UI stays `Idle` forever. Also `cancelDownload()` does not cancel the coroutine/HTTP stream — it posts `Paused` while bytes keep writing; "Resume" restarts from 0 and overwrites the partial file. | Settings → DOWNLOAD on Gemma 3 1B → progress never appears; PAUSE does not stop the transfer | **P0** |
+| F-4 | **Local Whisper transcription** (Settings model list + `WhisperNativeBridge` → `app/src/main/cpp/melodia_whisper_bridge.cpp`) | **broken (fake success)** | `nativeInit` really loads whisper.cpp/ggml (compiles into `libmelodia_whisper.so`), but `nativeTranscribe` returns the hardcoded string `"Transcription API ready"` — no audio is processed. `WhisperNativeBridge` has **0 references** outside its own file; downloaded `ggml-tiny/base.bin` models are never used. `LocalWhisperEngine.alignLyricsWithAudio` is the energy-heuristic only (honestly labelled in Sync UI). | Sync screen shows "local Whisper is not integrated yet" while Settings implies the model enables it | **P0** |
+| F-5 | **Image/artwork generation** (Visuals → `generateCoverArtOnly` → `CoverArtGenerator`) | **partial (procedural only, honestly labelled)** | Real, working offline procedural PNG generator (1024×1024, saved under `filesDir/covers`, preview + gallery save work). **No** diffusion integration: `stable_diffusion_v15` download entry fetches a raw `.ckpt` that **nothing consumes** (MediaPipe Image Generator is in deps but never imported) — a fake capability. | Visuals → GENERATE COVER ART → works; Settings SD entry → downloads 2.1 GB that does nothing | **P1** |
+| F-6 | **Export button double-tap** (Library ▸ VIDEO / More ▸ Export → `VideoExporterScreen`) | **partial** | Export button lacks `enabled = !exportProgress.isExporting` → two concurrent `MediaCodec`+`MediaMuxer` encodes possible. Also `bitrateMbps` is fixed at 12 (no slider despite the parameter) and the finished file has **no open/share action** on this screen. | Tap EXPORT MP4 twice quickly → two encodes | **P1** |
+| F-7 | **Audio focus & interruptions** (`AudioPlayerManager`) | **partial** | No `AudioManager.requestAudioFocus`, no noisy-receiver, no focus-loss pause. Playback overlaps other apps and calls. Play/pause/seek/complete/error handling otherwise solid (error listener stops cleanly). | Start Melodia playback, play another app's audio → both play | **P1** |
+| F-8 | **Island overlay** (Settings switch → `PlaybackIslandService`) | **complete (with caveats)** | Off by default ✓, `canDrawOverlays` re-checked before every show ✓, safe remove on revoke/stop ✓, notification fallback with MediaSession ✓, cutout-safe placement ✓. Caveats: `MediaSession.Callback.onPlay` routes through the `pauseAudio()` toggle (works but fragile); service starts on every play even when Island is disabled (foreground notification appears — arguably a feature, but it runs whenever any audio plays). | Settings → Island → play track → overlay appears; revoke permission → overlay removed | **P2** |
+| F-9 | **Cloud transcription consent flow** (import → `MusicEngine.transcribeLyricsFromAudio`) | **complete** | Off by default, explicit `allowCloudUpload=true` argument required, 14 MB limit enforced, status text explains state in all four branches. Requires `GEMINI_API_KEY`; failure surfaces an error (not fake success). | Import audio with cloud off → "kept on device" message | — |
+| F-10 | **Sync / word timing** (Sync → `LocalWhisperEngine.alignLyricsWithAudio`) | **complete (heuristic, honestly labelled)** | Real PCM decode → activity detection → word timing; UI says "heuristic, not speech recognition; review before export". LRC/JSON share intents work via FileProvider. | Sync → AUTO-CREATE WORD TIMINGS with imported audio + lyrics | — |
+| F-11 | **MP4 export** (`LyricVideoExporter`, MediaCodec/MediaMuxer) | **partial** | Real hardware encode path with resolution/aspect handling; outputs to `cacheDir/exported_videos` (cache — can be evicted by the OS; should go to `filesDir` or MediaStore). correctness on-device **unverified** (needs a long-running emulator encode; planned in fix stage). | Export tab → EXPORT MP4 | **P2** |
+| F-12 | **Studio/Library/Sync/Vault/Queue navigation & controls** | **complete** | All traced controls have real handlers (no empty callbacks found — grep for `onClick = { }` is empty). Bottom bar = 5 primary tabs; Visuals/Export/Settings reachable via More ✓. Back-handler returns to Studio ✓. | Instrumented nav tests pass (19/20) | — |
+| F-13 | **Instrumented test bug** (`MainActivityTest.floatingPlayerBarContainerRenders`) | **broken (test only)** | Bar is `AnimatedVisibility(visible = currentUrl != null)` — correctly absent until audio plays; the test asserts it exists on a fresh launch. Test expectation is wrong, not the app. | Run connected tests → 1 failure | **P2** |
+| F-14 | **Room schema safety** (`AppDatabase`) | **risk** | `fallbackToDestructiveMigration(true)` — any future schema bump silently deletes all user lyrics/drafts/songs. No `exportSchema`, no migrations. | Code inspection | **P1** |
+| F-15 | **i18n / RTL** | **partial** | `supportsRtl=true`, Arabic lyric handling is real (normalizer, tests), but **all UI chrome is hardcoded English** — `strings.xml` has 1 entry, 0 `R.string` usages in Kotlin. Full extraction is a large refactor; staged approach proposed. | Any screen | **P2** |
+| F-16 | **Security posture** | **partial** | `.env` is gitignored ✓ and not tracked ✓; key travels in `x-goog-api-key` header (not URL) ✓; release logging off ✓. Remaining: `usesCleartextTraffic="true"` (needed only for custom `http://` LLM base URLs), API key baked into APK via BuildConfig (documented AI-Studio pattern), keystore passwords in `build.gradle.kts` (template-mandated). | Code inspection | **P2** |
+| F-17 | **Dead/legacy code** (user priority: clean up safely) | **unavailable (unused)** | 0-reference files verified by grep: `GenreSelectionScreen`, `WavPlaybackController`, `AudioAlignmentService`, `SecurityManager`, `BpmAnalyzer`, `AudioCacheManager`, `FreeLlmProvider`, dialogs `LyricsDialog`/`ExportLyricsDialog`/`EditTagsDialog`/`ManualSyncDialog`, `TrebloApiService` (only referenced by `ApiClient`, no call sites — audio-synthesis pivot leftover), and `app/src/main/cpp/whisper.cpp` (top-level stub, **not** in the CMake target, mismatched JNI names). Active UI does not reference any of them. | grep reference counts (see audit notes) | **P2** |
+| F-18 | **Local provider engine lifecycle** (`Gemma3LocalLlmProvider`) | ✅ closed | ~~New LiteRT-LM `Engine` created per `generate()` call~~ Engine now cached across calls with failure invalidation; `estimateTokenCount` removed. Cold vs warm generation measured ~72 s vs ~35–50 s. | Code inspection + on-device timing | **P3** |
+| F-19 | **Floating player copy** | **cosmetic** | Expanded sheet says "MELODIA v3 AUDIO SYNTHESIS" — app does not synthesize audio (pivot removed it). | Open expanded player | **P3** |
+
+## Prioritized fix plan (proposed stages — approval requested before starting)
+
+**Stage 1 — make lyric generation actually work (P0: F-1, F-2, F-18)**
+1. Implement `GeminiNanoLlmProvider` for real with ML Kit GenAI Prompt API (`GenerativeModel`, availability check, download-then-retry flow) — the dependency is already declared.
+2. Add `PROVIDER_GEMMA3_LOCAL` to the Settings provider row; pass `Application` context through `MusicEngine` (change `LlmProviderFactory.create` call sites to accept context); cache the LiteRT-LM engine per provider instance.
+3. Make the Settings badge reflect the *runtime* check, not a constant.
+Files: `GeminiNanoLlmProvider.kt`, `LlmProviderFactory.kt`, `MusicEngine.kt`, `Gemma3LocalLlmProvider.kt`, `SettingsScreen.kt`.
+Acceptance: with no key and no downloaded model, Nano path reports a specific actionable state; with Gemma 3 1B downloaded, lyrics generate end-to-end on device; unit tests for provider selection and fallback.
+
+**Stage 2 — model-download truthfulness (P0: F-3, F-4 partial)**
+1. Single shared `LocalModelManager` (ViewModel-owned) exposed to Settings; LiveData → StateFlow.
+2. Real cancellable downloads (cancel the coroutine + close stream; resume = re-download, delete partial file on cancel).
+3. Remove the `stable_diffusion_v15` entry (nothing consumes it — usage check documented) and either wire Whisper models to a real transcription path or label them "reserved — not yet used" honestly.
+Files: `LocalModelManager.kt`, `MelodiaViewModel.kt`, `SettingsScreen.kt`.
+Acceptance: progress bar moves during download; PAUSE actually stops bytes; no model entry implies a capability the app lacks.
+
+**Stage 3 — playback correctness (P1: F-7, F-6, F-13) — DONE 2026-11-12**
+- F-7: `AudioPlayerManager` now requests `AudioFocusRequest` before play (blocks playback if denied), pauses on transient/total loss, ducks to 0.2 on CAN_DUCK, restores on gain. (Emulator has no competing audio app; focus paths are code-reviewed + compile-verified, not live-audited on hardware.)
+- F-6: export button disabled while `isExporting` (double-tap guard); bitrate selector chips (8/12/20/35 Mbps) wired to `bitrateMbps`; SHARE VIDEO via FileProvider (`${applicationId}.fileprovider`, `video/mp4`) after a completed export; output moved from `cacheDir` to `getExternalFilesDir(MOVIES)/exported_videos` (survives cache clears).
+- F-13: instrumented test renamed `floatingPlayerBarHiddenUntilAudioLoaded`, asserts absence when idle.
+- E2E on emulator: draft → Export screen shows chips + button; export ran ~90 s producing `Melodia_*.mp4` (5.28 MB) in `files/Movies/exported_videos/`; SHARE VIDEO opened the system share sheet (Drive/Quick Share visible).
+- Note: ~~completion state has no visible "complete" banner~~ — fixed in follow-up: an `EXPORT COMPLETE` card with status text and output file name now renders after a successful export (verified on emulator).
+- Note: ~~a stale incremental build (OneDrive + Gradle incremental mix) produced an APK with old+new classes~~ — later traced to a foreign build of the second Melodia project being deployed by Android Studio (see Stage F section); clean rebuilds only appeared to fix it.
+1. Audio focus (gain/pause/duck/loss) + noisy receiver in `AudioPlayerManager`.
+2. Disable export button while exporting; add bitrate slider; add open/share for the finished MP4; move output out of `cacheDir`.
+3. Fix the floating-player test to assert after loading a track (or assert absence when idle).
+Acceptance: focus-loss pauses playback; double-tap cannot start a second encode; instrumented suite green.
+
+**Stage 4 — data safety & cleanup (P1–P2: F-14, F-17) — DONE 2026-11-12**
+- F-14: `fallbackToDestructiveMigration(true)` removed; `exportSchema = true` + KSP `room.schemaLocation` (schemas in `app/schemas/`, 7.json + 8.json); explicit no-op `MIGRATION_7_8` registered via `addMigrations` (schema verified byte-identical between 7.json and 8.json). Future schema bumps must add a real migration — a missing one now throws instead of wiping user data.
+- Migration test `AppDatabaseMigrationTest` (Robolectric + `MigrationTestHelper`): seeds all 5 tables at v7, migrates to v8, asserts every row survives and Room validates the schema. 2 tests, green.
+- Build note: AGP 9 no longer packages unit-test assets; schemas are attached to the **debug** sourceSet assets so Robolectric can read them (release APKs stay clean).
+- F-17: deleted 12 dead files (0 external references re-verified before deletion): `GenreSelectionScreen`, `WavPlaybackController`, `AudioAlignmentService`, `SecurityManager`, `BpmAnalyzer`, `AudioCacheManager`, `FreeLlmProvider`, dialogs `LyricsDialog`/`ExportLyricsDialog`/`EditTagsDialog`/`ManualSyncDialog`, `TrebloApiService` (+ removed the dead `trebloService` property from `ApiClient`), and `cpp/whisper.cpp` (stub, outside the CMake target — only `third_party/whisper.cpp` is compiled).
+- Lesson: file-name grep missed that `OpenAiChatService`/`OpenAiChatRequest`/`OpenAiMessage`/`OpenAiChatResponse`/`OpenAiChoice` were defined *inside* `FreeLlmProvider.kt` and used by live `HuggingFaceLlmProvider`/`OpenRouterLlmProvider`. Restored them verbatim into `network/llm/OpenAiChatModels.kt`. Deletion checks must cover symbols defined inside deleted files, not just file names.
+- Verification: clean `assembleDebug` + `testDebugUnitTest` (47 tests, 0 failures) + `connectedDebugAndroidTest` (20 tests, 0 failures) after deletions.
+
+**Stage 5 — i18n/RTL & polish (P2–P3: F-15, F-16, F-8 caveats, F-19) — DONE 2026-11-12**
+- F-16: `usesCleartextTraffic="true"` removed from the manifest; `OpenRouterLlmProvider.isAvailable()` now requires HTTPS (API key travels in a header — plain HTTP would leak it); HuggingFace provider already https-only; all model download URLs are https. 3 unit tests cover the https rule.
+- F-8: `PlaybackIslandService.start()` now returns immediately unless the Island preference is enabled — plain in-app playback no longer spawns a foreground notification. 2 Robolectric tests prove gating both ways.
+- F-19: expanded player copy corrected "MELODIA v3 AUDIO SYNTHESIS" → "MELODIA v3 PLAYBACK" (app does not synthesize audio).
+- F-15 (slice 1): bottom-bar tab labels + floating-player strings extracted to `strings.xml` (`tab_*`, `player_*`); `MelodiaTab` now carries `titleRes`; values are byte-identical to the old literals so instrumented text matchers stay green.
+- F-15 (slice 2, follow-up): `SettingsScreen` (22 literals) and `VideoExporterScreen` (6 + 2 banner strings) fully extracted (`settings_*`, `model_*`, `exporter_*`). Slice 3: VaultScreen (19), SyncScreen (9), QueueScreen (8) fully extracted (`vault_*`, `sync_*`, `queue_*`), verified on emulator. Slice 4: Studio sub-sections (StudioConfigSection 14, StudioHeader 5, StudioPresetsSection 4, StudioVersionHistorySection 2) + DraftsDialog (13) extracted (`studio_*`, `drafts_*`), verified on emulator. Slice 5 (final): all remaining small files extracted — GenreSelection (6), LyricsScreen (5), RhymeDialog (5), SavePresetDialog (4), NothingWaveformView (4), NothingComponents (4), LocalAudioPlayer (4), MoreScreen (3), VoiceDictationDialog (3), GenreSelectionDialog (3), StudioScreen (2), VisualsScreen (1). Zero text literals remain in the UI tree; F-15 extraction is complete. Verification note: the emulator initially ran a foreign APK (installed APK resources lacked tab_studio while dex contained MelodiaTab) — deployed by Android Studio from the second Melodia project (see Stage F section); after re-installing our build, Lyrics/Studio/More rendered correctly from resources.
+- Follow-up: export-complete banner added to `VideoExporterScreen` (`EXPORT COMPLETE` card with status + output file name); verified on emulator via UI dump after a real export.
+- Emulator checks: all 5 tab labels render from resources; forced RTL (`debug.force_rtl 1`) renders with no crash; `font_scale 1.3` renders with no crash. Both settings reset afterwards.
+- Verification: `assembleDebug` + `testDebugUnitTest` (52 tests, 0 failures) + `connectedDebugAndroidTest` (20 tests, 0 failures).
+
+## Not testable in this environment (documented honestly)
+
+- Real Gemini Nano generation requires a physical supported device (AICore) — emulator reports unavailable. **Physical-device checklist when available:** (1) Settings → Nano Local tile must show READY after AICore downloads its model; (2) Studio → CREATE LYRICS must produce a draft with provider toast "Creating lyrics with Nano Local…"; (3) airplane-mode test: generation must still work with no network; (4) `adb logcat` must show no LlmException from the Nano path.
+- Real Gemini cloud calls are not made from tests (no paid requests); provider logic tested via fakes.
+- 4K encode profile behaviour depends on device encoder caps; verified at 1080p on the emulator.
+
+## On-device verification — Gemma 3 1B (2026-11-12, emulator-5554)
+
+The Gemma 3 local inference path was verified END-TO-END on the x86_64 emulator (LiteRT-LM 0.17.1 ships x86_64 JNI):
+1. Settings → Gemma 3 tile selected; 584,417,280-byte `gemma-3-1b-it-int4.litertlm` downloaded in ~5 min with live progress; UI shows READY.
+2. Studio → CREATE LYRICS with the Gemma 3 provider: `liblitertlm_jni.so` loaded, engine initialized, inference completed in ~2 min (emulator CPU).
+3. Result: draft "Crimson Echoes" — 177 words, 7 sections ([Intro]/[Verse 1]/[Chorus]/[Verse 2]/[Bridge]/[Outro]), coherent on-theme lyrics verified in the drafts database. Drafts count incremented.
+4. **Bug found and fixed during verification:** `Gemma3LocalLlmProvider` appended the raw `Message` object from the `sendMessageAsync` Flow instead of extracting `Content.Text` — output would have been garbage. Fixed to `message.contents.contents.filterIsInstance<Content.Text>()`.
+5. Side note: `SentimentAnalyzer` logs a Nano-unavailable LlmException then falls back to heuristics — graceful, but the error-level log is noisy (cosmetic follow-up).
+
+Gemini Nano remains unverified until a physical device is available (checklist above).
+
+## Stage F — engine cache (F-18 closure) + emulator incidents (2026-11-12)
+
+**F-18 engine lifecycle closed:** `Gemma3LocalLlmProvider` now caches the LiteRT-LM `Engine` across `generate()` calls (`AtomicReference<CachedEngine>`; invalidated when the model path changes or inference fails, so a broken engine is never reused). Measured on the emulator with the same prompt: cold generation (includes model load) ~72 s; warm generation (cached engine) ~35–50 s. `liblitertlm_jni.so` loads once per process — no reload between generations.
+
+**"Stale APK" incidents retroactively explained — not a Gradle/OneDrive issue:** a SECOND Melodia project exists at `C:\Users\acer\StudioProjects\Melodia` (same applicationId `com.aistudio.melodia.nothing`, different design: PROJECT/LIBRARY/COACH/SETTINGS bottom bar, `CoachScreen.kt`, 59 MB APK). Android Studio with that project open deployed its build over the emulator mid-session (observed install at 14:35:38 with no local action; earlier `INSTALL_FAILED_UPDATE_INCOMPATIBLE` during the test run had the same cause — different signature origin). Diagnosis method: pull `$(pm path ...)` and check `resources.arsc` size/keys — our build is 828,616 bytes with `tab_studio`; the foreign build is 685,228 bytes with `COACH`. If the emulator UI suddenly shows the 4-tab bar or missing resources, re-verify the installed APK identity before debugging code. The earlier "OneDrive + Gradle incremental mix" explanation in the Stage 3/5 notes was wrong; clean rebuilds only appeared to fix it because they coincided with reinstalls.
+
+**Emulator OOM during model load:** the first Stage F generation attempt was killed by `lowmemorykiller` (app RSS ~1.1 GB while loading the 584 MB model; 4 GB emulator under memory pressure from Google-app background work). Fixed by disabling the memory-hog Google apps on the emulator (Photos, Chrome, YouTube, Gmail, Maps, quicksearchbox) — test-env-only change; after freeing ~1 GB, generation completed normally. Physical devices with ≥3 GB free RAM are unaffected.
+
+## Stage G — SentimentAnalyzer log noise (follow-up item 2) — DONE (2026-11-12)
+
+**Change:** `SentimentAnalyzer.analyzeLyrics` now checks `provider.isAvailable()` before invoking Nano (expected-unavailable → single `Log.i`, no stack); unexpected failures log `Log.w` with the message only instead of `Log.e` with a full stack trace. The heuristic fallback behaviour is unchanged.
+
+**Verified on emulator:** generation with Gemma 3 → sentiment fallback now logs one line: `W SentimentAnalyzer: On-device sentiment analysis failed; using heuristic analysis: Gemini Nano is not available…` (previously `E` + 10-line stack). 52 unit tests, 0 failures.
+
+**Residual finding (P3) — CLOSED 2026-11-12 (Stage H):** `GeminiNanoLlmProvider.isAvailable()` was only a static SDK-level check (`Build.VERSION.SDK_INT >= MIN_SDK_FOR_AICORE`), so on emulators and non-AICore Android 14+ devices it reported available and the failure surfaced at `generate()` time. Fixed by adding `LlmProvider.checkReady()` (suspend, defaults to `isAvailable()`), overridden in the Nano provider with the real AICore `checkStatus()` probe (verified against the shipped `genai-prompt-1.0.0-beta4` AAR with javap: `Generation.getClient(config).checkStatus(): FeatureStatus`), wrapped so a throwing check (AICore missing entirely) counts as not ready. All coroutine gates (`MusicEngine` ×4, `SentimentAnalyzer`, `MelodiaViewModel`) now call `checkReady()`. This also surfaced and fixed a silent-failure UX bug: with no draft selected, the provider-error feedback was shadowed by the "Create or restore a draft first" placeholder, leaving CREATE LYRICS looking dead — error feedback now outranks the placeholder in `StudioTopicSection`. Verified on the emulator (Nano tile NOT SUPPORTED; CREATE LYRICS → immediate actionable error) and regression-checked with a full Gemma 3 generation. 55 unit tests, 0 failures.
+
+**Process lesson:** the on-device check initially ran a stale APK because only `compileDebugKotlin` had been run after the edit — `assembleDebug` must run before every install-and-verify cycle. (Also: a long "dead button" detour was a false alarm — CREATE LYRICS with the default Nano provider fails in <100 ms, faster than the 10 s UI-poll interval; grep patterns must match the actual failure feedback strings.)
+
+## Stage I — log hygiene + i18n gap closure (2026-11-12)
+
+**Discovery:** the F-15 extraction greps used `text = "` as the pattern, which misses conditional assignments (`text = if (…) "A" else "B"`, `text = when {…}`) and non-`text` parameters (dialog titles, parameter defaults). The claim "zero hardcoded literals remain" was therefore too strong — corrected here.
+
+**Fixed in this stage:**
+- MusicEngine log noise: the 4 `Log.e(TAG, …, e)` sites that rethrow now log `Log.w` with the message only (the caller owns the failure); the 2 sites that swallow the exception (JSON parse, transcription) keep the stack — the only diagnostic — but downgrade to `Log.w`. Same rule as Stage G.
+- i18n slice 6: all 10 conditional `text = if/when` UI sites extracted to 18 new resources (`studio_drafting_lyrics`, `studio_polishing`, `studio_generate_prompt`, `studio_header_*`, `studio_autosave_*`, `lyrics_writing`, `lyrics_generate`, `player_play`, `wave_*`, `rhyme_*`, `settings_gemini_*_note`, `settings_cloud_transcription_*`, `settings_island_*`); shared strings reused (`queue_create_lyrics`, `model_action_pause`). Verified on the emulator: CREATE LYRICS / GENERATE PROMPT / Auto-save is on / Text only render identically from resources.
+
+**Still hardcoded (documented, not hidden):** genre/mood option lists in `GenreSelection` (content labels), data defaults (genre/mood/language names), and assorted dialog strings.
+
+**i18n slice 7 (same day):** all 67 user-visible status/feedback message sites in `MelodiaViewModel` extracted to 71 `status_*` resources with placeholders; ViewModel uses a `s(id, args)` helper (`getApplication().getString`) since Compose `stringResource` is unavailable outside composables. Live-verified on the emulator: parameterized strings render correctly through a full Gemma 3 generation cycle ("Creating lyrics with Gemma 3 1B (Local)…" → "Lyrics ready: Crimson Echoes").
+
+**i18n slice 8 — Arabic locale (`values-ar`):** all 255 resources translated to Arabic (placeholders verified to match per-string, 0 mismatches; aapt validates). Live-verified on the emulator via per-app locale `cmd locale set-app-locales … --locales ar`: Studio screen renders fully in Arabic, RTL mirroring confirmed (Studio tab moves from the left edge to the right side), parameterized strings ("المسودات (4)") interpolate correctly.
+
+**Remaining English in Arabic locale — by design and by gap:**
+- *By design (data labels):* genre/mood/language/vocal-style/reverb option lists and `statusOptions` (DRAFT/IN PROGRESS/…) — these are data values fed to AI prompts and stored/matched in the Room DB (VaultScreen maps them to colors by string equality); translating them would change prompts and break DB lookups.
+- *Gap (~55 sites, slice 9 candidate):* `GlyphCard` section headers across 11 screen files (TOPIC & SONG INSPIRATION, CONFIGURATION // DROPDOWNS, GEMINI CLOUD API, KARAOKE PREVIEW, …), status/badge pills (READY, TRANSCRIBING, NOT SUPPORTED, CONFIGURED, …), and a few button/feedback fallbacks in `StudioTopicSection` and `SyncScreen`. All user-visible chrome, none data-bound.
+
+## Physical-device verification — Redmi Note 13 Pro 5G (2026-11-12)
+
+Device: `23090RA98G` (zircon, Dimensity 7200 Ultra, arm64-v8a), Android 16, 11.6 GB RAM, unmetered Wi-Fi. Debug build installed via adb.
+
+1. **Gemini Nano checklist step 1 (honest state):** Settings → Nano Local tile reports **NOT CONFIGURED** on this non-AICore device — no misleading READY. (Steps 2–4 remain blocked: no AICore on this chipset.)
+2. **Gemma 3 model download:** 584,417,280 bytes in ~80 s over Wi-Fi; `.part` → final-file rename observed (pause/resume cleanup logic works on hardware).
+3. **Lyric generation E2E:** CREATE LYRICS → draft "Crimson Echoes" in ~60–70 s (cold engine), ~55–60 s on the second run (engine cache effective; model load skipped).
+4. **SentimentAnalyzer:** logs the single `W` line (no stack trace) on hardware too.
+5. **MP4 export:** hardware encoder produced `Melodia_1794487990161.mp4` (7.48 MB) in under a minute; `EXPORT COMPLETE` banner + output file name rendered.
+6. **SHARE VIDEO:** opened the system chooser (`com.android.intentresolver.ChooserActivity`).
+
+The Gemma 3 + export pipeline is verified on real ARM hardware. Remaining unverified: Gemini Nano generation (needs an AICore-capable device: Pixel 8/9-class, Tensor G3+, or Snapdragon 8 Gen 3-class).

@@ -38,15 +38,27 @@ class WhisperNativeBridge(private val context: Context) {
         return result
     }
 
-    /**
-     * Run transcription on a 16 kHz mono float PCM buffer.
-     * Returns a JSON array of segments; empty array `[]` on any failure.
-     */
-    fun transcribe(pcm: FloatArray): String {
+    /** Run transcription on 16kHz mono float PCM data */
+    fun transcribePcm(pcmData: FloatArray, sampleRate: Int = 16000): String {
+        if (!initialized) {
+            Log.w(TAG, "transcribePcm called before init")
+        }
+        if (sampleRate != 16000) {
+            throw IllegalArgumentException("Only 16000 Hz sample rate is supported")
+        }
+        if (pcmData.isEmpty()) {
+            throw IllegalArgumentException("Empty audio data")
+        }
+        return nativeTranscribePcm(pcmData, sampleRate)
+    }
+
+    /** @deprecated Use transcribePcm with PCM data instead */
+    @Deprecated("Use transcribePcm with PCM data", ReplaceWith("transcribePcm(pcmData, sampleRate)"))
+    fun transcribe(audioPath: String): String {
         if (!initialized) {
             Log.w(TAG, "transcribe called before init")
         }
-        return if (pcm.isEmpty()) "[]" else nativeTranscribeFloat(pcm, pcm.size)
+        return if (audioPath.isBlank()) "[]" else "[]"
     }
 
     /** Shutdown whisper context */
@@ -65,12 +77,13 @@ class WhisperNativeBridge(private val context: Context) {
 
     /** Get the models directory path for whisper models */
     fun getModelsDir(): String {
-        return File(context.filesDir, "models/whisper").also { it.mkdirs() }.path
+        return java.io.File(context.filesDir, "models/whisper").also { it.mkdirs() }.path
     }
 
     // ---- JNI methods ----
     private external fun nativeInit(modelPath: String): String
-    private external fun nativeTranscribeFloat(pcm: FloatArray, nSamples: Int): String
+    private external fun nativeTranscribePcm(pcmData: FloatArray, sampleRate: Int): String
+    private external fun nativeTranscribe(audioPath: String): String
     private external fun nativeShutdown()
     private external fun nativeGetVersion(): String
 }

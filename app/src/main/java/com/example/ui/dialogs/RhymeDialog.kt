@@ -1,5 +1,7 @@
 package com.example.ui.dialogs
 
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -28,9 +30,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.domain.RhymeAnalyzer
 import com.example.domain.RhymeResult
-import com.example.ui.components.CommitHaptic
-import com.example.ui.components.NothingPillButton
-import com.example.ui.components.pressable
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingDarkSurface
 import com.example.ui.theme.NothingGrey
@@ -72,7 +73,7 @@ fun RhymeDialog(
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Column {
                     Text(
-                        text = "LYRICS // RHYME ENGINE",
+                        text = stringResource(R.string.rhyme_header),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 11.sp,
                         color = NothingRed,
@@ -80,7 +81,7 @@ fun RhymeDialog(
                         letterSpacing = 2.sp
                     )
                     Text(
-                        text = "RHYMES FOR \"${query.trim().uppercase()}\"",
+                        text = stringResource(R.string.rhymes_for, query.trim().uppercase()),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
@@ -90,14 +91,14 @@ fun RhymeDialog(
 
                 when {
                     isLoading -> Text(
-                        text = "ANALYZING SOUND PATTERNS...",
+                        text = stringResource(R.string.rhyme_analyzing),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         color = NothingGrey
                     )
 
                     result == null -> Text(
-                        text = "RHYME ENGINE UNAVAILABLE. CHECK YOUR CONNECTION.",
+                        text = stringResource(R.string.rhyme_unavailable),
                         fontFamily = SpaceMonoFontFamily,
                         fontSize = 12.sp,
                         color = NothingGrey
@@ -106,23 +107,24 @@ fun RhymeDialog(
                     else -> {
                         val rhymes = result!!
                         SuggestionRow(
-                            title = "EXACT RHYMES",
+                            title = stringResource(R.string.rhyme_exact),
                             values = rhymes.exactRhymes,
                             onPick = { onInsert(it); lastInserted = it }
                         )
                         SuggestionRow(
-                            title = "SLANT RHYMES",
+                            title = stringResource(R.string.rhyme_slant),
                             values = rhymes.slantRhymes,
                             onPick = { onInsert(it); lastInserted = it }
                         )
                         SuggestionRow(
-                            title = "POETIC SYNONYMS",
+                            title = stringResource(R.string.rhyme_synonyms),
                             values = rhymes.synonyms,
                             onPick = { onInsert(it); lastInserted = it }
                         )
 
                         Text(
-                            text = lastInserted?.let { "INSERTED: $it" } ?: "TAP A WORD TO INSERT IT INTO THE DRAFT",
+                            text = lastInserted?.let { stringResource(R.string.rhyme_inserted, it) }
+                                ?: stringResource(R.string.rhyme_tap_to_insert),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 10.sp,
                             color = if (lastInserted != null) NothingRed else NothingGrey,
@@ -135,9 +137,11 @@ fun RhymeDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    NothingPillButton(
-                        text = "DONE",
-                        onClick = onDismiss
+                    NothingButton(
+                        text = stringResource(R.string.rhyme_done),
+                        onClick = onDismiss,
+                        modifier = Modifier.testTag("rhyme_done_button"),
+                        style = NothingButtonStyle.Primary
                     )
                 }
             }
@@ -170,25 +174,14 @@ private fun SuggestionRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             values.forEach { value ->
-                Box(
+                NothingButton(
+                    text = value,
+                    onClick = { onPick(value) },
                     modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(NothingDarkSurface)
-                        .border(1.dp, NothingBorder, RoundedCornerShape(10.dp))
-                        .pressable(
-                            pressedScale = 0.92f,
-                            haptic = CommitHaptic
-                        ) { onPick(value) }
                         .padding(horizontal = 10.dp, vertical = 6.dp)
-                        .testTag("rhyme_chip_$value")
-                ) {
-                    Text(
-                        text = value,
-                        fontFamily = SpaceMonoFontFamily,
-                        fontSize = 12.sp,
-                        color = NothingWhite
-                    )
-                }
+                        .testTag("rhyme_chip_$value"),
+                    style = NothingButtonStyle.Secondary
+                )
             }
         }
     }

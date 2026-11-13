@@ -3,6 +3,7 @@ package com.example.domain
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import org.json.JSONObject
 
 data class SentimentResult(
@@ -19,36 +20,44 @@ object SentimentAnalyzer {
 
     suspend fun analyzeLyrics(lyrics: String): SentimentResult = withContext(Dispatchers.IO) {
         if (lyrics.isNotBlank()) {
-            try {
-                val prompt = """
-                    Analyze the emotional tone and sentiment of these song lyrics. 
-                    Provide percentages (0-100 sum to 100) for Joy, Energy, Melancholy, and Nostalgia, determine the dominant emotional tone, and write a 1-sentence poetic summary.
-                    Return valid JSON with keys: dominantTone (string), joyScore (int), energyScore (int), melancholyScore (int), nostalgiaScore (int), summary (string).
+            // Nano is unavailable on emulators and unsupported devices — that is an
+            // expected state, so skip silently (info only) instead of error-logging
+            // a stack trace before the heuristic fallback.
+            val provider = com.example.network.llm.LlmProviderFactory.create(
+                com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO
+            )
+            if (provider.checkReady()) {
+                try {
+                    val prompt = """
+                        Analyze the emotional tone and sentiment of these song lyrics. 
+                        Provide percentages (0-100 sum to 100) for Joy, Energy, Melancholy, and Nostalgia, determine the dominant emotional tone, and write a 1-sentence poetic summary.
+                        Return valid JSON with keys: dominantTone (string), joyScore (int), energyScore (int), melancholyScore (int), nostalgiaScore (int), summary (string).
 
-                    Lyrics:
-                    $lyrics
-                """.trimIndent()
+                        Lyrics:
+                        $lyrics
+                    """.trimIndent()
 
-                val provider = com.example.network.llm.LlmProviderFactory.create(
-                    com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO
-                )
-                val candidate = provider.generate(prompt, temperature = 0.3f, maxTokens = 400).text
-                val json = JSONObject(candidate.trim().removeSurrounding("```json", "```").trim())
-                return@withContext SentimentResult(
-                    dominantTone = json.optString("dominantTone", "Energetic"),
-                    joyScore = json.optInt("joyScore", 35),
-                    energyScore = json.optInt("energyScore", 40),
-                    melancholyScore = json.optInt("melancholyScore", 15),
-                    nostalgiaScore = json.optInt("nostalgiaScore", 10),
-                    summary = json.optString("summary", "High energy pulse with uplifting lyrical themes.")
-                )
-            } catch (e: Exception) {
-                Log.e(TAG, "On-device sentiment analysis unavailable; using heuristic analysis", e)
+                    val candidate = provider.generate(prompt, temperature = 0.3f, maxTokens = 400).text
+                    val json = JSONObject(candidate.trim().removeSurrounding("```json", "```").trim())
+                    return@withContext SentimentResult(
+                        dominantTone = json.optString("dominantTone", "Energetic"),
+                        joyScore = json.optInt("joyScore", 35),
+                        energyScore = json.optInt("energyScore", 40),
+                        melancholyScore = json.optInt("melancholyScore", 15),
+                        nostalgiaScore = json.optInt("nostalgiaScore", 10),
+                        summary = json.optString("summary", "High energy pulse with uplifting lyrical themes.")
+                    )
+                } catch (e: Exception) {
+                    // Handled fallback, not an error state — warn without a stack trace.
+                    Log.w(TAG, "On-device sentiment analysis failed; using heuristic analysis: ${e.message}")
+                }
+            } else {
+                Log.i(TAG, "On-device sentiment analysis unavailable; using heuristic analysis")
             }
         }
 
         // Heuristic fallback sentiment analysis
-        val lower = lyrics.lowercase()
+        val lower = lyrics.lowercase(Locale.ROOT)
         val joyWords = listOf("hope", "light", "smile", "joy", "sun", "أمل", "نور", "فرح", "سعادة")
         val energyWords = listOf("fire", "burn", "run", "fast", "night", "neon", "شعلة", "نار", "سرعة")
         val melancholyWords = listOf("rain", "tear", "alone", "dark", "shadow", "حزن", "دموع", "وحدة", "ظلام")
@@ -83,7 +92,7 @@ object SentimentAnalyzer {
     }
 
     fun getWordSentimentColor(word: String): androidx.compose.ui.graphics.Color {
-        val w = word.lowercase().trim()
+        val w = word.lowercase(Locale.ROOT).trim()
         val joy = listOf("hope", "light", "smile", "joy", "sun", "free", "أمل", "نور", "فرح", "حرية")
         val energy = listOf("fire", "burn", "run", "fast", "night", "neon", "beat", "شعلة", "نار", "سرعة", "نبض")
         val melancholy = listOf("rain", "tear", "alone", "dark", "shadow", "cold", "حزن", "دموع", "وحدة", "ظلام", "برد")

@@ -15,8 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.example.R
 import com.example.ui.components.GlyphCard
-import com.example.ui.components.NothingPillButton
+import com.example.ui.components.GenerationActionFeedback
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingRed
@@ -36,7 +40,7 @@ fun StudioTopicSection(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Song Topic & Inspiration Input
-        GlyphCard(headerTitle = "TOPIC & SONG INSPIRATION") {
+        GlyphCard(headerTitle = "TOPIC & SONG INSPIRATION", modifier = Modifier) {
             OutlinedTextField(
                 value = state.userTopic,
                 onValueChange = { onSetUserTopic(it) },
@@ -67,17 +71,48 @@ fun StudioTopicSection(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                NothingPillButton(
-                    text = if (state.isGenerating) "DRAFTING LYRICS..." else "CREATE LYRICS",
+                NothingButton(
+                    text = if (state.isGenerating) stringResource(R.string.studio_drafting_lyrics) else stringResource(R.string.queue_create_lyrics),
                     onClick = onGenerateLyrics,
-                    isPrimary = true,
+                    style = NothingButtonStyle.Primary,
+                    enabled = !state.isGenerating && !state.isPolishingPrompt,
                     modifier = Modifier.weight(1f)
                 )
 
-                NothingPillButton(
-                    text = if (state.isPolishingPrompt) "POLISHING..." else "GENERATE PROMPT",
+                NothingButton(
+                    text = if (state.isPolishingPrompt) stringResource(R.string.studio_polishing) else stringResource(R.string.studio_generate_prompt),
                     onClick = onGeneratePrompt,
+                    style = NothingButtonStyle.Secondary,
+                    enabled = state.currentDraft != null && !state.isGenerating && !state.isPolishingPrompt,
                     modifier = Modifier.weight(1f)
+                )
+            }
+
+            when {
+                state.isGenerating -> GenerationActionFeedback(
+                    message = state.lyricsFeedback?.message ?: "Creating lyrics...",
+                    isLoading = true
+                )
+                state.isPolishingPrompt -> GenerationActionFeedback(
+                    message = state.promptFeedback?.message ?: "Creating the text prompt...",
+                    isLoading = true
+                )
+                // Errors must outrank the empty-draft placeholder: otherwise a failed
+                // provider check with no selected draft leaves CREATE LYRICS looking dead.
+                state.lyricsFeedback?.isError == true -> GenerationActionFeedback(
+                    message = state.lyricsFeedback.message,
+                    isError = true
+                )
+                state.currentDraft == null -> GenerationActionFeedback(
+                    message = "Create or restore a draft first to generate a prompt."
+                )
+                state.lyricsFeedback != null -> GenerationActionFeedback(
+                    message = state.lyricsFeedback.message,
+                    isError = state.lyricsFeedback.isError
+                )
+                state.promptFeedback != null -> GenerationActionFeedback(
+                    message = state.promptFeedback.message,
+                    isError = state.promptFeedback.isError
                 )
             }
         }

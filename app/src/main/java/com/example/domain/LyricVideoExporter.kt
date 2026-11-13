@@ -117,7 +117,13 @@ object LyricVideoExporter {
             }
 
             val (width, height) = getDimensions(selectedRes, aspectRatio)
-            val outputDir = File(context.cacheDir, "exported_videos").apply { mkdirs() }
+            // Persistent app-visible Movies directory instead of cacheDir:
+            // exports survive cache eviction and can be shared/opened by the user.
+            val outputDir = File(
+                context.getExternalFilesDir(android.os.Environment.DIRECTORY_MOVIES)
+                    ?: context.filesDir,
+                "exported_videos"
+            ).apply { mkdirs() }
             val outputFile = File(outputDir, "Melodia_${System.currentTimeMillis()}.mp4")
 
             onProgress(0.1f, "Initializing encoder ($width x $height @ ${fps}fps)...")

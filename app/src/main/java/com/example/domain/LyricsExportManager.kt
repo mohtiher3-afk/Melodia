@@ -39,7 +39,7 @@ object LyricsExportManager {
 
         sections.forEach { section ->
             // Section header timestamp
-            sb.appendLine("[${formatTimestamp(section.startTimeMs)}][${section.name.uppercase()}]")
+            sb.appendLine("[${formatTimestamp(section.startTimeMs)}][${section.name.uppercase(Locale.ROOT)}]")
 
             val lines = section.text.lines()
                 .map { it.trim() }
@@ -73,7 +73,7 @@ object LyricsExportManager {
         val sectionsHtml = StringBuilder()
         sections.forEach { section ->
             sectionsHtml.appendLine("<div class='section-block'>")
-            sectionsHtml.appendLine("<div class='section-title'>[${section.name.uppercase()}] <span class='timing'>(${formatTimestamp(section.startTimeMs)} - ${formatTimestamp(section.endTimeMs)})</span></div>")
+            sectionsHtml.appendLine("<div class='section-title'>[${section.name.uppercase(Locale.ROOT)}] <span class='timing'>(${formatTimestamp(section.startTimeMs)} - ${formatTimestamp(section.endTimeMs)})</span></div>")
             section.text.lines().forEach { line ->
                 val trimmed = line.trim()
                 if (trimmed.isNotBlank()) {
@@ -174,8 +174,8 @@ object LyricsExportManager {
      */
     fun generatePureLyricsText(song: Song): String {
         val sb = StringBuilder()
-        sb.appendLine(song.title.uppercase())
-        sb.appendLine("${song.genre.uppercase()} // ${song.mood.uppercase()}")
+        sb.appendLine("${song.title.uppercase(Locale.ROOT)}")
+        sb.appendLine("${song.genre.uppercase(Locale.ROOT)} // ${song.mood.uppercase(Locale.ROOT)}")
         sb.appendLine("==========================================")
         sb.appendLine()
         sb.appendLine(song.lyrics)
@@ -261,7 +261,7 @@ object LyricsExportManager {
         sb.appendLine("MELODIA // LYRICS & TIMING EXPORT (NOTHING OS)")
         sb.appendLine("==================================================")
         sb.appendLine("TITLE:    ${song.title}")
-        sb.appendLine("GENRE:    ${song.genre.uppercase()} // ${song.mood.uppercase()}")
+        sb.appendLine("GENRE:    ${song.genre.uppercase(Locale.ROOT)} // ${song.mood.uppercase(Locale.ROOT)}")
         sb.appendLine("LANGUAGE: ${song.language}")
         if (song.tags.isNotBlank()) {
             sb.appendLine("TAGS:     ${song.tags}")
@@ -275,7 +275,7 @@ object LyricsExportManager {
         sections.forEach { section ->
             val startStr = formatTimestamp(section.startTimeMs)
             val endStr = formatTimestamp(section.endTimeMs)
-            sb.appendLine("[$startStr - $endStr] [${section.name.uppercase()}]")
+            sb.appendLine("[$startStr - $endStr] [${section.name.uppercase(Locale.ROOT)}]")
             section.text.lines().forEach { line ->
                 val trimmed = line.trim()
                 if (trimmed.isNotBlank()) {
@@ -297,8 +297,8 @@ object LyricsExportManager {
     // --- Intent Creators ---
 
     fun createLrcExportIntent(context: Context, song: Song): Intent {
-        val safeTitle = song.title.lowercase().replace(Regex("[^a-z0-9]"), "_").take(24)
-        val fileName = "$safeTitle.lrc"
+        val safeTitle = song.title.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]"), "_").take(24)
+        val fileName = "${safeTitle}.lrc"
         val file = File(context.cacheDir, fileName)
 
         val content = generateLrcContent(song)
@@ -323,7 +323,7 @@ object LyricsExportManager {
     }
 
     fun createWordDocExportIntent(context: Context, song: Song): Intent {
-        val safeTitle = song.title.lowercase().replace(Regex("[^a-z0-9]"), "_").take(24)
+        val safeTitle = song.title.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]"), "_").take(24)
         val fileName = "${safeTitle}_lyrics.doc"
         val file = File(context.cacheDir, fileName)
 
@@ -349,7 +349,7 @@ object LyricsExportManager {
     }
 
     fun createJsonExportIntent(context: Context, song: Song): Intent {
-        val safeTitle = song.title.lowercase().replace(Regex("[^a-z0-9]"), "_").take(24)
+        val safeTitle = song.title.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]"), "_").take(24)
         val fileName = "melodia_${safeTitle}_timed_lyrics.json"
         val file = File(context.cacheDir, fileName)
 
@@ -375,7 +375,7 @@ object LyricsExportManager {
     }
 
     fun createTextExportIntent(context: Context, song: Song): Intent {
-        val safeTitle = song.title.lowercase().replace(Regex("[^a-z0-9]"), "_").take(24)
+        val safeTitle = song.title.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]"), "_").take(24)
         val fileName = "melodia_${safeTitle}_lyrics.txt"
         val file = File(context.cacheDir, fileName)
 

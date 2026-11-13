@@ -26,17 +26,21 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Forward10
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,6 +53,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,11 +62,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.R
 import com.example.domain.AudioPlayerManager
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
 import com.example.ui.theme.NothingDarkGrey
+import com.example.ui.theme.NothingDarkSurface
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingOffWhite
 import com.example.ui.theme.NothingRed
@@ -100,13 +107,13 @@ fun FloatingPlayerBar(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp)
-                    .clip(RoundedCornerShape(32.dp))
-                    .border(1.dp, NothingRed.copy(alpha = 0.8f), RoundedCornerShape(32.dp))
+                    .height(72.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .border(1.dp, NothingBorder, RoundedCornerShape(24.dp))
                     .pressable(pressedScale = 0.97f, haptic = TapHaptic) {
                         showExpandedPlayer = true
                     },
-                color = NothingCardSurface
+                color = NothingDarkSurface
             ) {
                 Row(
                     modifier = Modifier
@@ -156,42 +163,42 @@ fun FloatingPlayerBar(
                             )
                         }
                     }
-                    // Controls - Play/Pause and Close
+                    // Controls - Restart, Play/Pause and Close
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        IconButton(
+                        NothingButton(
+                            text = "",
+                            onClick = { audioPlayerManager.restartTrack() },
+                            modifier = Modifier
+                                .size(48.dp)
+                                .testTag("floating_restart_button"),
+                            style = NothingButtonStyle.IconOnly,
+                            icon = Icons.Default.Replay,
+                            iconTint = NothingWhite
+                        )
+
+                        NothingButton(
+                            text = "",
                             onClick = { audioPlayerManager.pauseAudio() },
                             modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(NothingBlack)
-                                .testTag("floating_play_pause_button")
-                        ) {
-                            DotMatrixIcon(
-                                icon = if (isPlaying) DotIcon.PAUSE else DotIcon.PLAY,
-                                contentDescription = if (isPlaying) "Pause" else "Play",
-                                size = 20.dp,
-                                tint = NothingWhite,
-                                animated = isPlaying
-                            )
-                        }
+                                .size(48.dp)
+                                .testTag("floating_play_pause_button"),
+                            style = NothingButtonStyle.Primary,
+                            icon = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            iconTint = NothingWhite
+                        )
 
-                        IconButton(
+                        NothingButton(
+                            text = "",
                             onClick = { audioPlayerManager.stopAudio() },
                             modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(NothingBlack)
-                                .testTag("floating_close_button")
-                        ) {
-                            DotMatrixIcon(
-                                icon = DotIcon.CLOSE,
-                                contentDescription = "Close Player",
-                                size = 16.dp,
-                                tint = NothingGrey
-                            )
-                        }
+                                .size(48.dp)
+                                .testTag("floating_close_button"),
+                            style = NothingButtonStyle.IconOnly,
+                            icon = Icons.Default.Close,
+                            iconTint = NothingGrey
+                        )
                     }
                 }
             }
@@ -267,25 +274,20 @@ fun ExpandedPlayerSheet(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
+                    NothingButton(
+                        text = "",
                         onClick = onDismiss,
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(NothingCardSurface)
-                            .testTag("close_expanded_player_button")
-                    ) {
-                        DotMatrixIcon(
-                            icon = DotIcon.CLOSE,
-                            contentDescription = "Minimize",
-                            size = 22.dp,
-                            tint = NothingWhite
-                        )
-                    }
+                            .size(48.dp)
+                            .testTag("close_expanded_player_button"),
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close,
+                        iconTint = NothingWhite
+                    )
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "NOW PLAYING // NOTHING PLAYER",
+                            text = stringResource(R.string.player_now_playing),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 10.sp,
                             color = NothingRed,
@@ -293,7 +295,7 @@ fun ExpandedPlayerSheet(
                             letterSpacing = 1.sp
                         )
                         Text(
-                            text = "MELODIA v3 AUDIO SYNTHESIS",
+                            text = stringResource(R.string.player_app_badge),
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 8.sp,
                             color = NothingGrey,
@@ -301,7 +303,7 @@ fun ExpandedPlayerSheet(
                         )
                     }
 
-                    Spacer(modifier = Modifier.size(36.dp))
+                    Spacer(modifier = Modifier.size(48.dp))
                 }
 
                 // Album Art
@@ -442,7 +444,7 @@ fun ExpandedPlayerSheet(
                     }
                 }
 
-                // Controls
+                // Controls - Rewind, Play/Pause, Forward
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -451,55 +453,38 @@ fun ExpandedPlayerSheet(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(
+                        NothingButton(
+                            text = "",
                             onClick = { onSeekTo((currentPosition - 10000).coerceAtLeast(0)) },
                             modifier = Modifier
                                 .size(48.dp)
-                                .clip(CircleShape)
-                                .background(NothingCardSurface)
-                                .testTag("rewind_10s_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Replay10,
-                                contentDescription = "Rewind 10s",
-                                tint = NothingWhite,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
+                                .testTag("rewind_10s_button"),
+                            style = NothingButtonStyle.IconOnly,
+                            icon = Icons.Default.Replay10,
+                            iconTint = NothingWhite
+                        )
 
-                        IconButton(
+                        NothingButton(
+                            text = "",
                             onClick = onTogglePlay,
                             modifier = Modifier
                                 .size(64.dp)
-                                .clip(CircleShape)
-                                .background(NothingBlack)
-                                .border(2.dp, NothingRed, CircleShape)
-                                .testTag("main_play_pause_button")
-                        ) {
-                            DotMatrixIcon(
-                                icon = if (isPlaying) DotIcon.PAUSE else DotIcon.PLAY,
-                                contentDescription = if (isPlaying) "Pause" else "Play",
-                                size = 36.dp,
-                                tint = NothingWhite,
-                                animated = isPlaying
-                            )
-                        }
+                                .testTag("main_play_pause_button"),
+                            style = NothingButtonStyle.Primary,
+                            icon = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            iconTint = NothingWhite
+                        )
 
-                        IconButton(
+                        NothingButton(
+                            text = "",
                             onClick = { onSeekTo((currentPosition + 10000).coerceAtMost(duration)) },
                             modifier = Modifier
                                 .size(48.dp)
-                                .clip(CircleShape)
-                                .background(NothingCardSurface)
-                                .testTag("forward_10s_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Forward10,
-                                contentDescription = "Forward 10s",
-                                tint = NothingWhite,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
+                                .testTag("forward_10s_button"),
+                            style = NothingButtonStyle.IconOnly,
+                            icon = Icons.Default.Forward10,
+                            iconTint = NothingWhite
+                        )
                     }
                 }
             }

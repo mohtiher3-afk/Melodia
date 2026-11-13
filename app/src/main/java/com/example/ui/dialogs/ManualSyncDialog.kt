@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,8 +48,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.domain.AudioPlayerManager
 import com.example.ui.components.NothingDotMatrixWaveform
-import com.example.ui.components.pressable
-import com.example.ui.components.NothingPillButton
+import com.example.ui.NothingButton
+import com.example.ui.NothingButtonStyle
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
@@ -157,21 +156,15 @@ fun ManualSyncDialog(
                         )
                     }
 
-                    IconButton(
+                    NothingButton(
+                        text = "",
                         onClick = onDismiss,
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(NothingCardSurface)
+                            .size(48.dp)
                             .testTag("close_manual_sync_dialog"),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = NothingWhite,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
+                        style = NothingButtonStyle.IconOnly,
+                        icon = Icons.Default.Close
+                    )
                 }
 
                 // Audio Status & Dot-Matrix Waveform
@@ -200,7 +193,8 @@ fun ManualSyncDialog(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        IconButton(
+                        NothingButton(
+                            text = "",
                             onClick = {
                                 if (isPlaying) {
                                     audioPlayerManager.pauseAudio()
@@ -209,18 +203,11 @@ fun ManualSyncDialog(
                                 }
                             },
                             modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(NothingRed)
+                                .size(48.dp)
                                 .testTag("sync_play_pause_button"),
-                        ) {
-                            Icon(
-                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                contentDescription = if (isPlaying) "Pause" else "Play",
-                                tint = NothingWhite,
-                                modifier = Modifier.size(22.dp),
-                            )
-                        }
+                            style = NothingButtonStyle.IconOnly,
+                            icon = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow
+                        )
 
                         Column {
                             Text(
@@ -253,35 +240,30 @@ fun ManualSyncDialog(
                 val currentTargetLine = parsedLines.getOrNull(nextLineIndex) ?: "ALL LINES STAMPED"
                 val canTap = isPlaying && (nextLineIndex in parsedLines.indices)
 
-                Box(
+                NothingButton(
+                    text = "",
+                    onClick = {
+                        if (nextLineIndex in parsedLines.indices) {
+                            recordedTimestamps[nextLineIndex] = currentPosition
+                            Toast.makeText(
+                                context,
+                                "Stamped Line ${nextLineIndex + 1}: ${formatLrcTimestamp(currentPosition)}",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                            nextLineIndex = (nextLineIndex + 1).coerceAtMost(parsedLines.size)
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(if (canTap) NothingRed else NothingCardSurface)
-                        .border(1.dp, if (canTap) NothingRed else NothingBorder, RoundedCornerShape(20.dp))
-                        .pressable(
-                            pressedScale = 0.94f,
-                            haptic = com.example.ui.components.TapHaptic,
-                            enabled = canTap,
-                        ) {
-                            if (nextLineIndex in parsedLines.indices) {
-                                recordedTimestamps[nextLineIndex] = currentPosition
-                                Toast.makeText(
-                                    context,
-                                    "Stamped Line ${nextLineIndex + 1}: ${formatLrcTimestamp(currentPosition)}",
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                                nextLineIndex = (nextLineIndex + 1).coerceAtMost(parsedLines.size)
-                            }
-                        }
                         .padding(vertical = 16.dp, horizontal = 16.dp)
                         .testTag("tap_sync_line_button"),
-                    contentAlignment = Alignment.Center,
+                    style = if (canTap) NothingButtonStyle.Primary else NothingButtonStyle.Secondary,
+                    enabled = canTap
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Timer,
@@ -338,21 +320,16 @@ fun ManualSyncDialog(
                             letterSpacing = 1.sp,
                         )
 
-                        Text(
+                        NothingButton(
                             text = "RESET ALL",
-                            fontFamily = SpaceMonoFontFamily,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = NothingGrey,
-                            modifier = Modifier
-                            .pressable(
-                                pressedScale = 0.94f,
-                                haptic = com.example.ui.components.TapHaptic,
-                            ) {
+                            onClick = {
                                 recordedTimestamps.clear()
                                 nextLineIndex = 0
                                 Toast.makeText(context, "Timestamps reset", Toast.LENGTH_SHORT).show()
                             },
+                            modifier = Modifier
+                                .testTag("reset_all_timestamps"),
+                            style = NothingButtonStyle.Quiet
                         )
                     }
 
@@ -368,36 +345,21 @@ fun ManualSyncDialog(
                             val isCurrentTarget = idx == nextLineIndex
                             val isRecorded = timestampMs != null
 
-                            Row(
+                            NothingButton(
+                                text = "",
+                                onClick = {
+                                    nextLineIndex = idx
+                                    timestampMs?.let { audioPlayerManager.seekTo(it) }
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(
-                                        when {
-                                            isCurrentTarget -> NothingDarkGrey
-                                            isRecorded -> NothingBlack
-                                            else -> Color.Transparent
-                                        },
-                                    )
-                                    .border(
-                                        1.dp,
-                                        when {
-                                            isCurrentTarget -> NothingRed
-                                            isRecorded -> NothingBorder
-                                            else -> Color.Transparent
-                                        },
-                                        RoundedCornerShape(10.dp),
-                                    )
-                                    .pressable(
-                                        pressedScale = 0.94f,
-                                        haptic = com.example.ui.components.TapHaptic,
-                                    ) {
-                                        nextLineIndex = idx
-                                        timestampMs?.let { audioPlayerManager.seekTo(it) }
-                                    }
-                                    .padding(horizontal = 10.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    .padding(horizontal = 10.dp, vertical = 8.dp)
+                                    .testTag("lyric_line_$idx"),
+                                style = when {
+                                    isCurrentTarget -> NothingButtonStyle.Primary
+                                    isRecorded -> NothingButtonStyle.Secondary
+                                    else -> NothingButtonStyle.Quiet
+                                }
                             ) {
                                 // Index number
                                 Text(
@@ -413,7 +375,7 @@ fun ManualSyncDialog(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(6.dp))
                                         .background(if (isRecorded) NothingRed else NothingDarkGrey)
-                                        .padding(horizontal = 6.dp, vertical = 3.dp),
+                                        .padding(horizontal = 6.dp, vertical = 3.dp)
                                 ) {
                                     Text(
                                         text = if (isRecorded) formatLrcTimestamp(timestampMs) else "[--:--.--]",
@@ -436,30 +398,19 @@ fun ManualSyncDialog(
                                 )
 
                                 // Manual Stamp / Overwrite Button
-                                Box(
+                                NothingButton(
+                                    text = "STAMP",
+                                    onClick = {
+                                        recordedTimestamps[idx] = currentPosition
+                                        nextLineIndex = (idx + 1).coerceAtMost(parsedLines.size)
+                                        Toast.makeText(context, "Stamped line ${idx + 1}", Toast.LENGTH_SHORT).show()
+                                    },
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(NothingBlack)
-                                        .border(1.dp, NothingBorder, RoundedCornerShape(6.dp))
-                                        .pressable(
-                                            pressedScale = 0.94f,
-                                            haptic = com.example.ui.components.TapHaptic,
-                                            enabled = isPlaying,
-                                        ) {
-                                            recordedTimestamps[idx] = currentPosition
-                                            nextLineIndex = (idx + 1).coerceAtMost(parsedLines.size)
-                                            Toast.makeText(context, "Stamped line ${idx + 1}", Toast.LENGTH_SHORT).show()
-                                        }
-                                        .padding(horizontal = 6.dp, vertical = 3.dp),
-                                ) {
-                                    Text(
-                                        text = "STAMP",
-                                        fontFamily = SpaceMonoFontFamily,
-                                        fontSize = 9.sp,
-                                        color = if (isPlaying) NothingRed else NothingGrey,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                }
+                                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                                        .testTag("manual_stamp_$idx"),
+                                    style = NothingButtonStyle.Secondary,
+                                    enabled = isPlaying
+                                )
                             }
                         }
                     }
@@ -470,15 +421,16 @@ fun ManualSyncDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    NothingPillButton(
+                    NothingButton(
                         text = "CANCEL",
                         onClick = onDismiss,
-                        isPrimary = false,
-                        modifier = Modifier.weight(1f),
-                        testTag = "cancel_sync_button",
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("cancel_sync_button"),
+                        style = NothingButtonStyle.Secondary
                     )
 
-                    NothingPillButton(
+                    NothingButton(
                         text = "APPLY SYNCED LRC",
                         onClick = {
                             val formattedLrc = buildString {
@@ -496,10 +448,11 @@ fun ManualSyncDialog(
                             Toast.makeText(context, "Synced LRC timings applied!", Toast.LENGTH_SHORT).show()
                             onDismiss()
                         },
-                        isRedAccent = true,
-                        modifier = Modifier.weight(1.5f),
-                        enabled = recordedTimestamps.isNotEmpty(),
-                        testTag = "apply_synced_lrc_button",
+                        modifier = Modifier
+                            .weight(1.5f)
+                            .testTag("apply_synced_lrc_button"),
+                        style = NothingButtonStyle.Primary,
+                        enabled = recordedTimestamps.isNotEmpty()
                     )
                 }
             }
