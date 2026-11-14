@@ -15,11 +15,11 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.ui.theme.AppAppearance
-import com.example.ui.theme.AppearanceRepository
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ui.MelodiaSplash
 import com.example.ui.components.FloatingPlayerBar
+import com.example.ui.components.MelodiaMiniPlayer
 import com.example.ui.nothing.NtAppShell
 import com.example.ui.nothing.NtDestination
 import com.example.ui.nothing.ProjectStep
@@ -31,6 +31,8 @@ import com.example.ui.screens.SettingsScreen
 import com.example.ui.screens.StudioScreen
 import com.example.ui.screens.SyncScreen
 import com.example.ui.screens.VisualsScreen
+import com.example.ui.theme.AppAppearance
+import com.example.ui.theme.AppearanceRepository
 import com.example.ui.theme.MelodiaTheme
 import com.example.ui.viewmodel.MelodiaViewModel
 import kotlinx.coroutines.launch
@@ -55,8 +57,12 @@ class MainActivity : ComponentActivity() {
                 var destination by rememberSaveable { mutableStateOf(NtDestination.PROJECT) }
                 var projectStep by rememberSaveable { mutableStateOf(ProjectStep.STUDIO) }
                 val saveableStateHolder = rememberSaveableStateHolder()
+                var showSplash by remember { mutableStateOf(true) }
 
-                BackHandler(enabled = destination != NtDestination.PROJECT || projectStep != ProjectStep.STUDIO) {
+                if (showSplash) {
+                    MelodiaSplash(onComplete = { showSplash = false })
+                } else {
+                    BackHandler(enabled = destination != NtDestination.PROJECT || projectStep != ProjectStep.STUDIO) {
                     // Preserve the existing behavior: Back returns to the Studio home.
                     destination = NtDestination.PROJECT
                     projectStep = ProjectStep.STUDIO
@@ -82,7 +88,10 @@ class MainActivity : ComponentActivity() {
                     scrollContent = false,
                     modifier = Modifier.fillMaxSize(),
                     bottomExtra = {
-                        FloatingPlayerBar(audioPlayerManager = viewModel.audioPlayerManager)
+                        MelodiaMiniPlayer(
+                            audioPlayerManager = viewModel.audioPlayerManager,
+                            onExpand = { /* TODO: Expand to full player */ }
+                        )
                     }
                 ) {
                     saveableStateHolder.SaveableStateProvider(routeKey) {
@@ -117,4 +126,5 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
 }

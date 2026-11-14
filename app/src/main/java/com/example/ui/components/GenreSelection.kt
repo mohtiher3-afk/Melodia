@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -164,13 +165,13 @@ fun GenreSelection(
                             modifier = Modifier
                                 .size(7.dp)
                                 .clip(CircleShape)
-                                .background(MelodiaTheme.Accent)
+                                .background(MaterialTheme.colorScheme.primary)
                         )
                         Text(
                             text = "RECENTLY VIEWED // LAST 3",
                             fontFamily = NothingDotMatrixFontFamily,
                             fontSize = 13.sp,
-                            color = MelodiaTheme.Accent,
+                            color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.2.sp
                         )
@@ -284,7 +285,7 @@ fun GenreSelection(
                     text = category.uppercase(),
                     fontFamily = NothingDotMatrixFontFamily,
                     fontSize = 13.sp,
-                    color = MelodiaTheme.Accent,
+                    color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
                     letterSpacing = 1.sp
@@ -330,7 +331,7 @@ fun RecentlyViewedSubGenreCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val borderColor = if (isSelected) MelodiaTheme.Accent else NothingBorder
+    val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else NothingBorder
     val bgColor = if (isSelected) NothingCardSurface else NothingDarkSurface
 
     Box(
@@ -357,7 +358,7 @@ fun RecentlyViewedSubGenreCard(
                         text = "REC // 0$index",
                         fontFamily = NothingDotMatrixFontFamily,
                         fontSize = 10.sp,
-                        color = MelodiaTheme.Accent,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
@@ -373,7 +374,7 @@ fun RecentlyViewedSubGenreCard(
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = if (isSelected) MelodiaTheme.Accent else MelodiaTheme.TextMain
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else MelodiaTheme.TextMain
                 )
                 if (recent.tempoRange.isNotBlank()) {
                     Text(
@@ -390,7 +391,7 @@ fun RecentlyViewedSubGenreCard(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(MelodiaTheme.Accent)
+                        .background(MaterialTheme.colorScheme.primary)
                 )
             }
         }
@@ -404,7 +405,7 @@ fun MelodiaSubGenreItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val borderColor = if (isSelected) MelodiaTheme.Accent else NothingBorder
+    val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else NothingBorder
     val bgColor = if (isSelected) NothingCardSurface else NothingDarkSurface
 
     Box(
@@ -422,7 +423,7 @@ fun MelodiaSubGenreItem(
                 text = subGenre.name.uppercase(),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 11.sp,
-                color = if (isSelected) MelodiaTheme.Accent else MelodiaTheme.TextMain,
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MelodiaTheme.TextMain,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                 maxLines = 1
             )
@@ -432,7 +433,7 @@ fun MelodiaSubGenreItem(
                     text = subGenre.tempoRange,
                     fontFamily = SpaceMonoFontFamily,
                     fontSize = 9.sp,
-                    color = if (isSelected) MelodiaTheme.Accent else NothingGrey
+                    color = if (isSelected) MaterialTheme.colorScheme.primary else NothingGrey
                 )
             }
         }

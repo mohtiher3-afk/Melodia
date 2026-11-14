@@ -25,6 +25,7 @@ retrofit = "2.12.0"
 converterMoshi = "2.12.0"
 kotlinxCoroutinesAndroid = "1.10.2"
 kotlinxCoroutinesCore = "1.10.2"
+kotlinxSerializationJson = "1.8.0"
 accompanistPermissions = "0.37.3"
 playServicesLocation = "21.3.0"
 cameraCamera2 = "1.5.0"
@@ -47,6 +48,8 @@ securityCrypto = "1.1.0-alpha06"
 litertLmVersion = "0.17.1"
 mediapipeImageGeneratorVersion = "0.10.26.1"
 leakcanary = "1.0.0"
+firebaseCrashlytics = "21.1.0"
+googleFirebaseCrashlytics = "3.0.8"
 
 
 [libraries]
@@ -82,6 +85,7 @@ retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = 
 converter-moshi = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "converterMoshi" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanistPermissions" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "cameraCamera2" }
@@ -109,11 +113,14 @@ androidx-security-crypto = { group = "androidx.security", name = "security-crypt
 litertLm = { group = "com.google.ai.edge.litertlm", name = "litertlm-android", version.ref = "litertLmVersion" }
 mediapipeImageGenerator = { group = "com.google.mediapipe", name = "tasks-vision-image-generator", version.ref = "mediapipeImageGeneratorVersion" }
 leakcanary = { group = "com.android.tools.studio.leakcanary", name = "leakcanary", version.ref = "leakcanary" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics", version.ref = "firebaseCrashlytics" }
 
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "googleDevtoolsKsp" }
 secrets = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "secretsGradlePlugin" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+google-firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "googleFirebaseCrashlytics" }

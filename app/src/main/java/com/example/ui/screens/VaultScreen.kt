@@ -689,7 +689,124 @@ fun SavedDraftItem(
     onRestoreToStudio: () -> Unit,
     onDelete: () -> Unit
 ) {
-    // Implementation...
+    val dateFormat = remember { SimpleDateFormat("yyyy.MM.dd", Locale.getDefault()) }
+    val formattedDate = remember(draft.lastModified) { dateFormat.format(Date(draft.lastModified)) }
+
+    GlyphCard(
+        testTag = "saved_draft_${draft.id}",
+        modifier = Modifier
+            .pressable(
+                pressedScale = 0.94f,
+                haptic = com.example.ui.components.TapHaptic,
+                onClick = onRestoreToStudio
+            ),
+        content = {
+            Column {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    NothingCoverArt(
+                        title = draft.title,
+                        genre = draft.genre,
+                        imagePath = draft.coverImagePath,
+                        modifier = Modifier.size(72.dp)
+                    )
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(NothingWhite.copy(alpha = 0.2f))
+                                        .border(1.dp, NothingWhite, RoundedCornerShape(6.dp))
+                                        .padding(horizontal = 5.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "DRAFT",
+                                        fontFamily = SpaceMonoFontFamily,
+                                        fontSize = 8.sp,
+                                        color = NothingWhite,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            Text(
+                                text = formattedDate,
+                                fontFamily = SpaceMonoFontFamily,
+                                fontSize = 9.sp,
+                                color = NothingGrey
+                            )
+                        }
+
+                        Text(
+                            text = draft.title,
+                            fontFamily = SpaceMonoFontFamily,
+                            fontSize = 15.sp,
+                            color = NothingWhite,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
+                        )
+
+                        Text(
+                            text = draft.promptText,
+                            fontSize = 11.sp,
+                            color = NothingGrey,
+                            maxLines = 1
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(NothingCardSurface)
+                            .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = draft.genre.ifBlank { "UNLABELED" },
+                            fontFamily = SpaceMonoFontFamily,
+                            fontSize = 10.sp,
+                            color = NothingGrey
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(NothingCardSurface)
+                            .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = draft.mood.ifBlank { "NO MOOD" },
+                            fontFamily = SpaceMonoFontFamily,
+                            fontSize = 10.sp,
+                            color = NothingGrey
+                        )
+                    }
+                }
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)

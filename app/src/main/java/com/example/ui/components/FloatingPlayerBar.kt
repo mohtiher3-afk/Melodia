@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
@@ -64,9 +65,9 @@ import com.example.ui.theme.NothingCardSurface
 import com.example.ui.theme.NothingDarkGrey
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingOffWhite
-import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingWhite
 import com.example.ui.theme.SpaceMonoFontFamily
+import com.example.ui.theme.melodiaAccentText
 import java.util.Locale
 
 @Composable
@@ -102,7 +103,7 @@ fun FloatingPlayerBar(
                     .fillMaxWidth()
                     .height(64.dp)
                     .clip(RoundedCornerShape(32.dp))
-                    .border(1.dp, NothingRed.copy(alpha = 0.8f), RoundedCornerShape(32.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f), RoundedCornerShape(32.dp))
                     .pressable(pressedScale = 0.97f, haptic = TapHaptic) {
                         showExpandedPlayer = true
                     },
@@ -288,7 +289,7 @@ fun ExpandedPlayerSheet(
                             text = "NOW PLAYING // NOTHING PLAYER",
                             fontFamily = SpaceMonoFontFamily,
                             fontSize = 10.sp,
-                            color = NothingRed,
+                            color = melodiaAccentText(),
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.sp
                         )
@@ -383,8 +384,8 @@ fun ExpandedPlayerSheet(
                                         Box(
                                             modifier = Modifier
                                                 .clip(RoundedCornerShape(6.dp))
-                                                .background(NothingRed.copy(alpha = 0.2f))
-                                                .border(1.dp, NothingRed, RoundedCornerShape(6.dp))
+                                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                                                .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(6.dp))
                                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                                         ) {
                                             Text(
@@ -392,7 +393,7 @@ fun ExpandedPlayerSheet(
                                                 fontFamily = SpaceMonoFontFamily,
                                                 fontSize = 8.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = NothingRed,
+                                                color = melodiaAccentText(),
                                                 letterSpacing = 1.sp
                                             )
                                         }
@@ -417,8 +418,8 @@ fun ExpandedPlayerSheet(
                             .fillMaxWidth()
                             .padding(horizontal = 8.dp),
                         colors = SliderDefaults.colors(
-                            thumbColor = NothingRed,
-                            activeTrackColor = NothingRed,
+                            thumbColor = MaterialTheme.colorScheme.primary,
+                            activeTrackColor = MaterialTheme.colorScheme.primary,
                             inactiveTrackColor = NothingGrey.copy(alpha = 0.3f)
                         ),
                         valueRange = 0f..duration.coerceAtLeast(1000).toFloat()
@@ -473,7 +474,7 @@ fun ExpandedPlayerSheet(
                                 .size(64.dp)
                                 .clip(CircleShape)
                                 .background(NothingBlack)
-                                .border(2.dp, NothingRed, CircleShape)
+                                .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
                                 .testTag("main_play_pause_button")
                         ) {
                             DotMatrixIcon(

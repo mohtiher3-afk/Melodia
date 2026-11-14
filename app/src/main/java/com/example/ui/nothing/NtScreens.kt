@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -149,6 +150,29 @@ fun ColumnScope.NtLyricsContent(
 
 // ---------------------------------------------------------------- 3. Visuals
 
+/** Draws the drifting dot grid background (matches NtCoverArt's grid). */
+@Composable
+fun NtDotGridBackground(modifier: Modifier = Modifier) {
+    val reduced = rememberReducedMotion()
+    val transition = rememberInfiniteTransition(label = "dotgrid_bg")
+    val drift by transition.animateFloat(
+        0f, 14f, infiniteRepeatable(tween(6000, easing = LinearEasing), RepeatMode.Restart), label = "drift"
+    )
+    Canvas(modifier.fillMaxSize()) {
+        val step = 14.dp.toPx()
+        val shift = if (reduced) 0f else drift.dp.toPx()
+        var y = -step + shift
+        while (y < size.height + step) {
+            var x = -step + shift
+            while (x < size.width + step) {
+                drawCircle(Nt.White.copy(alpha = 0.18f), 1.2.dp.toPx(), Offset(x, y))
+                x += step
+            }
+            y += step
+        }
+    }
+}
+
 /** Square cover preview: drifting dot grid plus a pulsing red glow behind the title. */
 @Composable
 fun NtCoverArt(title: String, modifier: Modifier = Modifier) {
@@ -204,20 +228,27 @@ fun ColumnScope.NtVisualsContent(
     progress: Float?,
     onGenerate: () -> Unit
 ) {
-    NtTitle(stringResource(R.string.nt_visuals_title), Modifier.staggeredEnter(1))
-    NtCoverArt(artTitle, Modifier.staggeredEnter(2))
-    ChipRow(styles, selectedStyle, onSelectStyle, Modifier.staggeredEnter(3))
-    if (progress != null) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            NtBody(stringResource(R.string.nt_rendering_cover))
-            NtLabel("${(progress * 100).toInt()}%", color = Nt.RedText)
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopStart) {
+        // Full-screen dot grid background
+        NtDotGridBackground()
+        
+        Column(Modifier.fillMaxSize().padding(Nt.ScreenPadding)) {
+            NtTitle(stringResource(R.string.nt_visuals_title), Modifier.staggeredEnter(1))
+            NtCoverArt(artTitle, Modifier.staggeredEnter(2))
+            ChipRow(styles, selectedStyle, onSelectStyle, Modifier.staggeredEnter(3))
+            if (progress != null) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    NtBody(stringResource(R.string.nt_rendering_cover))
+                    NtLabel("${(progress * 100).toInt()}%", color = Nt.RedText)
+                }
+                NtProgressBar(progress, stringResource(R.string.nt_cover_progress))
+            }
+            NtButton(
+                stringResource(R.string.nt_generate_cover), onGenerate,
+                Modifier.fillMaxWidth(), style = NtButtonStyle.Primary
+            )
         }
-        NtProgressBar(progress, stringResource(R.string.nt_cover_progress))
     }
-    NtButton(
-        stringResource(R.string.nt_generate_cover), onGenerate,
-        Modifier.fillMaxWidth(), style = NtButtonStyle.Primary
-    )
 }
 
 // ---------------------------------------------------------------- 4. Sync

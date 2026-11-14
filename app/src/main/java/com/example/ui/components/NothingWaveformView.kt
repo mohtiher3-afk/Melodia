@@ -64,6 +64,57 @@ import com.example.ui.theme.SpaceMonoFontFamily
 import kotlinx.coroutines.delay
 
 @Composable
+fun NothingWaveformView(
+    modifier: Modifier = Modifier,
+    barCount: Int = 12,
+    color: Color = NothingRed,
+    speed: Float = 0.5f
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "waveform_logo")
+    val phase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 2f * Math.PI.toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween((1000f / speed).toInt(), easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "waveform_logo_phase"
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(64.dp)
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val width = size.width
+            val height = size.height
+            val barWidth = width / barCount
+            val dotRadius = (barWidth * 0.35f).coerceAtMost(4f)
+
+            for (i in 0 until barCount) {
+                val base = kotlin.math.sin(i * 0.5f) * 0.5f + 0.5f
+                val dynamicFactor = kotlin.math.sin(phase + i * 0.4f) * 0.3f + 0.7f
+                val amplitude = (height * 0.4f) * base * dynamicFactor
+                val x = i * barWidth + barWidth / 2f
+                val centerY = height / 2f
+                // Draw vertical bar of dots
+                val dotSpacing = dotRadius * 1.8f
+                val numDots = (amplitude * 2 / dotSpacing).toInt().coerceAtLeast(1)
+                for (d in 0 until numDots) {
+                    val y = centerY + (d - numDots / 2f) * dotSpacing
+                    drawCircle(
+                        color = color,
+                        radius = dotRadius,
+                        center = Offset(x, y.coerceIn(dotRadius, size.height - dotRadius))
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun NothingDotMatrixWaveform(
     isPlaying: Boolean,
     currentPosition: Int = 0,

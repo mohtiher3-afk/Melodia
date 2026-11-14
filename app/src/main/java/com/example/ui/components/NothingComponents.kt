@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -61,8 +62,6 @@ import com.example.ui.theme.NothingElevatedSurface
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingDotMatrixFontFamily
 import com.example.network.LyricSection
-import com.example.ui.theme.NothingRed
-import com.example.ui.theme.NothingRedGlow
 import com.example.ui.theme.NothingWhite
 import com.example.ui.theme.SpaceMonoFontFamily
 import kotlin.random.Random
@@ -79,6 +78,7 @@ fun GlyphCard(
     content: @Composable () -> Unit
 ) {
     val shape = RoundedCornerShape(cornerRadius)
+    val accent = MaterialTheme.colorScheme.primary
     Surface(
         modifier = modifier
             .testTag(testTag)
@@ -107,7 +107,7 @@ fun GlyphCard(
                                 modifier = Modifier
                                     .size(5.dp)
                                     .clip(CircleShape)
-                                    .background(NothingRed)
+                                    .background(accent)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
@@ -128,14 +128,14 @@ fun GlyphCard(
                             Box(
                                 modifier = Modifier
                                     .size(6.dp)
-                                    .background(NothingRed, CircleShape)
+                                    .background(accent, CircleShape)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "REC // ON",
                                 fontFamily = SpaceMonoFontFamily,
                                 fontSize = 9.sp,
-                                color = NothingRed,
+                                color = accent,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -159,7 +159,7 @@ fun NothingPillButton(
 ) {
     val bgColor = when {
         !enabled -> NothingDarkGrey
-        isRedAccent -> NothingRed
+        isRedAccent -> MaterialTheme.colorScheme.primary
         isPrimary -> NothingWhite
         else -> NothingElevatedSurface
     }
@@ -289,6 +289,7 @@ fun DotMatrixAudioMeter(
         }
     }
 
+    val accentBarColor = MaterialTheme.colorScheme.primary
     Canvas(
         modifier = modifier
             .fillMaxWidth()
@@ -309,7 +310,7 @@ fun DotMatrixAudioMeter(
             val x = i * (barWidth + gap)
             val y = size.height - barHeight
 
-            val color = if (i >= barCount - 3) NothingRed else NothingWhite
+            val color = if (i >= barCount - 3) accentBarColor else NothingWhite
 
             drawRoundRect(
                 color = color,
@@ -329,6 +330,7 @@ fun NothingCoverArt(
     imagePath: String? = null,
     testTag: String = "nothing_cover_art"
 ) {
+    val accentColor = MaterialTheme.colorScheme.primary
     val hasValidImage = remember(imagePath) {
         !imagePath.isNullOrBlank() && File(imagePath).exists()
     }
@@ -381,7 +383,7 @@ fun NothingCoverArt(
             )
 
             drawCircle(
-                color = NothingRed,
+                color = accentColor,
                 radius = 8.dp.toPx(),
                 center = Offset(w * 0.45f, h * 0.5f)
             )
@@ -415,7 +417,7 @@ fun NothingCoverArt(
                 text = genre.uppercase(),
                 fontFamily = SpaceMonoFontFamily,
                 fontSize = 10.sp,
-                color = NothingRed,
+                color = accentColor,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.5.sp
             )
@@ -469,6 +471,7 @@ fun NothingDotMatrixLoader(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        val accentDotColor = MaterialTheme.colorScheme.primary
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
@@ -483,7 +486,7 @@ fun NothingDotMatrixLoader(
             for (i in 0 until cols) {
                 val waveOffset = kotlin.math.sin((progress * 2 * Math.PI) + (i * 0.5)).toFloat()
                 val radius = 3.dp.toPx() + (waveOffset * 1.5f).coerceAtLeast(0f)
-                val color = if (i == (progress * cols).toInt() % cols) NothingRed else NothingWhite
+                val color = if (i == (progress * cols).toInt() % cols) accentDotColor else NothingWhite
                 val alpha = (0.3f + 0.7f * ((waveOffset + 1f) / 2f)).coerceIn(0.2f, 1f)
 
                 drawCircle(
@@ -499,7 +502,7 @@ fun NothingDotMatrixLoader(
             text = text.uppercase(),
             fontFamily = NothingDotMatrixFontFamily,
             fontSize = 12.sp,
-            color = NothingRed,
+            color = MaterialTheme.colorScheme.primary,
             letterSpacing = 1.5.sp,
             fontWeight = FontWeight.Bold
         )
@@ -525,7 +528,7 @@ fun LyricTimelineEditor(
             text = "LYRIC TIMING // SECTION ALIGNMENT",
             fontFamily = NothingDotMatrixFontFamily,
             fontSize = 12.sp,
-            color = NothingRed,
+            color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold
         )
         sections.forEach { section ->
@@ -569,7 +572,7 @@ fun StatusBadge(
     val color = when (status.uppercase()) {
         "READY", "DONE", "COMPLETED" -> NothingWhite
         "PROCESSING", "PENDING", "IDLE" -> NothingGrey
-        "FAILED", "ERROR" -> NothingRed
+        "FAILED", "ERROR" -> MaterialTheme.colorScheme.primary
         else -> NothingGrey
     }
     

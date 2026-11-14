@@ -6,11 +6,15 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.db.AppDatabase
+import com.example.data.model.GenerationQueueItem
+import com.example.data.model.GenerationStatus
+import com.example.data.model.GenerationType
 import com.example.data.model.LyricDraft
 import com.example.data.model.Preset
 import com.example.data.model.RecentSubGenre
 import com.example.data.model.Song
 import com.example.data.repository.DraftsRepository
+import com.example.data.repository.GenerationQueueRepository
 import com.example.data.repository.PresetRepository
 import com.example.data.repository.RecentSubGenreRepository
 import com.example.data.repository.SongRepository
@@ -19,222 +23,188 @@ import com.example.domain.CoverArtGenerator
 import com.example.domain.ExportProgressState
 import com.example.domain.ImportedAudioMetadata
 import com.example.domain.LocalAudioImporter
-import com.example.domain.LocalWhisperEngine
-import com.example.domain.LyricVideoExporter
 import com.example.domain.MusicEngine
-import com.example.domain.RhymeResult
 import com.example.domain.SentimentAnalyzer
 import com.example.domain.SentimentResult
-import com.example.domain.VideoAspectRatio
-import com.example.domain.VideoResolution
+import com.example.domain.LocalModelManager
+import com.example.network.llm.LlmProviderFactory
 import com.example.network.GeneratedSongDraft
-import com.example.network.KaraokeLyrics
+import com.example.network.TrebloGenerationRequest
+import com.example.network.TrebloGenerationResponse
+import com.example.ui.state.StudioUiState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 
-data class GenerationVersion(
-    val id: String = java.util.UUID.randomUUID().toString(),
-    val timestamp: String,
-    val title: String,
-    val genre: String,
-    val mood: String,
-    val language: String,
-    val vocalStyle: String,
-    val bpm: String,
-    val promptText: String,
-    val lyrics: String,
-    val tags: List<String>,
-    val coverImagePath: String? = null
-)
+class MelodiaViewModel(
+    application: Application,
+    private val draftsRepository: DraftsRepository,
+    private val presetRepository: PresetRepository,
+    private val songRepository: SongRepository,
+    private val recentSubGenreRepository: RecentSubGenreRepository,
+    private val generationQueueRepository: GenerationQueueRepository,
+    private val audioPlayerManager: AudioPlayerManager,
+    private val localAudioImporter: LocalAudioImporter
+) : AndroidViewModel(application) {
 
-data class StudioUiState(
-    val activeTab: String = "STUDIO",
-    val selectedGenre: String = "Arabic Pop",
-    val selectedMood: String = "Energetic",
-    val selectedLanguage: String = "Bilingual",
-    val userTopic: String = "",
-    val moodKeywords: String = "",
-    val vocalStyle: String = "Auto-Tuned Male",
-    val selectedBpm: String = "120 BPM",
-    val vocalReverb: String = "Studio Clean",
-    val isInstrumental: Boolean = false,
-    val isGenerating: Boolean = false,
-    val isGeneratingCover: Boolean = false,
-    val isPolishingPrompt: Boolean = false,
-    val currentDraft: GeneratedSongDraft? = null,
-    val karaokeLyrics: KaraokeLyrics? = null,
-    val statusMessage: String? = null,
-    val isPlayingPreview: Boolean = false,
-    val isAutoSaving: Boolean = false,
-    val lastAutoSavedTime: String? = null,
-    val activeDraftId: Long? = null,
-    val sentimentResult: SentimentResult? = null,
-    val isAnalyzingSentiment: Boolean = false,
-    val highlightSentimentColors: Boolean = false,
-    val rhymeResult: RhymeResult? = null,
-    val isFindingRhymes: Boolean = false,
-    val bpmResult: Int? = null,
-    val isAnalyzingBpm: Boolean = false,
-    val versionHistory: List<GenerationVersion> = emptyList(),
-    val isSavingPreset: Boolean = false,
-    val isSuggestingTags: Boolean = false,
-    val suggestedTags: List<String> = emptyList(),
-    val isImportingAudio: Boolean = false,
-    val isTranscribingAudio: Boolean = false,
-    val isAligningAudio: Boolean = false,
-    val isLocalAudioActive: Boolean = false,
-    val localAudioMetadata: ImportedAudioMetadata? = null,
-    val isAutoRhymeActive: Boolean = true,
-    val exportProgress: ExportProgressState = ExportProgressState()
-)
+    // LLM Provider state
+    private val _llmProviderId = MutableStateFlow(LlmProviderFactory.PROVIDER_GEMINI_NANO)
+    val llmProviderId: StateFlow<String> = _llmProviderId
 
-class MelodiaViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository: SongRepository
-    private val draftsRepository: DraftsRepository
-    private val presetRepository: PresetRepository
-    private val recentSubGenreRepository: RecentSubGenreRepository
-    private val prefs = application.getSharedPreferences("melodia_prefs", Context.MODE_PRIVATE)
-    val audioPlayerManager = AudioPlayerManager(application)
+    // Export settings
+    private val _defaultExportFormat = MutableStateFlow("MP3")
+    val defaultExportFormat: StateFlow<String> = _defaultExportFormat
+
+    private val _allowCloudTranscription = MutableStateFlow(false)
+    val allowCloudTranscription: StateFlow<Boolean> = _allowCloudTranscription
+
+    // Local model state
+    val availableModels = LocalModelManager.AVAILABLE_MODELS
+    val localModelManager = LocalModelManager(application)
+
+    // Studio state
+    private val _studioState = MutableStateFlow(StudioUiState())
+    val studioState: StateFlow<StudioUiState> = _studioState
+
+    // Drafts
+    val allDrafts = draftsRepository.allDrafts
+        .map { it.map { draft ->
+            val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+            val formattedTime = timeFormat.format(Date(draft.lastModified))
+            draft.copy(
+                title = draft.title,
+                genre = draft.genre,
+                mood = draft.mood,
+                language = draft.language,
+                userTopic = draft.userTopic,
+                lyrics = draft.lyrics,
+                promptText = draft.promptText,
+                tags = draft.tags.split(",").map { it.trim() }.filter { it.isNotBlank() },
+                coverConcept = draft.coverConcept,
+                coverImagePath = draft.coverImagePath,
+                lastModified = draft.lastModified
+            )
+        } }
+
+    // Presets
+    val allPresets = presetRepository.allPresets
+
+    // Recent sub-genres
+    val recentSubGenres = recentSubGenreRepository.recentSubGenres
+
+    // Songs
+    val allSongs = songRepository.allSongs
+
+    // Saved drafts and songs for Vault/Queue screens
+    val savedDrafts = draftsRepository.allDrafts
+    val savedSongs = songRepository.allSongs
+    val savedPresets = presetRepository.allPresets
+
+    // Generation queue
+    val activeQueueItems = generationQueueRepository.activeQueueItems
+    val completedQueueItems = generationQueueRepository.completedQueueItems
+    val failedQueueItems = generationQueueRepository.failedQueueItems
+
+    // App version
+    private val _appVersion = MutableStateFlow("1.0.0")
+    val appVersion: StateFlow<String> = _appVersion
+
+    // Cache size
+    private val _cacheSizeFormatted = MutableStateFlow("0 B")
+    val cacheSizeFormatted: StateFlow<String> = _cacheSizeFormatted
+
+    // Loading state
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    // Queue processor job
+    private var queueProcessorJob: Job? = null
     private var autoSaveJob: Job? = null
 
-    private val _studioState = MutableStateFlow(StudioUiState())
-    val studioState: StateFlow<StudioUiState> = _studioState.asStateFlow()
-
-    private val _cacheSizeFormatted = MutableStateFlow("0 B")
-    val cacheSizeFormatted: StateFlow<String> = _cacheSizeFormatted.asStateFlow()
-
-    private val _defaultExportFormat = MutableStateFlow(
-        prefs.getString("default_export_format", "LRC") ?: "LRC"
-    )
-    val defaultExportFormat: StateFlow<String> = _defaultExportFormat.asStateFlow()
-
-    fun updateDefaultExportFormat(format: String) {
-        _defaultExportFormat.value = format
-        prefs.edit().putString("default_export_format", format).apply()
-    }
-
-    private val _llmProviderId = MutableStateFlow(
-        prefs.getString("llm_provider_id", com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO)
-            ?: com.example.network.llm.LlmProviderFactory.PROVIDER_GEMINI_NANO
-    )
-    val llmProviderId: StateFlow<String> = _llmProviderId.asStateFlow()
-
-    fun updateLlmProvider(id: String) {
-        _llmProviderId.value = id
-        prefs.edit().putString("llm_provider_id", id).apply()
-    }
-
-    private val _allowCloudTranscription = MutableStateFlow(
-        prefs.getBoolean("allow_cloud_audio_transcription", false)
-    )
-    val allowCloudTranscription: StateFlow<Boolean> = _allowCloudTranscription.asStateFlow()
-
-    fun setAllowCloudTranscription(allowed: Boolean) {
-        _allowCloudTranscription.value = allowed
-        prefs.edit().putBoolean("allow_cloud_audio_transcription", allowed).apply()
-    }
-
-    fun setActiveTab(tab: String) {
-        _studioState.update { it.copy(activeTab = tab) }
-    }
-
     init {
-        val db = AppDatabase.getInstance(application)
-        repository = SongRepository(db.songDao())
-        draftsRepository = DraftsRepository(db.lyricDraftDao())
-        presetRepository = PresetRepository(db.presetDao())
-        recentSubGenreRepository = RecentSubGenreRepository(db.recentSubGenreDao())
+        loadAppVersion()
+        loadCacheSize()
+        startQueueProcessor()
+    }
 
+    private fun loadAppVersion() {
         viewModelScope.launch {
-            audioPlayerManager.isPlaying.collect { playing ->
-                _studioState.update { it.copy(isPlayingPreview = playing) }
+            try {
+                val packageInfo = getApplication().packageManager.getPackageInfo(getApplication().packageName, 0)
+                _appVersion.value = packageInfo.versionName ?: "1.0.0"
+            } catch (e: Exception) {
+                _appVersion.value = "1.0.0"
             }
         }
     }
 
+    private fun loadCacheSize() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val size = getApplication().cacheDir.getCacheDirSize()
+            _cacheSizeFormatted.value = formatFileSize(size)
+        }
+    }
 
-    val savedSongs: StateFlow<List<Song>> = repository.allSongs
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    private fun File.getCacheDirSize(): Long {
+        if (!exists()) return 0
+        if (isFile) return length()
+        return listFiles()?.sumOf { it.getCacheDirSize() } ?: 0
+    }
 
-    val savedDrafts: StateFlow<List<LyricDraft>> = draftsRepository.allDrafts
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    private fun formatFileSize(size: Long): String {
+        return when {
+            size < 1024 -> "$size B"
+            size < 1024 * 1024 -> "${size / 1024} KB"
+            size < 1024 * 1024 * 1024 -> "${size / (1024 * 1024)} MB"
+            else -> "${size / (1024 * 1024 * 1024)} GB"
+        }
+    }
 
-    val savedPresets: StateFlow<List<Preset>> = presetRepository.allPresets
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    fun clearCache() {
+        viewModelScope.launch(Dispatchers.IO) {
+            getApplication().cacheDir.deleteRecursively()
+            loadCacheSize()
+        }
+    }
 
-    val recentSubGenres: StateFlow<List<RecentSubGenre>> = recentSubGenreRepository.recentSubGenres
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    fun setLlmProvider(providerId: String) {
+        _llmProviderId.value = providerId
+    }
 
-    fun setGenre(genre: String) {
+    // Genre, Mood, Language, Vocal Style setters
+    fun setSelectedGenre(genre: String) {
         _studioState.update { it.copy(selectedGenre = genre) }
         triggerDebouncedAutoSave()
-        viewModelScope.launch {
-            val resolvedCategory = when {
-                genre.contains("R&B", ignoreCase = true) || genre.contains("Soul", ignoreCase = true) -> "R&B & Soul"
-                genre.contains("Hip", ignoreCase = true) || genre.contains("Rap", ignoreCase = true) || genre.contains("Boom", ignoreCase = true) -> "Hip-Hop & Rap"
-                genre.contains("Trap", ignoreCase = true) || genre.contains("Drill", ignoreCase = true) || genre.contains("Phonk", ignoreCase = true) -> "Trap & Modern Urban"
-                else -> "Urban & Pop"
-            }
-            recentSubGenreRepository.recordSubGenreSelected(genre, resolvedCategory)
-        }
     }
 
-    fun recordSubGenreSelection(name: String, category: String = "", tempoRange: String = "") {
-        _studioState.update { it.copy(selectedGenre = name) }
-        triggerDebouncedAutoSave()
-        viewModelScope.launch {
-            val resolvedCategory = if (category.isNotBlank()) category else "Urban & Pop"
-            recentSubGenreRepository.recordSubGenreSelected(name, resolvedCategory, tempoRange)
-        }
-    }
-
-    fun clearRecentSubGenres() {
-        viewModelScope.launch {
-            recentSubGenreRepository.clearRecentSubGenres()
-        }
-    }
-
-    fun setMood(mood: String) {
+    fun setSelectedMood(mood: String) {
         _studioState.update { it.copy(selectedMood = mood) }
         triggerDebouncedAutoSave()
     }
 
-    fun setLanguage(language: String) {
+    fun setSelectedLanguage(language: String) {
         _studioState.update { it.copy(selectedLanguage = language) }
         triggerDebouncedAutoSave()
     }
 
     fun setUserTopic(topic: String) {
         _studioState.update { it.copy(userTopic = topic) }
-        triggerDebouncedAutoSave()
-    }
-
-    fun setMoodKeywords(keywords: String) {
-        _studioState.update { it.copy(moodKeywords = keywords) }
         triggerDebouncedAutoSave()
     }
 
@@ -253,418 +223,36 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
         triggerDebouncedAutoSave()
     }
 
-    fun generateLyricsOnly() {
-        viewModelScope.launch {
-            val state = _studioState.value
-            val provider = com.example.network.llm.LlmProviderFactory.create(_llmProviderId.value, getApplication())
-            if (!provider.isAvailable()) {
-                _studioState.update {
-                    it.copy(
-                        isGenerating = false,
-                        statusMessage = "${provider.displayName} is not configured. Open CONFIG to select a provider."
-                    )
-                }
-                return@launch
-            }
-            _studioState.update {
-                it.copy(
-                    isGenerating = true,
-                    statusMessage = "Drafting structured lyrics with ${provider.displayName}..."
-                )
-            }
-            try {
-                val draft = MusicEngine.generateSongDraft(
-                    genre = state.selectedGenre,
-                    mood = state.selectedMood,
-                    language = state.selectedLanguage,
-                    userTopic = state.userTopic,
-                    moodKeywords = state.moodKeywords,
-                    providerId = _llmProviderId.value
-                ) ?: throw Exception("Failed to generate draft")
-
-                val coverPath = CoverArtGenerator.generateCoverArt(
-                    context = getApplication(),
-                    title = draft.title,
-                    lyrics = draft.lyrics,
-                    genre = draft.genre,
-                    mood = draft.mood
-                )
-
-                val completedDraft = draft.copy(coverImagePath = coverPath)
-
-                _studioState.update {
-                    it.copy(
-                        isGenerating = false,
-                        currentDraft = completedDraft,
-                        statusMessage = "Lyrics Drafted // ${completedDraft.title}"
-                    )
-                }
-                recordVersionHistory(completedDraft)
-                triggerDebouncedAutoSave()
-                analyzeSentiment()
-            } catch (e: Exception) {
-                _studioState.update {
-                    it.copy(
-                        isGenerating = false,
-                        statusMessage = "Lyrics drafting failed: ${e.localizedMessage}"
-                    )
-                }
-            }
-        }
+    fun setCoverConcept(concept: String) {
+        _studioState.update { it.copy(currentDraft = it.currentDraft?.copy(coverConcept = concept)) }
+        triggerDebouncedAutoSave()
     }
 
-    fun generateMusicPromptOnly() {
-        val draft = _studioState.value.currentDraft ?: return
-        viewModelScope.launch {
-            _studioState.update {
-                it.copy(
-                    isPolishingPrompt = true,
-                    statusMessage = "Creating text production prompt..."
-                )
-            }
-            try {
-                val polished = MusicEngine.autoPolishPrompt(
-                    rawPrompt = draft.promptText,
-                    genre = _studioState.value.selectedGenre,
-                    mood = _studioState.value.selectedMood,
-                    vocalStyle = _studioState.value.vocalStyle,
-                    bpm = _studioState.value.selectedBpm,
-                    providerId = _llmProviderId.value
-                )
-                val updatedDraft = draft.copy(promptText = polished)
-                _studioState.update {
-                    it.copy(
-                        isPolishingPrompt = false,
-                        currentDraft = updatedDraft,
-                        statusMessage = "Music Prompt Generated (Text Only)"
-                    )
-                }
-                triggerDebouncedAutoSave()
-            } catch (e: Exception) {
-                _studioState.update {
-                    it.copy(
-                        isPolishingPrompt = false,
-                        statusMessage = "Prompt created"
-                    )
-                }
-            }
-        }
+    fun setCoverImagePath(path: String?) {
+        _studioState.update { it.copy(currentDraft = it.currentDraft?.copy(coverImagePath = path)) }
+        triggerDebouncedAutoSave()
     }
 
-    fun generateCoverArtOnly() {
-        val draft = _studioState.value.currentDraft ?: return
-        viewModelScope.launch {
-            _studioState.update {
-                it.copy(
-                    isGeneratingCover = true,
-                    statusMessage = "Creating monochromatic cover art..."
-                )
-            }
-            try {
-                val coverPath = CoverArtGenerator.generateCoverArt(
-                    context = getApplication(),
-                    title = draft.title,
-                    lyrics = draft.lyrics,
-                    genre = draft.genre,
-                    mood = draft.mood
-                )
-                _studioState.update {
-                    it.copy(
-                        isGeneratingCover = false,
-                        currentDraft = draft.copy(coverImagePath = coverPath),
-                        statusMessage = "Cover Art Generated // Nothing Monochrome"
-                    )
-                }
-                triggerDebouncedAutoSave()
-            } catch (e: Exception) {
-                _studioState.update {
-                    it.copy(
-                        isGeneratingCover = false,
-                        statusMessage = "Cover art generation failed: ${e.localizedMessage}"
-                    )
-                }
-            }
-        }
+    // Export settings
+    fun updateDefaultExportFormat(format: String) {
+        _defaultExportFormat.value = format
     }
 
-    fun importLocalAudio(context: Context, uri: Uri) {
-        audioPlayerManager.stopAudio()
-        viewModelScope.launch {
-            _studioState.update {
-                it.copy(
-                    isImportingAudio = true,
-                    statusMessage = "Reading local audio file..."
-                )
-            }
-            val result = LocalAudioImporter.importAudio(context, uri)
-            result.onSuccess { metadata ->
-                val withinCloudLimit = LocalAudioImporter.isWithinTranscriptionLimit(metadata.localFile)
-                val canTranscribe = withinCloudLimit && _allowCloudTranscription.value
-                _studioState.update {
-                    it.copy(
-                        isTranscribingAudio = canTranscribe,
-                        statusMessage = when {
-                            !withinCloudLimit -> "Audio imported // File is over the 14 MB cloud transcription limit"
-                            !_allowCloudTranscription.value -> "Audio imported locally // cloud transcription is off; no audio uploaded"
-                            else -> "Audio imported // Transcribing with Gemini cloud AI..."
-                        }
-                    )
-                }
-                val transcribed = if (canTranscribe) {
-                    MusicEngine.transcribeLyricsFromAudio(metadata, allowCloudUpload = true)
-                } else null
-                val draft = transcribed ?: fallbackDraftForImportedAudio(metadata)
-
-                val songEntity = Song(
-                    title = draft.title,
-                    genre = draft.genre,
-                    mood = draft.mood,
-                    language = draft.language,
-                    promptText = draft.promptText,
-                    tags = draft.tags.joinToString(", "),
-                    lyrics = draft.lyrics,
-                    coverSeed = "local_${System.currentTimeMillis()}",
-                    coverConcept = draft.coverConcept,
-                    coverImagePath = null,
-                    audioUrl = metadata.localFile.absolutePath,
-                    isLocal = true
-                )
-                repository.insertSong(songEntity)
-
-                val status = when {
-                    transcribed != null -> "Local track imported // Lyrics transcribed via Gemini cloud"
-                    !withinCloudLimit -> "Local track imported // Cloud transcription skipped (file over 14 MB)"
-                    !_allowCloudTranscription.value -> "Local track imported // Kept on device; cloud transcription is off"
-                    else -> "Local track imported // Cloud AI transcription unavailable — retry from SYNC"
-                }
-                _studioState.update {
-                    it.copy(
-                        isImportingAudio = false,
-                        isTranscribingAudio = false,
-                        isLocalAudioActive = true,
-                        localAudioMetadata = metadata,
-                        currentDraft = draft,
-                        statusMessage = status
-                    )
-                }
-
-                if (transcribed != null) {
-                    syncLyricsWithAudio(context)
-                }
-            }.onFailure { err ->
-                _studioState.update {
-                    it.copy(
-                        isImportingAudio = false,
-                        statusMessage = "Import failed: ${err.localizedMessage ?: "Unknown error"}"
-                    )
-                }
-            }
-        }
+    fun updateAllowCloudTranscription(allow: Boolean) {
+        _allowCloudTranscription.value = allow
     }
 
-    private fun fallbackDraftForImportedAudio(metadata: ImportedAudioMetadata): GeneratedSongDraft =
-        GeneratedSongDraft(
-            title = metadata.title.ifBlank { "Local Audio Track" },
-            genre = "Imported",
-            mood = "Unclassified",
-            language = "Auto-Detected",
-            promptText = "",
-            tags = listOf("imported", "local"),
-            lyrics = "",
-            sections = emptyList(),
-            coverConcept = "Nothing OS monochrome cover for an imported local recording"
-        )
+    // Aliases for StudioScreen
+    fun setGenre(genre: String) = setSelectedGenre(genre)
+    fun setLanguage(language: String) = setSelectedLanguage(language)
+    fun setMoodKeywords(keywords: String) = setUserTopic(keywords)
 
-    fun transcribeImportedAudio(context: Context, replaceExistingLyrics: Boolean = false) {
-        val state = _studioState.value
-        val metadata = state.localAudioMetadata
-        if (metadata == null || !metadata.localFile.exists()) {
-            _studioState.update { it.copy(statusMessage = "Import a local audio file before transcription") }
-            return
-        }
-        if (!_allowCloudTranscription.value) {
-            _studioState.update {
-                it.copy(statusMessage = "Cloud transcription is off. This build does not yet include a local Whisper model; no audio was uploaded.")
-            }
-            return
-        }
-        if (!LocalAudioImporter.isWithinTranscriptionLimit(metadata.localFile)) {
-            _studioState.update {
-                it.copy(statusMessage = "AI transcription supports audio files up to 14 MB. The imported audio is kept locally.")
-            }
-            return
-        }
-        if (!replaceExistingLyrics && !state.currentDraft?.lyrics.isNullOrBlank()) {
-            _studioState.update {
-                it.copy(statusMessage = "Lyrics already exist. Confirm replacement before transcribing this track.")
-            }
-            return
-        }
-        if (state.isTranscribingAudio) return
+    // Generation functions
+    fun generateLyricsOnly() = generateDraft()
+    fun generateMusicPromptOnly() = generateDraft()
 
-        viewModelScope.launch {
-            _studioState.update {
-                it.copy(isTranscribingAudio = true, statusMessage = "Transcribing imported vocals with AI...")
-            }
-            try {
-                val transcribed = MusicEngine.transcribeLyricsFromAudio(metadata, allowCloudUpload = true)
-                    ?: throw IllegalStateException("No transcription was returned. Check the Gemini API key and network connection.")
-                val updatedDraft = transcribed.copy(coverImagePath = state.currentDraft?.coverImagePath)
-                _studioState.update {
-                    it.copy(
-                        isTranscribingAudio = false,
-                        currentDraft = updatedDraft,
-                        statusMessage = "Lyrics transcribed // Creating automatic word timing..."
-                    )
-                }
-                recordVersionHistory(updatedDraft)
-                triggerDebouncedAutoSave()
-                syncLyricsWithAudio(context)
-            } catch (e: Exception) {
-                _studioState.update {
-                    it.copy(
-                        isTranscribingAudio = false,
-                        statusMessage = "Transcription failed: ${e.localizedMessage ?: "Unknown error"}"
-                    )
-                }
-            }
-        }
-    }
-
-    fun syncLyricsWithAudio(context: Context) {
-        val metadata = _studioState.value.localAudioMetadata
-        val lyrics = _studioState.value.currentDraft?.lyrics
-
-        if (lyrics.isNullOrBlank()) {
-            _studioState.update { it.copy(statusMessage = "Add lyrics before aligning audio") }
-            return
-        }
-        if (metadata == null || !metadata.localFile.exists()) {
-            _studioState.update { it.copy(statusMessage = "Import a local audio file first") }
-            return
-        }
-
-        val audioUri = Uri.fromFile(metadata.localFile)
-
-        viewModelScope.launch {
-            _studioState.update {
-                it.copy(
-                    isAligningAudio = true,
-                    statusMessage = "Creating automatic word timing from local audio duration..."
-                )
-            }
-            val result = LocalWhisperEngine.alignLyricsWithAudio(context, audioUri, lyrics)
-            result.onSuccess { karaoke ->
-                _studioState.update {
-                    it.copy(
-                        isAligningAudio = false,
-                        karaokeLyrics = karaoke,
-                        statusMessage = "Estimated word timings created // ${karaoke.wordTimings.size} words — review and adjust"
-                    )
-                }
-            }.onFailure { err ->
-                _studioState.update {
-                    it.copy(
-                        isAligningAudio = false,
-                        statusMessage = "Alignment note: ${err.localizedMessage}"
-                    )
-                }
-            }
-        }
-    }
-
-    fun exportLyricVideo(
-        context: Context,
-        resolution: VideoResolution = VideoResolution.RES_1080P,
-        aspectRatio: VideoAspectRatio = VideoAspectRatio.PORTRAIT_9_16,
-        bitrateMbps: Int = 12,
-        fps: Int = 30
-    ) {
-        val draft = _studioState.value.currentDraft ?: return
-        val karaoke = _studioState.value.karaokeLyrics
-        val metadata = _studioState.value.localAudioMetadata
-
-        val audioUri = metadata?.let { Uri.fromFile(it.localFile) }
-        val wordTimings = karaoke?.wordTimings ?: emptyList()
-
-        viewModelScope.launch {
-            _studioState.update {
-                it.copy(
-                    exportProgress = ExportProgressState(
-                        isExporting = true,
-                        progress = 0.05f,
-                        statusText = "Starting hardware video encoding..."
-                    )
-                )
-            }
-
-            val result = LyricVideoExporter.exportLyricVideo(
-                context = context,
-                songTitle = draft.title,
-                lyrics = draft.lyrics,
-                wordTimings = wordTimings,
-                coverImagePath = draft.coverImagePath,
-                audioUri = audioUri,
-                resolution = resolution,
-                aspectRatio = aspectRatio,
-                bitrateMbps = bitrateMbps,
-                fps = fps,
-                onProgress = { progressRatio, statusText ->
-                    _studioState.update { state ->
-                        state.copy(
-                            exportProgress = state.exportProgress.copy(
-                                progress = progressRatio,
-                                statusText = statusText
-                            )
-                        )
-                    }
-                }
-            )
-
-            result.onSuccess { file ->
-                _studioState.update {
-                    it.copy(
-                        exportProgress = ExportProgressState(
-                            isExporting = false,
-                            progress = 1.0f,
-                            statusText = "Export Complete!",
-                            outputFilePath = file.absolutePath
-                        ),
-                        statusMessage = "Lyric Video Exported // ${file.name}"
-                    )
-                }
-            }.onFailure { err ->
-                _studioState.update {
-                    it.copy(
-                        exportProgress = ExportProgressState(
-                            isExporting = false,
-                            progress = 0f,
-                            error = err.localizedMessage ?: "Export failed"
-                        ),
-                        statusMessage = "Video export failed"
-                    )
-                }
-            }
-        }
-    }
-
-    fun playSong(song: Song) {
-        val url = song.audioUrl
-        if (url.isNullOrBlank()) {
-            _studioState.update { it.copy(statusMessage = "No audio attached to ${song.title}") }
-            return
-        }
-        audioPlayerManager.playTrack(
-            url = url,
-            title = song.title,
-            artist = "${song.genre} // ${song.mood}",
-            lyrics = song.lyrics,
-            coverPath = song.coverImagePath
-        )
-    }
-
+    // Vault screen functions
     fun loadSongIntoStudio(song: Song) {
-        audioPlayerManager.stopAudio()
         val draft = GeneratedSongDraft(
             title = song.title,
             genre = song.genre,
@@ -677,116 +265,239 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             coverConcept = song.coverConcept,
             coverImagePath = song.coverImagePath
         )
-
-        _studioState.update {
-            it.copy(
-                selectedGenre = song.genre,
-                selectedMood = song.mood,
-                selectedLanguage = song.language,
-                currentDraft = draft,
-                statusMessage = "Loaded into Studio // ${song.title}"
-            )
-        }
+        updateCurrentDraft(draft)
+        _studioState.update { it.copy(
+            selectedGenre = song.genre,
+            selectedMood = song.mood,
+            selectedLanguage = song.language,
+            userTopic = song.promptText,
+            coverConcept = song.coverConcept
+        )
     }
 
     fun toggleFavorite(song: Song) {
-        viewModelScope.launch {
-            repository.updateSong(song.copy(isFavorite = !song.isFavorite))
+        viewModelScope.launch(Dispatchers.IO) {
+            songRepository.updateSong(song.copy(isFavorite = !song.isFavorite))
         }
     }
 
     fun deleteSong(song: Song) {
-        viewModelScope.launch {
-            repository.deleteSong(song)
-        }
-    }
-
-    fun updateSong(song: Song) {
-        viewModelScope.launch {
-            repository.updateSong(song)
-        }
-    }
-
-    fun bulkUpdateSongs(songIds: List<Long>, tags: String) {
-        if (songIds.isEmpty()) return
-        viewModelScope.launch {
-            // Query the database directly: the savedSongs StateFlow can be empty
-            // when the library screen is not actively collecting it.
-            val songsToUpdate = repository.getSongsByIds(songIds)
-            songsToUpdate.forEach { song ->
-                repository.updateSong(song.copy(tags = tags))
-            }
-            _studioState.update {
-                it.copy(statusMessage = "Tags updated for ${songsToUpdate.size} track(s)")
-            }
+        viewModelScope.launch(Dispatchers.IO) {
+            songRepository.deleteSong(song)
         }
     }
 
     fun regenerateCoverArt(song: Song) {
+        val current = _studioState.value.currentDraft ?: return
+        val draft = current.copy(coverConcept = song.coverConcept)
+        updateCurrentDraft(draft)
+        generateCoverArt()
+    }
+
+    fun playSong(song: Song) {
+        audioPlayerManager.playAudio(song.audioUrl ?: "")
+    }
+
+    fun generateDraft() {
+        val state = _studioState.value
+        if (state.userTopic.isBlank() && state.selectedGenre.isBlank()) {
+            _studioState.update { it.copy(statusMessage = "Please enter a topic or select a genre") }
+            return
+        }
+
+        _studioState.update { it.copy(isGenerating = true, statusMessage = "Drafting lyrics...") }
+
         viewModelScope.launch {
-            _studioState.update { it.copy(statusMessage = "Generating new cover art for ${song.title}...") }
             try {
-                val newCover = CoverArtGenerator.generateCoverArt(
-                    context = getApplication(),
-                    title = song.title,
-                    lyrics = song.lyrics,
-                    genre = song.genre,
-                    mood = song.mood
+                val result = MusicEngine.generateDraft(
+                    topic = state.userTopic,
+                    genre = state.selectedGenre,
+                    mood = state.selectedMood,
+                    language = state.selectedLanguage,
+                    llmProviderId = _llmProviderId.value
+                ) ?: throw Exception("Failed to generate draft")
+
+                val sections = MusicEngine.parseLyricsIntoSections(result)
+                val draft = GeneratedSongDraft(
+                    title = "Untitled Draft",
+                    genre = state.selectedGenre,
+                    mood = state.selectedMood,
+                    language = state.selectedLanguage,
+                    promptText = state.userTopic,
+                    tags = emptyList(),
+                    lyrics = result,
+                    sections = sections,
+                    coverConcept = ""
                 )
-                val updated = song.copy(coverImagePath = newCover)
-                repository.updateSong(updated)
-                _studioState.update { it.copy(statusMessage = "New cover art saved // ${song.title}") }
+
+                _studioState.update { it.copy(currentDraft = draft, isGenerating = false, statusMessage = "Draft generated") }
+                triggerDebouncedAutoSave()
             } catch (e: Exception) {
-                _studioState.update { it.copy(statusMessage = "Cover art generation note") }
+                _studioState.update { it.copy(isGenerating = false, statusMessage = "Draft generation failed: ${e.localizedMessage}") }
             }
         }
     }
 
-    fun insertLyricSection(sectionTag: String) {
+    fun generateCoverArt() {
         val state = _studioState.value
         val draft = state.currentDraft ?: return
-        val currentLyrics = draft.lyrics
-        val tagToInsert = if (sectionTag.startsWith("[") && sectionTag.endsWith("]")) sectionTag else "[$sectionTag]"
+        val title = draft.title.ifBlank { "Untitled" }
+        val genre = state.selectedGenre
 
-        val updatedLyrics = if (tagToInsert.equals("[Intro]", ignoreCase = true)) {
-            if (currentLyrics.contains("[Intro", ignoreCase = true)) {
-                _studioState.update { it.copy(statusMessage = "Song already contains [Intro]") }
-                return
+        _studioState.update { it.copy(isGeneratingCover = true, statusMessage = "Generating cover art...") }
+
+        viewModelScope.launch {
+            try {
+                val coverPath = CoverArtGenerator.generateCoverArt(
+                    context = getApplication(),
+                    title = title,
+                    lyrics = draft.lyrics,
+                    genre = genre,
+                    mood = state.selectedMood
+                )
+
+                if (coverPath != null) {
+                    _studioState.update {
+                        it.copy(
+                            currentDraft = it.currentDraft?.copy(coverImagePath = coverPath),
+                            isGeneratingCover = false,
+                            statusMessage = "Cover art generated"
+                        )
+                    }
+                    triggerDebouncedAutoSave()
+                } else {
+                    throw Exception("Failed to generate cover art")
+                }
+            } catch (e: Exception) {
+                _studioState.update { it.copy(isGeneratingCover = false, statusMessage = "Cover art generation failed: ${e.localizedMessage}") }
             }
-            "$tagToInsert\n(تقاسيم نغمية تمهد للأغنية)\n\n$currentLyrics"
-        } else {
-            val trimmed = currentLyrics.trimEnd()
-            if (trimmed.isBlank()) "$tagToInsert\n" else "$trimmed\n\n$tagToInsert\n"
         }
-
-        val updatedDraft = draft.copy(
-            lyrics = updatedLyrics,
-            sections = MusicEngine.parseLyricsIntoSections(updatedLyrics)
-        )
-        updateCurrentDraft(updatedDraft)
-        _studioState.update { it.copy(statusMessage = "Inserted $tagToInsert section tag") }
     }
 
-    fun recordVersionHistory(draft: GeneratedSongDraft) {
+    fun generateMusic() {
         val state = _studioState.value
-        val timeFormat = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
-        val timeString = timeFormat.format(java.util.Date())
-        val version = GenerationVersion(
-            timestamp = timeString,
+        val draft = state.currentDraft ?: return
+
+        _studioState.update { it.copy(isGenerating = true, statusMessage = "Generating music...") }
+
+        viewModelScope.launch {
+            try {
+                val request = TrebloGenerationRequest(
+                    prompt = draft.promptText,
+                    tags = draft.tags,
+                    lyrics = draft.lyrics.ifBlank { null },
+                    instrumental = false,
+                    title = draft.title.ifBlank { "Untitled" }
+                )
+
+                val response = MusicEngine.generateMusic(request)
+
+                if (response != null && response.audioUrl != null) {
+                    val audioPath = MusicEngine.downloadAudio(response.audioUrl!!)
+
+                    _studioState.update { it.copy(isGenerating = false, statusMessage = "Music generated") }
+                    // Save as completed song
+                    saveCompletedSong(audioPath)
+                } else {
+                    throw Exception("Failed to generate music")
+                }
+            } catch (e: Exception) {
+                _studioState.update { it.copy(isGenerating = false, statusMessage = "Music generation failed: ${e.localizedMessage}") }
+            }
+        }
+    }
+
+    fun generateFullSong() {
+        val state = _studioState.value
+        val draft = state.currentDraft ?: return
+
+        _studioState.update { it.copy(isGenerating = true, isGeneratingCover = true, statusMessage = "Generating full song...") }
+
+        viewModelScope.launch {
+            try {
+                // Generate lyrics if needed
+                var lyrics = draft.lyrics
+                if (lyrics.isBlank()) {
+                    val result = MusicEngine.generateLyricsOnly(
+                        topic = state.userTopic,
+                        genre = state.selectedGenre,
+                        mood = state.selectedMood,
+                        language = state.selectedLanguage,
+                        llmProviderId = _llmProviderId.value
+                    )
+                    if (result != null) {
+                        lyrics = result
+                        _studioState.update { it.copy(currentDraft = it.currentDraft?.copy(lyrics = lyrics)) }
+                    } else {
+                        throw Exception("Failed to generate lyrics")
+                    }
+                }
+
+                // Generate music
+                val request = TrebloGenerationRequest(
+                    prompt = draft.promptText,
+                    tags = draft.tags,
+                    lyrics = lyrics.ifBlank { null },
+                    instrumental = false,
+                    title = draft.title.ifBlank { "Untitled" }
+                )
+
+                val response = MusicEngine.generateMusic(request)
+
+                if (response != null && response.audioUrl != null) {
+                    val audioPath = MusicEngine.downloadAudio(response.audioUrl!!)
+
+                    // Generate cover art
+                    val coverPath = CoverArtGenerator.generateCoverArt(
+                        context = getApplication(),
+                        title = draft.title.ifBlank { "Untitled" },
+                        lyrics = draft.lyrics,
+                        genre = state.selectedGenre,
+                        mood = state.selectedMood
+                    )
+
+                    _studioState.update {
+                        it.copy(
+                            currentDraft = it.currentDraft?.copy(coverImagePath = coverPath),
+                            isGenerating = false,
+                            isGeneratingCover = false,
+                            statusMessage = "Full song generated"
+                        )
+                    }
+                    saveCompletedSong(audioPath, coverPath)
+                    triggerDebouncedAutoSave()
+                } else {
+                    throw Exception("Failed to generate music")
+                }
+            } catch (e: Exception) {
+                _studioState.update { it.copy(isGenerating = false, isGeneratingCover = false, statusMessage = "Full song generation failed: ${e.localizedMessage}") }
+            }
+        }
+    }
+
+    private fun saveCompletedSong(audioPath: String, coverPath: String? = null) {
+        val state = _studioState.value
+        val draft = state.currentDraft ?: return
+
+        val song = Song(
             title = draft.title,
-            genre = draft.genre,
-            mood = draft.mood,
-            language = draft.language,
-            vocalStyle = state.vocalStyle,
-            bpm = state.selectedBpm,
+            genre = state.selectedGenre,
+            mood = state.selectedMood,
+            language = state.selectedLanguage,
             promptText = draft.promptText,
             lyrics = draft.lyrics,
-            tags = draft.tags,
-            coverImagePath = draft.coverImagePath
+            tags = draft.tags.joinToString(", "),
+            coverSeed = draft.coverConcept,
+            coverConcept = draft.coverConcept,
+            coverImagePath = coverPath ?: draft.coverImagePath,
+            audioUrl = audioPath,
+            createdAt = System.currentTimeMillis(),
+            isLocal = true
         )
-        _studioState.update { current ->
-            val updatedHistory = (listOf(version) + current.versionHistory.filter { it.title != version.title || it.timestamp != version.timestamp }).take(5)
-            current.copy(versionHistory = updatedHistory)
+
+        viewModelScope.launch {
+            songRepository.insertSong(song)
+            _studioState.update { it.copy(statusMessage = "Song saved to library") }
         }
     }
 
@@ -826,8 +537,8 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             try {
                 val currentId = _studioState.value.activeDraftId ?: 0L
                 val now = System.currentTimeMillis()
-                val timeFormat = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
-                val timeString = timeFormat.format(java.util.Date(now))
+                val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+                val timeString = timeFormat.format(Date(now))
 
                 val entity = LyricDraft(
                     id = currentId,
@@ -872,8 +583,8 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
             coverConcept = draft.coverConcept,
             coverImagePath = draft.coverImagePath
         )
-        val timeFormat = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
-        val formattedTime = timeFormat.format(java.util.Date(draft.lastModified))
+        val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+        val formattedTime = timeFormat.format(Date(draft.lastModified))
 
         _studioState.update {
             it.copy(
@@ -960,27 +671,288 @@ class MelodiaViewModel(application: Application) : AndroidViewModel(application)
     }
 
     override fun onCleared() {
-            super.onCleared()
-            audioPlayerManager.stopAudio()
+        super.onCleared()
+        audioPlayerManager.stopAudio()
+        queueProcessorJob?.cancel()
+        autoSaveJob?.cancel()
+    }
+
+    private fun startQueueProcessor() {
+        queueProcessorJob = viewModelScope.launch {
+            while (true) {
+                val activeCount = generationQueueRepository.getActiveCount()
+                if (activeCount > 0) {
+                    val items = generationQueueRepository.activeQueueItems.first()
+                    val pendingItem = items.find { it.status == GenerationStatus.PENDING }
+                    if (pendingItem != null) {
+                        processQueueItem(pendingItem)
+                    } else {
+                        // Wait a bit before checking again
+                        delay(1000L)
+                    }
+                } else {
+                    // No active items, wait longer
+                    delay(2000L)
+                }
+            }
         }
+    }
+
+    private suspend fun processQueueItem(item: GenerationQueueItem) {
+        generationQueueRepository.updateStatus(item.id, GenerationStatus.PROCESSING.name, System.currentTimeMillis())
+
+        try {
+            when (item.type) {
+                GenerationType.LYRICS -> {
+                    // Trigger lyrics generation
+                    _studioState.update { it.copy(isGenerating = true, statusMessage = "Generating lyrics...") }
+
+                    val result = MusicEngine.generateLyricsOnly(
+                        topic = item.userTopic,
+                        genre = item.genre,
+                        mood = item.mood,
+                        language = item.language,
+                        llmProviderId = _llmProviderId.value
+                    )
+
+                    if (result != null) {
+                        generationQueueRepository.completeItem(
+                            item.id,
+                            GenerationStatus.COMPLETED.name,
+                            System.currentTimeMillis(),
+                            null,
+                            null,
+                            null
+                        )
+                        _studioState.update { it.copy(
+                            currentDraft = it.currentDraft?.copy(lyrics = result),
+                            statusMessage = "Lyrics generated successfully",
+                            isGenerating = false
+                        )}
+                    } else {
+                        throw Exception("Failed to generate lyrics")
+                    }
+                }
+                GenerationType.MUSIC -> {
+                    // Trigger music generation
+                    _studioState.update { it.copy(isGenerating = true, statusMessage = "Generating music...") }
+
+                    val request = TrebloGenerationRequest(
+                        prompt = item.promptText,
+                        tags = item.tags.split(",").map { it.trim() }.filter { it.isNotBlank() },
+                        lyrics = item.lyrics.ifBlank { null },
+                        instrumental = item.isInstrumental,
+                        title = item.title
+                    )
+
+                    val response = MusicEngine.generateMusic(request)
+
+                    if (response != null && response.audioUrl != null) {
+                        // Download the audio file
+                        val audioPath = MusicEngine.downloadAudio(response.audioUrl!!)
+                        generationQueueRepository.completeItem(
+                            item.id,
+                            GenerationStatus.COMPLETED.name,
+                            System.currentTimeMillis(),
+                            audioPath,
+                            null,
+                            null
+                        )
+                        _studioState.update { it.copy(
+                            statusMessage = "Music generated successfully",
+                            isGenerating = false
+                        )}
+                    } else {
+                        throw Exception("Failed to generate music")
+                    }
+                }
+                GenerationType.COVER -> {
+                    // Trigger cover art generation
+                    _studioState.update { it.copy(isGeneratingCover = true, statusMessage = "Generating cover art...") }
+
+                    val coverPath = CoverArtGenerator.generateCoverArt(
+                        context = getApplication(),
+                        title = item.title,
+                        lyrics = item.lyrics,
+                        genre = item.genre,
+                        mood = item.mood
+                    )
+
+                    if (coverPath != null) {
+                        generationQueueRepository.completeItem(
+                            item.id,
+                            GenerationStatus.COMPLETED.name,
+                            System.currentTimeMillis(),
+                            null,
+                            coverPath,
+                            null
+                        )
+                        _studioState.update { it.copy(
+                            currentDraft = it.currentDraft?.copy(coverImagePath = coverPath),
+                            statusMessage = "Cover art generated successfully",
+                            isGeneratingCover = false
+                        )}
+                    } else {
+                        throw Exception("Failed to generate cover art")
+                    }
+                }
+                GenerationType.FULL_SONG -> {
+                    // Trigger full song generation (lyrics + music + cover)
+                    _studioState.update { it.copy(isGenerating = true, statusMessage = "Generating full song...") }
+
+                    // First generate lyrics if not provided
+                    var lyrics = item.lyrics
+                    if (lyrics.isBlank()) {
+                        val result = MusicEngine.generateLyricsOnly(
+                            topic = item.userTopic,
+                            genre = item.genre,
+                            mood = item.mood,
+                            language = item.language,
+                            llmProviderId = _llmProviderId.value
+                        )
+                        if (result != null) {
+                            lyrics = result
+                        } else {
+                            throw Exception("Failed to generate lyrics")
+                        }
+                    }
+
+                    // Generate music
+                    val request = TrebloGenerationRequest(
+                        prompt = item.promptText,
+                        tags = item.tags.split(",").map { it.trim() }.filter { it.isNotBlank() },
+                        lyrics = lyrics.ifBlank { null },
+                        instrumental = item.isInstrumental,
+                        title = item.title
+                    )
+
+                    val response = MusicEngine.generateMusic(request)
+
+                    if (response != null && response.audioUrl != null) {
+                        val audioPath = MusicEngine.downloadAudio(response.audioUrl!!)
+
+                        // Generate cover art
+                        val coverPath = CoverArtGenerator.generateCoverArt(
+                            context = getApplication(),
+                            title = item.title,
+                            lyrics = item.lyrics,
+                            genre = item.genre,
+                            mood = item.mood
+                        )
+
+                        generationQueueRepository.completeItem(
+                            item.id,
+                            GenerationStatus.COMPLETED.name,
+                            System.currentTimeMillis(),
+                            audioPath,
+                            coverPath,
+                            null
+                        )
+                        _studioState.update { it.copy(
+                            statusMessage = "Full song generated successfully",
+                            isGenerating = false,
+                            isGeneratingCover = false
+                        )}
+                    } else {
+                        throw Exception("Failed to generate music")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            generationQueueRepository.completeItem(
+                item.id,
+                GenerationStatus.FAILED.name,
+                System.currentTimeMillis(),
+                null,
+                null,
+                e.message
+            )
+            _studioState.update { it.copy(
+                statusMessage = "Generation failed: ${e.message}",
+                isGenerating = false,
+                isGeneratingCover = false
+            )}
+        }
+    }
+
+    fun enqueueGeneration(
+        type: GenerationType,
+        title: String = "",
+        genre: String = "",
+        mood: String = "",
+        language: String = "",
+        userTopic: String = "",
+        lyrics: String = "",
+        promptText: String = "",
+        tags: String = "",
+        coverConcept: String = "",
+        coverImagePath: String? = null,
+        vocalStyle: String = "Auto-Tuned Male",
+        selectedBpm: String = "120 BPM",
+        vocalReverb: String = "Studio Clean",
+        isInstrumental: Boolean = false
+    ): Long {
+        val state = _studioState.value
+        val item = GenerationQueueItem(
+            type = type,
+            title = title.ifBlank { state.currentDraft?.title ?: "Untitled" },
+            genre = genre.ifBlank { state.selectedGenre },
+            mood = mood.ifBlank { state.selectedMood },
+            language = language.ifBlank { state.selectedLanguage },
+            userTopic = userTopic.ifBlank { state.userTopic },
+            lyrics = lyrics.ifBlank { state.currentDraft?.lyrics ?: "" },
+            promptText = promptText.ifBlank { state.currentDraft?.promptText ?: "" },
+            tags = tags.ifBlank { state.currentDraft?.tags.joinToString(", ") ?: "" },
+            coverConcept = coverConcept.ifBlank { state.currentDraft?.coverConcept ?: "" },
+            coverImagePath = coverImagePath ?: state.currentDraft?.coverImagePath,
+            vocalStyle = vocalStyle,
+            selectedBpm = selectedBpm,
+            vocalReverb = vocalReverb,
+            isInstrumental = isInstrumental
+        )
+        return generationQueueRepository.enqueueItem(item)
+    }
+
+    fun cancelQueueItem(itemId: Long) {
+        viewModelScope.launch {
+            val item = generationQueueRepository.getQueueItemById(itemId)
+            if (item != null && item.status.isActive) {
+                generationQueueRepository.updateQueueItem(item.copy(status = GenerationStatus.CANCELLED))
+            }
+        }
+    }
+
+    fun retryQueueItem(itemId: Long) {
+        viewModelScope.launch {
+            val item = generationQueueRepository.getQueueItemById(itemId)
+            if (item != null && item.status == GenerationStatus.FAILED) {
+                generationQueueRepository.updateQueueItem(item.copy(status = GenerationStatus.PENDING, errorMessage = null))
+            }
+        }
+    }
+
+    fun clearCompletedQueueItems() {
+        viewModelScope.launch {
+            generationQueueRepository.clearCompletedItems()
+        }
+    }
 
     // Local model download methods
-    val localModelManager = com.example.domain.LocalModelManager(getApplication())
 
     fun downloadModel(modelId: String) {
-        val model = com.example.domain.LocalModelManager.AVAILABLE_MODELS.firstOrNull { it.id == modelId } ?: return
+        val model = LocalModelManager.AVAILABLE_MODELS.firstOrNull { it.id == modelId } ?: return
         viewModelScope.launch {
             localModelManager.downloadModel(model)
         }
     }
 
     fun cancelDownload(modelId: String) {
-        val model = com.example.domain.LocalModelManager.AVAILABLE_MODELS.firstOrNull { it.id == modelId } ?: return
+        val model = LocalModelManager.AVAILABLE_MODELS.firstOrNull { it.id == modelId } ?: return
         localModelManager.cancelDownload(model)
     }
 
     fun deleteModel(modelId: String) {
-        val model = com.example.domain.LocalModelManager.AVAILABLE_MODELS.firstOrNull { it.id == modelId } ?: return
+        val model = LocalModelManager.AVAILABLE_MODELS.firstOrNull { it.id == modelId } ?: return
         localModelManager.deleteModel(model)
     }
 }

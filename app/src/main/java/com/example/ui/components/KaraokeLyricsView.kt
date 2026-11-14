@@ -38,9 +38,10 @@ import com.example.network.KaraokeLyrics
 import com.example.network.WordTiming
 import com.example.ui.theme.NothingBlack
 import com.example.ui.theme.NothingBorder
+import androidx.compose.material3.MaterialTheme
 import com.example.ui.theme.NothingGrey
-import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingWhite
+import com.example.ui.theme.melodiaAccentText
 import com.example.ui.theme.SpaceMonoFontFamily
 
 /** One rendered lyric line, already aligned against the word timings. */
@@ -174,7 +175,7 @@ fun KaraokeLyricsView(
                             .height(barHeight)
                             .clip(RoundedCornerShape(2.dp))
                             .background(
-                                if (isActive) NothingRed else Color.Transparent
+                                if (isActive) MaterialTheme.colorScheme.primary else Color.Transparent
                             )
                     )
                     Text(
@@ -208,7 +209,7 @@ private fun lineText(
 ): AnnotatedString {
     line.sectionLabel?.let { label ->
         return buildAnnotatedString {
-            withStyle(SpanStyle(color = NothingRed, fontWeight = FontWeight.Bold)) {
+            withStyle(SpanStyle(color = melodiaAccentText(), fontWeight = FontWeight.Bold)) {
                 append(label)
             }
         }
@@ -220,9 +221,9 @@ private fun lineText(
             val isPast = currentPositionMs > word.endTimeMs
             val style = when {
                 isActive -> SpanStyle(
-                    color = NothingRed,
+                    color = melodiaAccentText(),
                     fontWeight = FontWeight.Bold,
-                    background = NothingRed.copy(alpha = 0.18f)
+                    background = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
                 )
                 isPast -> SpanStyle(color = NothingGrey.copy(alpha = 0.6f))
                 else -> SpanStyle(color = baseColor)

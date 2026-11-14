@@ -48,6 +48,7 @@ import com.example.ui.components.TapHaptic
 import com.example.ui.components.pressable
 import com.example.ui.theme.AccentColor
 import com.example.ui.theme.AppAppearance
+import com.example.ui.theme.AppearanceSettingsCard
 import com.example.ui.theme.SpaceMonoFontFamily
 import com.example.ui.theme.ThemeMode
 import com.example.ui.viewmodel.MelodiaViewModel

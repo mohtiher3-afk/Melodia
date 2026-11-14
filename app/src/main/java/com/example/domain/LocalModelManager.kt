@@ -125,26 +125,60 @@ class LocalModelManager(private val appContext: Context) {
 
         val downloadState = getDownloadState(model.id)
 
+        // Check if already complete
         if (file.exists() && file.length() >= model.expectedSizeBytes * 9 / 10) {
             downloadState.value = DownloadState.Complete(file.absolutePath)
             return@withContext Result.success(file.absolutePath)
         }
 
+        // Determine if we're resuming from a partial download
+        val existingBytes = if (file.exists()) file.length() else 0L
+        val currentState = downloadState.value
+        val isResuming = currentState is DownloadState.Paused && existingBytes > 0 && existingBytes == currentState.downloadedBytes
+
         val totalSize = model.expectedSizeBytes
-        downloadState.value = DownloadState.Downloading(0f, 0L, totalSize)
+        val initialProgress = if (isResuming && totalSize > 0) existingBytes.toFloat() / totalSize else 0f
+        downloadState.value = DownloadState.Downloading(initialProgress.coerceIn(0f, 1f), existingBytes, totalSize)
+
         try {
             val url = URL(model.downloadUrl)
             val connection = url.openConnection() as HttpURLConnection
             connection.connectTimeout = 30_000
             connection.readTimeout = 120_000
             connection.doInput = true
+            
+            // Support resume with Range header
+            if (isResuming) {
+                connection.setRequestProperty("Range", "bytes=$existingBytes-")
+            }
+            
             connection.connect()
 
-            val actualTotalSize = connection.contentLengthLong.takeIf { it > 0 } ?: model.expectedSizeBytes
+            // For resume, server returns 206 Partial Content with content-length being remaining bytes
+            // We need to calculate actual total including already downloaded bytes
+            val responseCode = connection.responseCode
+            
+            // If we requested resume (Range header) but server returns 200 OK (not 206),
+            // it means the server doesn't support range requests and is sending the full file.
+            // In this case, we must restart the download from the beginning (overwrite, not append).
+            val serverSupportsResume = isResuming && responseCode == 206
+            val effectiveIsResuming = serverSupportsResume
+            val initialDownloaded = if (effectiveIsResuming) existingBytes else 0L
+            val actualTotalSize = when {
+                effectiveIsResuming && connection.contentLengthLong > 0 -> existingBytes + connection.contentLengthLong
+                connection.contentLengthLong > 0 -> connection.contentLengthLong
+                else -> model.expectedSizeBytes
+            }
+
+            if (isResuming && !serverSupportsResume) {
+                Log.w(TAG, "Server doesn't support resume (response $responseCode), restarting download from beginning")
+            }
+            
             connection.getInputStream().use { input ->
-                FileOutputStream(file).use { output ->
+                // Append mode only when server actually supports resume
+                FileOutputStream(file, effectiveIsResuming).use { output ->
                     val buffer = ByteArray(8192)
-                    var downloaded = 0L
+                    var downloaded = initialDownloaded
                     var lastUpdate = 0L
                     while (true) {
                         val read = input.read(buffer)

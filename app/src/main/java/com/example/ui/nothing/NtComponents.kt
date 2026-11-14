@@ -4,12 +4,14 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.LocalIndication
@@ -43,8 +45,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -52,7 +56,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
@@ -65,6 +71,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.example.ui.components.pressable
+import com.example.ui.components.CommitHaptic
+import com.example.ui.components.TapHaptic
 import com.example.ui.theme.NothingDotMatrixFontFamily
 import com.example.ui.theme.SpaceMonoFontFamily
 
@@ -130,46 +139,47 @@ fun NtButton(
     leading: (@Composable () -> Unit)? = null
 ) {
     val shape = RoundedCornerShape(50)
-    val source = remember { MutableInteractionSource() }
-    val pressed by source.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (pressed) 0.96f else 1f, tween(150), label = "press")
     val background = when {
         !enabled -> Nt.Track
         style == NtButtonStyle.Primary -> Nt.Red
         else -> Nt.Surface
     }
     val borderColor = if (enabled && style == NtButtonStyle.Primary) Nt.Red else Nt.Outline
-    Row(
+    val haptic = if (style == NtButtonStyle.Primary) CommitHaptic else TapHaptic
+
+    Box(
         modifier = modifier
-            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .pressable(
+                enabled = enabled,
+                pressedScale = 0.94f,
+                haptic = haptic,
+                onClick = onClick
+            )
             .heightIn(min = 48.dp)
             .clip(shape)
             .background(background)
             .border(1.dp, borderColor, shape)
-            .clickable(
-                interactionSource = source,
-                indication = LocalIndication.current,
-                enabled = enabled,
-                role = Role.Button,
-                onClick = onClick
-            )
             .padding(horizontal = 20.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
+        contentAlignment = Alignment.Center
     ) {
-        if (leading != null) {
-            leading()
-            Spacer(Modifier.width(10.dp))
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (leading != null) {
+                leading()
+                Spacer(Modifier.width(10.dp))
+            }
+            Text(
+                text = text,
+                color = if (enabled) Nt.White else Nt.Grey,
+                fontFamily = SpaceMonoFontFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                letterSpacing = 0.06.em,
+                maxLines = 1
+            )
         }
-        Text(
-            text = text,
-            color = if (enabled) Nt.White else Nt.Grey,
-            fontFamily = SpaceMonoFontFamily,
-            fontWeight = FontWeight.Bold,
-            fontSize = 12.sp,
-            letterSpacing = 0.06.em,
-            maxLines = 1
-        )
     }
 }
 
@@ -183,11 +193,15 @@ fun NtIconButton(
 ) {
     Box(
         modifier = modifier
+            .pressable(
+                pressedScale = 0.94f,
+                haptic = TapHaptic,
+                onClick = onClick
+            )
             .size(48.dp)
             .clip(CircleShape)
             .background(Nt.Surface)
-            .border(1.dp, Nt.Outline, CircleShape)
-            .clickable(role = Role.Button, onClick = onClick),
+            .border(1.dp, Nt.Outline, CircleShape),
         contentAlignment = Alignment.Center
     ) {
         DotMatrixIcon(icon, contentDescription, iconSize = 22.dp, tint = Nt.White, animated = animated)
@@ -200,11 +214,15 @@ fun NtChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modif
     val shape = RoundedCornerShape(50)
     Box(
         modifier = modifier
+            .pressable(
+                pressedScale = 0.94f,
+                haptic = TapHaptic,
+                onClick = onClick
+            )
             .minimumInteractiveComponentSize()
             .clip(shape)
             .background(if (selected) Nt.White else Color.Transparent)
             .border(1.dp, if (selected) Nt.White else Nt.Outline, shape)
-            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
     ) {

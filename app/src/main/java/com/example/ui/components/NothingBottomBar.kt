@@ -52,8 +52,8 @@ import com.example.ui.theme.NothingBorder
 import com.example.ui.theme.NothingCardSurface
 import com.example.ui.theme.NothingElevatedSurface
 import com.example.ui.theme.NothingMutedGrey
+import androidx.compose.material3.MaterialTheme
 import com.example.ui.theme.NothingOutline
-import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingWhite
 import com.example.ui.theme.SpaceMonoFontFamily
 
@@ -173,7 +173,7 @@ private fun BottomBarItem(
                 .width(indicatorWidth)
                 .height(3.dp)
                 .clip(RoundedCornerShape(2.dp))
-                .background(NothingRed)
+                .background(MaterialTheme.colorScheme.primary)
         )
 
         Spacer(modifier = Modifier.height(6.dp))

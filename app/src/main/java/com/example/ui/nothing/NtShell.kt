@@ -200,10 +200,9 @@ fun NtAppShell(
                 }
             }
             bottomExtra?.invoke()
-            NtBottomNav(
-                items = rememberNtNavItems(),
-                selectedIndex = selectedDestination,
-                onSelect = onSelectDestination,
+            NtNothingBottomBar(
+                selectedDestination = NtDestination.fromIndex(selectedDestination),
+                onDestinationSelected = { destination -> onSelectDestination(destination.navigationIndex) },
                 modifier = Modifier.navigationBarsPadding()
             )
         }

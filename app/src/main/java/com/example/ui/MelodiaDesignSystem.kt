@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -23,10 +24,18 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,8 +55,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.graphicsLayer
 import com.example.ui.components.CommitHaptic
+import com.example.ui.components.NothingWaveformView
 import com.example.ui.components.TapHaptic
+import kotlinx.coroutines.delay
 import com.example.ui.components.pressable
 import com.example.ui.components.rememberPressScale
 import com.example.ui.theme.MelodiaTheme
@@ -60,17 +72,16 @@ import com.example.ui.theme.NothingDotMatrixFontFamily
 import com.example.ui.theme.NothingGrey
 import com.example.ui.theme.NothingMutedGrey
 import com.example.ui.theme.NothingOutline
-import com.example.ui.theme.NothingRed
 import com.example.ui.theme.NothingTrack
 import com.example.ui.theme.NothingWhite
 import com.example.ui.theme.SpaceMonoFontFamily
+import com.example.ui.theme.melodiaAccentText
 
 object MelodiaTheme {
     val Background = NothingBlack
     val Surface = NothingDarkSurface
     val Border = NothingBorder
     val Track = NothingTrack
-    val Accent = NothingRed
     val TextMain = NothingWhite
     val TextSecondary = NothingGrey
 }
@@ -126,14 +137,18 @@ fun Modifier.dotGrid(
     }
 }
 
-/** A restrained red ambient bloom that adds depth without competing with content. */
-fun Modifier.ambientGlow(): Modifier = drawWithCache {
+/** A restrained ambient bloom that adds depth without competing with content. */
+@Composable
+fun Modifier.ambientGlow(): Modifier {
+    val accent = MaterialTheme.colorScheme.primary
+    return drawWithCache {
     val glow = Brush.radialGradient(
-        colors = listOf(NothingRed.copy(alpha = 0.14f), Color.Transparent),
+        colors = listOf(accent.copy(alpha = 0.14f), Color.Transparent),
         center = Offset(size.width * 0.88f, size.height * 0.03f),
         radius = maxOf(size.width, size.height) * 0.78f
     )
     onDrawBehind { drawRect(glow) }
+    }
 }
 
 enum class MelodiaButtonStyle { Primary, Secondary, Quiet }
@@ -153,7 +168,7 @@ fun MelodiaActionButton(
     val shape = CircleShape
     val container = when {
         !enabled -> NothingDarkGrey
-        style == MelodiaButtonStyle.Primary -> NothingRed
+        style == MelodiaButtonStyle.Primary -> MaterialTheme.colorScheme.primary
         style == MelodiaButtonStyle.Secondary -> NothingCardSurface
         else -> Color.Transparent
     }
@@ -301,7 +316,7 @@ fun MelodiaPrimaryButton(
             .fillMaxWidth()
             .height(48.dp)
             .clip(CircleShape)
-            .background(if (enabled) MelodiaTheme.Accent else NothingDarkGrey)
+            .background(if (enabled) MaterialTheme.colorScheme.primary else NothingDarkGrey)
             .pressable(
                 enabled = enabled,
                 pressedScale = 0.94f,
@@ -328,7 +343,7 @@ fun StatusBadge(
     val color = when (status.uppercase()) {
         "READY", "DONE", "COMPLETED" -> NothingWhite
         "PROCESSING", "PENDING", "IDLE" -> MelodiaTheme.TextSecondary
-        "FAILED", "ERROR" -> NothingRed
+        "FAILED", "ERROR" -> MaterialTheme.colorScheme.primary
         else -> MelodiaTheme.TextSecondary
     }
 
@@ -353,6 +368,116 @@ fun StatusBadge(
             color = color,
             fontWeight = FontWeight.Bold
         )
+    }
+}
+
+/**
+ * Splash screen that displays the Melodia logo with a dot-matrix pulse animation.
+ * Shows for a minimum of 1.5 seconds before completing.
+ */
+@Composable
+fun MelodiaSplash(onComplete: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var animationProgress by remember { mutableStateOf(0f) }
+    var isFadingOut by remember { mutableStateOf(false) }
+    
+    // Start the pulse animation
+    LaunchedEffect(Unit) {
+        while (animationProgress < 1f) {
+            animationProgress += 0.016f // ~60fps
+            if (animationProgress >= 1f) break
+        }
+        // Hold at full for a moment
+        delay(800)
+        // Fade out
+        isFadingOut = true
+        while (animationProgress > 0f) {
+            animationProgress -= 0.03f
+            if (animationProgress <= 0f) break
+        }
+        onComplete()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(NothingBlack)
+            .dotGrid(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(MelodiaSpacing.lg)
+        ) {
+            // Logo with pulsing scale
+            Box(
+                modifier = Modifier
+                    .graphicsLayer {
+                        scaleX = 0.8f + (0.2f * animationProgress)
+                        scaleY = 0.8f + (0.2f * animationProgress)
+                        alpha = if (isFadingOut) animationProgress else 1f
+                    }
+                    .size(80.dp)
+            ) {
+                // Melodia logo - musical note in dot matrix style
+                NothingWaveformView(
+                    modifier = Modifier.fillMaxSize(),
+                    barCount = 12,
+                    color = MaterialTheme.colorScheme.primary,
+                    speed = 0.5f
+                )
+            }
+            
+            // App name
+            Text(
+                text = "MELODIA",
+                fontFamily = NothingDotMatrixFontFamily,
+                fontSize = 28.sp,
+                letterSpacing = 0.15.sp,
+                color = NothingWhite.copy(alpha = if (isFadingOut) animationProgress else 1f)
+            )
+            
+            // Tagline
+            Text(
+                text = "AI Music Studio",
+                fontFamily = SpaceMonoFontFamily,
+                fontSize = 12.sp,
+                letterSpacing = 0.1.sp,
+                color = NothingGrey.copy(alpha = if (isFadingOut) animationProgress else 1f)
+            )
+            
+            // Loading indicator
+            if (!isFadingOut) {
+                LoadingDots()
+            }
+        }
+    }
+}
+
+@Composable
+private fun LoadingDots() {
+    val dotScales = remember { mutableStateListOf(0.5f, 0.5f, 0.5f) }
+    LaunchedEffect(Unit) {
+        var direction = 0
+        while (true) {
+            val next = (direction + 1) % 3
+            dotScales[direction] = 0.5f
+            dotScales[next] = 1.2f
+            direction = next
+            delay(300)
+        }
+    }
+    
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        dotScales.forEachIndexed { index, scale ->
+            Box(
+                modifier = Modifier
+                    .graphicsLayer { scaleX = scale; scaleY = scale }
+                    .size(8.dp)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .clip(CircleShape)
+            )
+        }
     }
 }
 

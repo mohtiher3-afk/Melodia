@@ -4,8 +4,10 @@ plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
+  alias(libs.plugins.kotlin.serialization)
   alias(libs.plugins.secrets)
   alias(libs.plugins.google.services)
+    alias(libs.plugins.google.firebase.crashlytics)
 }
 
 android {
@@ -118,6 +120,7 @@ dependencies {
   implementation(libs.androidx.compose.ui.tooling.preview)
   implementation(libs.androidx.core.ktx)
   implementation(libs.androidx.datastore.preferences)
+  implementation(libs.kotlinx.serialization.json)
   implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.livedata.ktx)
@@ -128,6 +131,7 @@ dependencies {
   implementation(libs.androidx.room.runtime)
   implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
+    implementation(libs.firebase.crashlytics)
     implementation(libs.moshi.kotlin)
     implementation(libs.firebase.ai)
     // kotlin-reflect is required for Moshi's KotlinJsonAdapterFactory

@@ -108,7 +108,9 @@ fun SyncScreen(
                         color = NothingGrey
                     )
                     NothingPillButton(
-                        text = if (state.isTranscribingAudio) "TRANSCRIBING VOCALS..." else "EXTRACT LYRICS FROM AUDIO",
+                        text = if (state.isTranscribingAudio) "TRANSCRIBING VOCALS..."
+                            else if (!draft?.lyrics.isNullOrBlank()) "RE-TRANSCRIBE"
+                            else "EXTRACT LYRICS FROM AUDIO",
                         onClick = {
                             if (!draft?.lyrics.isNullOrBlank()) showTranscribeConfirmation = true
                             else viewModel.transcribeImportedAudio(context)
